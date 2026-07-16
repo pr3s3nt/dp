@@ -1,0 +1,103 @@
+# =============================================================================
+# CATALOG-CI — lưới an toàn khi sửa provisioner/patch.
+#
+# Mỗi PR đụng vào score/** sẽ:
+#   1. render bộ score mẫu (score/examples/*) bằng catalog CŨ (nhánh base)
+#   2. render y hệt bằng catalog MỚI (nhánh PR)
+#   3. diff 2 kết quả -> đưa vào Job Summary
+#
+# Reviewer nhìn thấy CHÍNH XÁC manifest sẽ thay đổi thế nào trước khi merge —
+# không phải đoán từ template Go. Diff rỗng = thay đổi không ảnh hưởng output.
+#
+# Sau khi merge, app vẫn CHƯA bị ảnh hưởng (mỗi app ghim catalog qua platform.lock);
+# rollout theo từng app — xem CHIEN-LUOC-MIGRATION-VA-CAP-NHAT.md.
+# =============================================================================
+name: catalog-ci
+
+on:
+  pull_request:
+    paths:
+      - "score/**"
+
+env:
+  SCORE_K8S_VERSION: "0.15.0"
+
+jobs:
+  render-diff:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout catalog MỚI (nhánh PR)
+        uses: actions/checkout@v4
+        with:
+          path: head
+
+      - name: Checkout catalog CŨ (nhánh base)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+
+      - name: Install score-k8s (chỉ khi runner chưa có)
+        run: |
+          if command -v score-k8s >/dev/null; then score-k8s --version; exit 0; fi
+          curl -fsSL -o score-k8s.tgz \
+            "https://github.com/score-spec/score-k8s/releases/download/${SCORE_K8S_VERSION}/score-k8s_${SCORE_K8S_VERSION}_linux_amd64.tar.gz"
+          tar xzf score-k8s.tgz score-k8s && sudo mv score-k8s /usr/local/bin/
+
+      - name: Render bằng cả 2 catalog rồi diff
+        run: |
+          set -euo pipefail
+          # Input mẫu lấy từ nhánh PR để 2 lần render chỉ khác nhau ở CATALOG
+          EXAMPLES=$(ls head/score/examples/*.score.yaml)
+
+          render() {
+            local catalog=$1 label=$2
+            for envname in staging prod; do
+              local dir="work-${label}-${envname}"
+              mkdir -p "$dir" && pushd "$dir" >/dev/null
+              score-k8s init --no-sample \
+                --provisioners "../${catalog}/score/provisioners/onprem.provisioners.yaml" \
+                --patch-templates "../${catalog}/score/patches/${envname}.tpl"
+              for f in $EXAMPLES; do
+                score-k8s generate "../$f" \
+                  --override-property 'containers.main.image="registry.example/app:TAG"' \
+                  --output manifests.yaml
+              done
+              popd >/dev/null
+              # Secret chứa password random mỗi lần chạy -> loại khỏi diff cho đỡ nhiễu
+              yq eval 'select(.kind != "Secret")' "$dir/manifests.yaml" > "render-${label}-${envname}.yaml"
+            done
+          }
+          render base base
+          render head head
+
+          {
+            echo "## Catalog render diff (examples × staging/prod)"
+            CHANGED=0
+            for envname in staging prod; do
+              echo ""
+              echo "### env: ${envname}"
+              if diff -u "render-base-${envname}.yaml" "render-head-${envname}.yaml" > "diff-${envname}.txt"; then
+                echo "_Không đổi output._"
+              else
+                CHANGED=1
+                echo '```diff'
+                cat "diff-${envname}.txt"
+                echo '```'
+              fi
+            done
+            echo ""
+            [ "$CHANGED" = "1" ] && echo "> Output ĐỔI — review kỹ diff trước khi merge; rollout theo platform.lock từng app." \
+                                 || echo "> Thay đổi không ảnh hưởng manifest sinh ra."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Nếu GHES của bạn không bundle actions/upload-artifact: xóa step này —
+      # Job Summary ở trên đã đủ để review.
+      - name: Upload render results
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-render-diff
+          path: |
+            render-*.yaml
+            diff-*.txt
+          if-no-files-found: ignore

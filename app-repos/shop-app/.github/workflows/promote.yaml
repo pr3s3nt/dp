@@ -1,0 +1,47 @@
+# PROMOTE shop-app — nút của dev; việc thật do orchestrator ở platform-repo làm.
+name: promote
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Git SHA (image tag) đã pass staging"
+        required: true
+      target:
+        description: "Nền tảng"
+        type: choice
+        options: [onprem, cloud]
+        default: onprem
+      mode:
+        description: "tag-only: chỉ đổi tag | re-render: score.yaml có đổi cấu trúc"
+        type: choice
+        options: [tag-only, re-render]
+        default: tag-only
+
+env:
+  APP_NAME: shop-app
+  PLATFORM_REPO: your-org/platform-repo       # TODO: thay your-org
+
+jobs:
+  request-promote:
+    runs-on: self-hosted
+    steps:
+      - name: Gọi orchestrator (promote-request)
+        run: |
+          curl -sf -X POST \
+            -H "Authorization: Bearer ${{ secrets.PLATFORM_DISPATCH_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "${{ github.api_url }}/repos/${PLATFORM_REPO}/dispatches" \
+            -d @- <<EOF
+          {
+            "event_type": "promote-request",
+            "client_payload": {
+              "app": "${APP_NAME}",
+              "repo": "${{ github.repository }}",
+              "tag": "${{ inputs.image_tag }}",
+              "target": "${{ inputs.target }}",
+              "mode": "${{ inputs.mode }}"
+            }
+          }
+          EOF
+          echo "Đã gửi yêu cầu promote — theo dõi ở tab Actions của ${PLATFORM_REPO}"

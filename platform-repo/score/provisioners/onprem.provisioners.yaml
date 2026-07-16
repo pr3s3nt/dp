@@ -1,0 +1,136 @@
+# =============================================================================
+# CATALOG PROVISIONER — ONPREM
+# Team hạ tầng sở hữu. Dev chỉ khai `type` trong score.yaml, KHÔNG đọc file này.
+#
+# type: postgres -> StatefulSet Postgres + Secret (password tự sinh, app đọc qua secretKeyRef)
+# type: route    -> Traefik IngressRoute
+# type: service  -> chỉ xuất DNS nội bộ (không sinh manifest)
+#
+# Thêm loại hạ tầng mới (redis, s3, queue...) = thêm một block ở đây.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# postgres: mỗi workload khai `db: {type: postgres}` được một Postgres riêng.
+# - Password sinh ngẫu nhiên, giữ trong state (.score-k8s/) để ổn định giữa các lần generate.
+#   State KHÔNG commit vào git; trên cluster, CI chỉ tạo Secret nếu CHƯA tồn tại
+#   nên password thực tế trên cụm không bao giờ bị xoay ngoài ý muốn.
+# - App nhận password qua secretKeyRef (encodeSecretRef) — không bao giờ plaintext trong env.
+# - Convention tên Secret: <workload>-db-credentials — là hợp đồng ổn định,
+#   sau này đổi sang Sealed Secrets / ESO thì app không đổi gì.
+# ---------------------------------------------------------------------------
+- uri: template://onprem/postgres
+  type: postgres
+  init: |
+    name: {{ .SourceWorkload }}-db
+    secretName: {{ .SourceWorkload }}-db-credentials
+  state: |
+    {{ if not .State.password }}password: {{ randAlphaNum 20 | quote }}{{ else }}password: {{ .State.password | quote }}{{ end }}
+  outputs: |
+    host: {{ .Init.name }}
+    port: 5432
+    name: appdb
+    username: postgres
+    password: {{ encodeSecretRef .Init.secretName "password" }}
+  manifests: |
+    # Secret này sẽ bị CI TÁCH RA khỏi manifest trước khi commit sang config repo
+    # (xem bước "split secrets" trong ci.yaml). Nó không bao giờ nằm trong git.
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: {{ .Init.secretName }}
+      type: Opaque
+      stringData:
+        password: {{ .State.password | quote }}
+    - apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: {{ .Init.name }}
+      spec:
+        serviceName: {{ .Init.name }}
+        replicas: 1
+        selector:
+          matchLabels: { app: {{ .Init.name }} }
+        template:
+          metadata:
+            labels: { app: {{ .Init.name }} }
+          spec:
+            containers:
+              - name: postgres
+                # Nếu cụm không ra được Docker Hub: dùng Harbor proxy-cache,
+                # vd harbor.example.com/dockerhub/library/postgres:16-alpine
+                image: postgres:16-alpine
+                env:
+                  - name: POSTGRES_DB
+                    value: appdb
+                  - name: POSTGRES_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: {{ .Init.secretName }}
+                        key: password
+                  - name: PGDATA
+                    value: /var/lib/postgresql/data/pgdata
+                ports:
+                  - containerPort: 5432
+                volumeMounts:
+                  - name: data
+                    mountPath: /var/lib/postgresql/data
+        volumeClaimTemplates:
+          - metadata:
+              name: data
+            spec:
+              accessModes: [ReadWriteOnce]
+              # Cụm dùng Rook Ceph (RBD block). Kiểm tra tên chính xác: kubectl get storageclass
+              storageClassName: rook-ceph-block
+              resources:
+                requests:
+                  storage: 5Gi
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: {{ .Init.name }}
+      spec:
+        selector: { app: {{ .Init.name }} }
+        ports:
+          - port: 5432
+            targetPort: 5432
+
+# ---------------------------------------------------------------------------
+# route: lộ service ra ngoài qua Traefik.
+# Dev khai: api: {type: route, params: {host: shop.example.com, path: /api, port: 8080}}
+# Trỏ vào Service do score-k8s sinh cho workload (mặc định trùng tên workload).
+# ---------------------------------------------------------------------------
+- uri: template://onprem/route
+  type: route
+  init: |
+    host: {{ .Params.host }}
+    path: {{ .Params.path | default "/" }}
+    port: {{ .Params.port }}
+  outputs: |
+    host: {{ .Init.host }}
+    path: {{ .Init.path }}
+  manifests: |
+    - apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        name: {{ .SourceWorkload }}-route{{ if ne .Init.path "/" }}-{{ .Init.path | trimPrefix "/" | replace "/" "-" }}{{ end }}
+      spec:
+        entryPoints: [web]   # TODO: đổi thành websecure + TLS khi có cert
+        routes:
+          - match: Host(`{{ .Init.host }}`) && PathPrefix(`{{ .Init.path }}`)
+            kind: Rule
+            services:
+              - name: {{ (index .WorkloadServices .SourceWorkload).ServiceName }}
+                port: {{ .Init.port }}
+
+# ---------------------------------------------------------------------------
+# service: gọi service khác trong cùng app (cùng namespace).
+# Không sinh manifest — chỉ trả về DNS nội bộ của K8s Service.
+# Lưu ý: score-k8s đặt tên Service = tên workload (đừng override bằng annotation
+# k8s.score.dev/service-name, nếu không convention này gãy).
+# Dev dùng: http://${resources.<tên>.host}:${resources.<tên>.port}
+# ---------------------------------------------------------------------------
+- uri: template://onprem/service
+  type: service
+  outputs: |
+    host: {{ .Params.workload }}
+    port: {{ .Params.port }}

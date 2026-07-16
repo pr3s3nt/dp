@@ -1,0 +1,60 @@
+# =============================================================================
+# ApplicationSet — CLOUD (EKS)
+# Giống hệt onprem, chỉ khác:
+#   - path: cloud/<env>
+#   - destination: cụm EKS theo env (đăng ký bằng `argocd cluster add --name eks-<env>`
+#     sau khi Terraform dựng xong — xem terraform/README.md)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cloud-apps
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - scmProvider:
+              github:
+                organization: your-org            # TODO: thay your-org
+                tokenRef:
+                  secretName: github-token
+                  key: token
+              filters:
+                - repositoryMatch: .*-config$
+          - list:
+              elements:
+                - env: staging
+                - env: prod
+  template:
+    metadata:
+      name: '{{ .repository | trimSuffix "-config" }}-{{ .env }}-cloud'
+      labels:
+        platform: cloud
+        env: '{{ .env }}'
+    spec:
+      project: idp
+      source:
+        repoURL: '{{ .url }}'
+        targetRevision: '{{ .branch }}'
+        path: 'cloud/{{ .env }}'
+        directory:
+          recurse: false
+      destination:
+        name: 'eks-{{ .env }}'   # tên cluster khi argocd cluster add
+        namespace: '{{ .repository | trimSuffix "-config" }}-{{ .env }}'
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+  templatePatch: |
+    {{ if eq .env "staging" }}
+    spec:
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+    {{ end }}

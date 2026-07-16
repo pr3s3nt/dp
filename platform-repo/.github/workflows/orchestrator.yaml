@@ -1,0 +1,274 @@
+# =============================================================================
+# ORCHESTRATOR — bộ não deploy của platform. Chạy trong platform-repo.
+#
+# CI của app CHỈ build image rồi "gọi" platform bằng repository_dispatch.
+# Toàn bộ hậu xử lý nằm ở đây, viết MỘT lần cho mọi app:
+#   - render:  score-k8s + provisioner + patch env -> manifest hoàn chỉnh
+#   - secret:  tách khỏi manifest, apply thẳng cụm (create-if-missing)
+#   - commit:  đẩy manifest sang <app>-config -> ArgoCD sync
+#
+# GHIM PHIÊN BẢN CATALOG (platform.lock):
+#   Mỗi app repo có file platform.lock chứa ref (tag/branch/SHA) của platform-repo.
+#   Orchestrator checkout catalog (score/provisioners + score/patches) ở ĐÚNG ref đó.
+#   -> Sửa provisioner/patch trên main KHÔNG ảnh hưởng app đang chạy;
+#      app nâng cấp bằng cách đổi platform.lock qua PR (canary từng app một).
+#   Không có platform.lock -> dùng main (không khuyến khích với app prod).
+#
+# Events (client_payload):
+#   deploy-request : { app, repo, sha, targets: "onprem" | "onprem cloud" }
+#   promote-request: { app, repo, tag, target, mode: "tag-only" | "re-render" }
+#
+# Secrets cần có trong platform-repo (Settings -> Secrets -> Actions):
+#   APP_REPOS_TOKEN            đọc các app repo trong org
+#   CONFIG_REPO_TOKEN          push vào các repo <app>-config
+#   KUBECONFIG_ONPREM_STAGING  base64 kubeconfig cụm staging (apply secret)
+#   KUBECONFIG_ONPREM_PROD     như trên, cho prod
+#   HARBOR_HOST                vd harbor.example.com
+#   HARBOR_ROBOT_USER          robot account chỉ quyền pull (tạo secret harbor-pull)
+#   HARBOR_ROBOT_PASS          password của robot đó
+# =============================================================================
+name: orchestrator
+
+on:
+  repository_dispatch:
+    types: [deploy-request, promote-request]
+
+env:
+  ORG: your-org                               # TODO: thay your-org
+  SCORE_K8S_VERSION: "0.15.0"
+  REGISTRY: harbor.example.com/idp            # TODO: Harbor project chứa image
+
+jobs:
+  # ===========================================================================
+  # DEPLOY: render staging (+ bootstrap prod) rồi commit sang config repo
+  # ===========================================================================
+  deploy:
+    if: github.event.action == 'deploy-request'
+    runs-on: self-hosted   # runner trong mạng, cài sẵn score-k8s/yq/kubectl + kubeconfig
+    env:
+      APP: ${{ github.event.client_payload.app }}
+      APP_REPO: ${{ github.event.client_payload.repo }}
+      SHA: ${{ github.event.client_payload.sha }}
+      TARGETS: ${{ github.event.client_payload.targets }}
+    steps:
+      - name: Checkout app repo tại đúng commit
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.APP_REPO }}
+          ref: ${{ env.SHA }}
+          token: ${{ secrets.APP_REPOS_TOKEN }}
+          path: app
+
+      # App ghim catalog ở ref nào thì render bằng đúng ref đó
+      - name: Resolve catalog version (platform.lock)
+        id: lock
+        run: |
+          REF=$(grep -v '^#' app/platform.lock 2>/dev/null | head -1 | tr -d '[:space:]')
+          [ -n "$REF" ] || REF=main
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+          echo "==> app=${APP} ghim catalog: $REF"
+
+      - name: Checkout catalog (provisioners + patches) tại ref app ghim
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.lock.outputs.ref }}
+          path: catalog
+
+      # Air-gap: cài sẵn score-k8s trên runner -> bước này tự skip, không cần internet
+      - name: Install score-k8s (chỉ khi runner chưa có)
+        run: |
+          if command -v score-k8s >/dev/null; then score-k8s --version; exit 0; fi
+          curl -fsSL -o score-k8s.tgz \
+            "https://github.com/score-spec/score-k8s/releases/download/${SCORE_K8S_VERSION}/score-k8s_${SCORE_K8S_VERSION}_linux_amd64.tar.gz"
+          tar xzf score-k8s.tgz score-k8s && sudo mv score-k8s /usr/local/bin/
+
+      - name: Checkout config repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.ORG }}/${{ env.APP }}-config
+          token: ${{ secrets.CONFIG_REPO_TOKEN }}
+          path: config
+
+      - name: Render manifests (mọi service có score.yaml)
+        run: |
+          set -euo pipefail
+          # Tự phát hiện service: mọi thư mục cấp 1 của app repo có score.yaml.
+          SERVICES=$(cd app && for f in */score.yaml; do dirname "$f"; done)
+          echo "==> app=${APP} services: ${SERVICES}"
+
+          render() {
+            local target=$1 env=$2 out=$3
+            local dir="work-${target}-${env}"
+            mkdir -p "$dir" && pushd "$dir" >/dev/null
+            score-k8s init --no-sample \
+              --provisioners "../catalog/score/provisioners/${target}.provisioners.yaml" \
+              --patch-templates "../catalog/score/patches/${env}.tpl"
+            for svc in $SERVICES; do
+              score-k8s generate "../app/${svc}/score.yaml" \
+                --override-property "containers.main.image=\"${REGISTRY}/${APP}-${svc}:${SHA}\"" \
+                --output manifests.yaml
+            done
+            yq eval 'select(.kind == "Secret")' manifests.yaml > secrets.yaml
+            yq eval 'select(.kind != "Secret")' manifests.yaml > app.yaml
+            popd >/dev/null
+            mkdir -p "$(dirname "$out")"
+            cp "${dir}/app.yaml" "$out"
+          }
+
+          for target in $TARGETS; do
+            render "$target" staging "config/${target}/staging/manifests.yaml"
+            if [ ! -f "config/${target}/prod/manifests.yaml" ]; then
+              render "$target" prod "config/${target}/prod/manifests.yaml"
+            fi
+          done
+
+      - name: Apply secrets lên cụm (create-if-missing)
+        env:
+          KUBECONFIG_STAGING_B64: ${{ secrets.KUBECONFIG_ONPREM_STAGING }}
+          KUBECONFIG_PROD_B64: ${{ secrets.KUBECONFIG_ONPREM_PROD }}
+          HARBOR_HOST: ${{ secrets.HARBOR_HOST }}
+          HARBOR_ROBOT_USER: ${{ secrets.HARBOR_ROBOT_USER }}
+          HARBOR_ROBOT_PASS: ${{ secrets.HARBOR_ROBOT_PASS }}
+        run: |
+          set -euo pipefail
+          setup_ns() {
+            local kc_b64=$1 ns=$2 file=$3
+            [ -n "$kc_b64" ] || { echo "skip ${ns}: chưa cấu hình kubeconfig"; return 0; }
+            echo "$kc_b64" | base64 -d > kubeconfig.tmp
+            export KUBECONFIG=kubeconfig.tmp
+            kubectl create namespace "$ns" 2>/dev/null || true
+            kubectl create secret docker-registry harbor-pull -n "$ns" \
+              --docker-server="$HARBOR_HOST" \
+              --docker-username="$HARBOR_ROBOT_USER" \
+              --docker-password="$HARBOR_ROBOT_PASS" 2>/dev/null \
+              || echo "harbor-pull ${ns} đã tồn tại -> giữ nguyên"
+            if [ -s "$file" ]; then
+              kubectl create -n "$ns" -f "$file" 2>/dev/null \
+                || echo "secret DB ${ns} đã tồn tại -> giữ nguyên"
+            fi
+            unset KUBECONFIG && rm -f kubeconfig.tmp
+          }
+          setup_ns "${KUBECONFIG_STAGING_B64}" "${APP}-staging" work-onprem-staging/secrets.yaml
+          setup_ns "${KUBECONFIG_PROD_B64}"    "${APP}-prod"    work-onprem-prod/secrets.yaml
+
+      - name: Commit & push config repo
+        run: |
+          cd config
+          git config user.name "idp-orchestrator"
+          git config user.email "idp-ci@users.noreply.github.com"
+          git add .
+          if git diff --cached --quiet; then
+            echo "Không có thay đổi manifest"
+          else
+            git commit -m "deploy(${APP}): staging ${SHA} (catalog: ${{ steps.lock.outputs.ref }})"
+            git push
+          fi
+
+      # ------------------------------------------------------------------
+      # STAGE "INFRA" (Giai đoạn 3 — chưa bật): chỗ cắm tự động hóa hạ tầng.
+      # App khai `type: postgres` + target cloud -> chạy terraform (module rds)
+      # tạo RDS + Secret TRƯỚC bước render. CI của app không bao giờ đụng terraform.
+      # ------------------------------------------------------------------
+
+  # ===========================================================================
+  # PROMOTE: đổi tag prod (tag-only) hoặc re-render prod từ đúng commit
+  # ===========================================================================
+  promote:
+    if: github.event.action == 'promote-request'
+    runs-on: self-hosted
+    env:
+      APP: ${{ github.event.client_payload.app }}
+      APP_REPO: ${{ github.event.client_payload.repo }}
+      TAG: ${{ github.event.client_payload.tag }}
+      TARGET: ${{ github.event.client_payload.target }}
+      MODE: ${{ github.event.client_payload.mode }}
+    steps:
+      - name: Checkout config repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.ORG }}/${{ env.APP }}-config
+          token: ${{ secrets.CONFIG_REPO_TOKEN }}
+          path: config
+
+      - name: Checkout app repo (chỉ khi re-render)
+        if: env.MODE == 're-render'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.APP_REPO }}
+          ref: ${{ env.TAG }}
+          token: ${{ secrets.APP_REPOS_TOKEN }}
+          path: app
+
+      # re-render dùng đúng catalog mà app ghim TẠI COMMIT ĐÓ -> tái lập được quá khứ
+      - name: Resolve catalog version (chỉ khi re-render)
+        if: env.MODE == 're-render'
+        id: lock
+        run: |
+          REF=$(grep -v '^#' app/platform.lock 2>/dev/null | head -1 | tr -d '[:space:]')
+          [ -n "$REF" ] || REF=main
+          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+          echo "==> app=${APP} ghim catalog: $REF"
+
+      - name: Checkout catalog (chỉ khi re-render)
+        if: env.MODE == 're-render'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.lock.outputs.ref }}
+          path: catalog
+
+      - name: Install score-k8s (chỉ khi re-render và runner chưa có)
+        if: env.MODE == 're-render'
+        run: |
+          if command -v score-k8s >/dev/null; then score-k8s --version; exit 0; fi
+          curl -fsSL -o score-k8s.tgz \
+            "https://github.com/score-spec/score-k8s/releases/download/${SCORE_K8S_VERSION}/score-k8s_${SCORE_K8S_VERSION}_linux_amd64.tar.gz"
+          tar xzf score-k8s.tgz score-k8s && sudo mv score-k8s /usr/local/bin/
+
+      - name: Promote
+        env:
+          KUBECONFIG_PROD_B64: ${{ secrets.KUBECONFIG_ONPREM_PROD }}
+        run: |
+          set -euo pipefail
+          FILE="config/${TARGET}/prod/manifests.yaml"
+
+          if [ "$MODE" = "tag-only" ]; then
+            [ -f "$FILE" ] || { echo "Chưa có ${FILE} — chạy mode re-render trước"; exit 1; }
+            yq eval -i "
+              (select(.kind == \"Deployment\")
+                | .spec.template.spec.containers[]
+                | select(.image | test(\"/${APP}-\"))
+                | .image
+              ) |= sub(\":[^:]+$\", \":\" + strenv(TAG))
+            " "$FILE"
+          else
+            SERVICES=$(cd app && for f in */score.yaml; do dirname "$f"; done)
+            mkdir -p work && pushd work >/dev/null
+            score-k8s init --no-sample \
+              --provisioners "../catalog/score/provisioners/${TARGET}.provisioners.yaml" \
+              --patch-templates "../catalog/score/patches/prod.tpl"
+            for svc in $SERVICES; do
+              score-k8s generate "../app/${svc}/score.yaml" \
+                --override-property "containers.main.image=\"${REGISTRY}/${APP}-${svc}:${TAG}\"" \
+                --output manifests.yaml
+            done
+            yq eval 'select(.kind == "Secret")' manifests.yaml > secrets.yaml
+            yq eval 'select(.kind != "Secret")' manifests.yaml > app.yaml
+            popd >/dev/null
+            if [ -n "${KUBECONFIG_PROD_B64}" ] && [ -s work/secrets.yaml ]; then
+              echo "${KUBECONFIG_PROD_B64}" | base64 -d > kubeconfig.tmp
+              KUBECONFIG=kubeconfig.tmp kubectl create namespace "${APP}-prod" 2>/dev/null || true
+              KUBECONFIG=kubeconfig.tmp kubectl create -n "${APP}-prod" -f work/secrets.yaml 2>/dev/null \
+                || echo "secret prod đã tồn tại -> giữ nguyên"
+              rm -f kubeconfig.tmp
+            fi
+            mkdir -p "$(dirname "$FILE")"
+            cp work/app.yaml "$FILE"
+          fi
+
+          cd config
+          git config user.name "idp-orchestrator"
+          git config user.email "idp-ci@users.noreply.github.com"
+          git add .
+          git diff --cached --quiet && { echo "Prod đã ở tag ${TAG}"; exit 0; }
+          git commit -m "promote(${APP}/${TARGET}): prod -> ${TAG} (${MODE})"
+          git push

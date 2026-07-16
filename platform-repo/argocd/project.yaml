@@ -1,0 +1,17 @@
+# AppProject cho toàn bộ app do IDP quản lý.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: idp
+  namespace: argocd
+spec:
+  description: Apps deployed via IDP (Score -> config repo -> ArgoCD)
+  # Chỉ cho phép đọc từ các config repo trong org:
+  sourceRepos:
+    - https://github.com/your-org/*   # TODO: thay your-org
+  destinations:
+    - server: '*'
+      namespace: '*'
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace

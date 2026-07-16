@@ -1,0 +1,26 @@
+# FRONTEND — React tĩnh, serve bằng nginx.
+# Dev chỉ khai: container + port + route ra ngoài. Không Deployment/IngressRoute/Secret.
+apiVersion: score.dev/v1b1
+
+metadata:
+  name: frontend
+
+# Convention platform: container chính luôn tên 'main', image luôn là "."
+# CI điền image thật bằng --override-property containers.main.image=<registry>/<app>-<service>:<sha>
+containers:
+  main:
+    image: "."
+
+service:
+  ports:
+    http:
+      port: 80
+      targetPort: 80
+
+resources:
+  site:
+    type: route
+    params:
+      host: shop.example.com   # TODO: đổi domain thật
+      path: /
+      port: 80

@@ -1,0 +1,15 @@
+# EXAMPLE — input chuẩn cho catalog-ci (render-diff). KHÔNG deploy thật.
+# Phủ loại resource: route.
+apiVersion: score.dev/v1b1
+metadata:
+  name: example-frontend
+containers:
+  main:
+    image: "."
+service:
+  ports:
+    http: { port: 80, targetPort: 80 }
+resources:
+  site:
+    type: route
+    params: { host: example.local, path: /, port: 80 }

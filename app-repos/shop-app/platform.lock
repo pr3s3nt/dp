@@ -1,0 +1,5 @@
+# PLATFORM.LOCK — app này ghim catalog platform (provisioners + patches) ở ref dưới đây.
+# Giá trị: tag (khuyên dùng, vd catalog/v1), branch, hoặc SHA của platform-repo.
+# Orchestrator render app bằng ĐÚNG phiên bản này — platform đổi trên main không ảnh hưởng app.
+# Nâng cấp = đổi dòng dưới qua PR (xem CHIEN-LUOC-MIGRATION-VA-CAP-NHAT.md).
+main

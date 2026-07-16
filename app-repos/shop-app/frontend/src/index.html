@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Shop</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 40px auto; }
+    li { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <h1>Shop — demo IDP</h1>
+  <p>Frontend gọi <code>/api/orders</code> qua api-gateway (cùng host, Traefik/ALB định tuyến theo path).</p>
+  <button id="create">Tạo order thử</button>
+  <ul id="orders"></ul>
+  <script>
+    async function load() {
+      const res = await fetch('/api/orders');
+      const orders = await res.json();
+      document.getElementById('orders').innerHTML =
+        orders.map(o => `<li>#${o.id} — ${o.item} — ${o.status}</li>`).join('');
+    }
+    document.getElementById('create').onclick = async () => {
+      await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item: 'item-' + Date.now(), amount: 10 })
+      });
+      load();
+    };
+    load();
+  </script>
+</body>
+</html>

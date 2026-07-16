@@ -1,0 +1,70 @@
+# =============================================================================
+# CATALOG PROVISIONER — CLOUD (EKS)
+# Cùng giao diện Score với onprem, chỉ khác cách "hiện thực hóa":
+#
+# type: postgres -> KHÔNG dựng gì trong cluster. Trỏ vào RDS do Terraform tạo.
+#                   Terraform ghi sẵn Secret <workload>-db-credentials vào namespace
+#                   (xem terraform/envs/*). Provisioner chỉ nối app vào Secret đó.
+# type: route    -> Ingress (AWS Load Balancer Controller / ALB)
+# type: service  -> giống onprem (DNS nội bộ)
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# postgres: toàn bộ thông tin kết nối đọc từ Secret do Terraform tạo.
+# App vẫn chỉ thấy DB_HOST/DB_PASSWORD... — không biết và không cần biết đó là RDS.
+# ---------------------------------------------------------------------------
+- uri: template://cloud/postgres
+  type: postgres
+  init: |
+    secretName: {{ .SourceWorkload }}-db-credentials
+  outputs: |
+    host: {{ encodeSecretRef .Init.secretName "host" }}
+    port: {{ encodeSecretRef .Init.secretName "port" }}
+    name: {{ encodeSecretRef .Init.secretName "dbname" }}
+    username: {{ encodeSecretRef .Init.secretName "username" }}
+    password: {{ encodeSecretRef .Init.secretName "password" }}
+
+# ---------------------------------------------------------------------------
+# route: Ingress class alb — AWS Load Balancer Controller tạo ALB.
+# ---------------------------------------------------------------------------
+- uri: template://cloud/route
+  type: route
+  init: |
+    host: {{ .Params.host }}
+    path: {{ .Params.path | default "/" }}
+    port: {{ .Params.port }}
+  outputs: |
+    host: {{ .Init.host }}
+    path: {{ .Init.path }}
+  manifests: |
+    - apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: {{ .SourceWorkload }}-route{{ if ne .Init.path "/" }}-{{ .Init.path | trimPrefix "/" | replace "/" "-" }}{{ end }}
+        annotations:
+          alb.ingress.kubernetes.io/scheme: internet-facing
+          alb.ingress.kubernetes.io/target-type: ip
+          # Gộp các route cùng host vào chung 1 ALB:
+          alb.ingress.kubernetes.io/group.name: {{ .Init.host | replace "." "-" }}
+      spec:
+        ingressClassName: alb
+        rules:
+          - host: {{ .Init.host }}
+            http:
+              paths:
+                - path: {{ .Init.path }}
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: {{ (index .WorkloadServices .SourceWorkload).ServiceName }}
+                      port:
+                        number: {{ .Init.port }}
+
+# ---------------------------------------------------------------------------
+# service: giống hệt onprem.
+# ---------------------------------------------------------------------------
+- uri: template://cloud/service
+  type: service
+  outputs: |
+    host: {{ .Params.workload }}
+    port: {{ .Params.port }}

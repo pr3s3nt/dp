@@ -1,0 +1,64 @@
+# =============================================================================
+# CI notes-app — SAU KHI TÁCH ORCHESTRATOR: CI chỉ còn 2 việc
+#   1. build + push image lên Harbor (tag = git SHA)
+#   2. "gọi platform": bắn repository_dispatch sang platform-repo
+# Toàn bộ hậu xử lý (render score-k8s, secret, commit config repo, sau này cả
+# terraform) nằm ở platform-repo/.github/workflows/orchestrator.yaml.
+#
+# Secrets cần trong repo này (ít hơn hẳn trước):
+#   HARBOR_USERNAME / HARBOR_PASSWORD   robot account Harbor có quyền push
+#   PLATFORM_DISPATCH_TOKEN             PAT chỉ cần quyền repo:dispatch vào platform-repo
+# =============================================================================
+name: ci
+
+on:
+  push:
+    branches: [main]
+
+env:
+  HARBOR_HOST: harbor.example.com             # TODO: Harbor của bạn
+  REGISTRY: harbor.example.com/idp            # TODO: project chứa image (tạo trước trong Harbor)
+  APP_NAME: notes-app
+  PLATFORM_REPO: your-org/platform-repo       # TODO: thay your-org
+
+jobs:
+  build:
+    runs-on: self-hosted   # runner trong mạng công ty
+    strategy:
+      matrix:
+        service: [frontend, backend]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Docker thuần (không dùng action marketplace — GHES air-gap không tải được)
+      - name: Login Harbor
+        run: echo "${{ secrets.HARBOR_PASSWORD }}" | docker login "$HARBOR_HOST" -u "${{ secrets.HARBOR_USERNAME }}" --password-stdin
+
+      - name: Build & push
+        run: |
+          IMG="${REGISTRY}/${APP_NAME}-${{ matrix.service }}:${{ github.sha }}"
+          docker build -t "$IMG" "./${{ matrix.service }}"
+          docker push "$IMG"
+
+  notify-platform:
+    needs: build
+    runs-on: self-hosted   # runner trong mạng công ty
+    steps:
+      - name: Gọi orchestrator (deploy-request)
+        run: |
+          curl -sf -X POST \
+            -H "Authorization: Bearer ${{ secrets.PLATFORM_DISPATCH_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "${{ github.api_url }}/repos/${PLATFORM_REPO}/dispatches" \
+            -d @- <<EOF
+          {
+            "event_type": "deploy-request",
+            "client_payload": {
+              "app": "${APP_NAME}",
+              "repo": "${{ github.repository }}",
+              "sha": "${{ github.sha }}",
+              "targets": "onprem"
+            }
+          }
+          EOF
+          echo "Đã gọi platform — theo dõi tiếp ở tab Actions của ${PLATFORM_REPO}"

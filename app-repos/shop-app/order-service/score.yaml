@@ -1,0 +1,33 @@
+# ORDER-SERVICE — có DB riêng + gọi payment-service.
+# `db: {type: postgres}` = "tôi cần một postgres":
+#   onprem -> platform dựng StatefulSet; cloud -> platform trỏ RDS. App không đổi một dòng.
+# DB_PASSWORD sẽ được render thành secretKeyRef — không bao giờ plaintext.
+apiVersion: score.dev/v1b1
+
+metadata:
+  name: order-service
+
+containers:
+  main:               # convention platform: container chính tên 'main', image do CI điền
+    image: "."
+    variables:
+      PORT: "8080"
+      DB_HOST: ${resources.db.host}
+      DB_PORT: ${resources.db.port}
+      DB_NAME: ${resources.db.name}
+      DB_USER: ${resources.db.username}
+      DB_PASSWORD: ${resources.db.password}
+      PAYMENTS_URL: http://${resources.payments.host}:${resources.payments.port}
+
+service:
+  ports:
+    http:
+      port: 8080
+      targetPort: 8080
+
+resources:
+  db:
+    type: postgres
+  payments:
+    type: service
+    params: { workload: payment-service, port: 8080 }

@@ -1,0 +1,23 @@
+# FRONTEND — React (Vite) build tĩnh, serve bằng nginx.
+apiVersion: score.dev/v1b1
+
+metadata:
+  name: frontend
+
+containers:
+  main:
+    image: "."
+
+service:
+  ports:
+    http:
+      port: 80
+      targetPort: 80
+
+resources:
+  site:
+    type: route
+    params:
+      host: notes.local   # cùng host với backend; Traefik tách theo path (/ vs /api)
+      path: /
+      port: 80

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+# score-k8s state (chứa password sinh ra) — TUYỆT ĐỐI không commit
+.score-k8s/
+.work-*/
+work-*/
+secrets.yaml
+manifests.yaml
+kubeconfig*

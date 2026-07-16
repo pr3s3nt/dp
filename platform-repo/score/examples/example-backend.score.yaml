@@ -1,0 +1,25 @@
+# EXAMPLE — input chuẩn cho catalog-ci (render-diff). KHÔNG deploy thật.
+# Phủ loại resource: postgres + service + route (đủ 3 type của catalog).
+apiVersion: score.dev/v1b1
+metadata:
+  name: example-backend
+containers:
+  main:
+    image: "."
+    variables:
+      PORT: "8080"
+      DB_HOST: ${resources.db.host}
+      DB_PASSWORD: ${resources.db.password}
+      FRONTEND_URL: http://${resources.web.host}:${resources.web.port}
+service:
+  ports:
+    http: { port: 8080, targetPort: 8080 }
+resources:
+  db:
+    type: postgres
+  web:
+    type: service
+    params: { workload: example-frontend, port: 80 }
+  api:
+    type: route
+    params: { host: example.local, path: /api, port: 8080 }

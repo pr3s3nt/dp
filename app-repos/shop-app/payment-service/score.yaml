@@ -1,0 +1,26 @@
+# PAYMENT-SERVICE — service nội bộ, có DB riêng, không lộ route ra ngoài.
+apiVersion: score.dev/v1b1
+
+metadata:
+  name: payment-service
+
+containers:
+  main:               # convention platform: container chính tên 'main', image do CI điền
+    image: "."
+    variables:
+      PORT: "8080"
+      DB_HOST: ${resources.db.host}
+      DB_PORT: ${resources.db.port}
+      DB_NAME: ${resources.db.name}
+      DB_USER: ${resources.db.username}
+      DB_PASSWORD: ${resources.db.password}
+
+service:
+  ports:
+    http:
+      port: 8080
+      targetPort: 8080
+
+resources:
+  db:
+    type: postgres

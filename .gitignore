@@ -1,0 +1,18 @@
+# score-k8s state (chứa password sinh ra) + secret tách ra từ manifest
+.score-k8s/
+secrets.yaml
+work-*/
+
+# terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform.lock.hcl
+
+# node
+node_modules/
+
+# khác
+kubeconfig*
+.DS_Store

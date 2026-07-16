@@ -1,0 +1,61 @@
+# =============================================================================
+# CI shop-app — mô hình TÁCH ORCHESTRATOR: CI chỉ build + gọi platform.
+# Hậu xử lý (render, secret, commit config repo) ở platform-repo/orchestrator.yaml.
+#
+# Secrets cần trong repo này:
+#   HARBOR_USERNAME / HARBOR_PASSWORD   robot account Harbor có quyền push
+#   PLATFORM_DISPATCH_TOKEN             PAT bắn repository_dispatch vào platform-repo
+# =============================================================================
+name: ci
+
+on:
+  push:
+    branches: [main]
+
+env:
+  HARBOR_HOST: harbor.example.com             # TODO: Harbor của bạn
+  REGISTRY: harbor.example.com/idp            # TODO: project chứa image
+  APP_NAME: shop-app
+  PLATFORM_REPO: your-org/platform-repo       # TODO: thay your-org
+
+jobs:
+  build:
+    runs-on: self-hosted   # runner trong mạng công ty
+    strategy:
+      matrix:
+        service: [frontend, api-gateway, order-service, payment-service]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Docker thuần (không dùng action marketplace — GHES air-gap không tải được)
+      - name: Login Harbor
+        run: echo "${{ secrets.HARBOR_PASSWORD }}" | docker login "$HARBOR_HOST" -u "${{ secrets.HARBOR_USERNAME }}" --password-stdin
+
+      - name: Build & push
+        run: |
+          IMG="${REGISTRY}/${APP_NAME}-${{ matrix.service }}:${{ github.sha }}"
+          docker build -t "$IMG" "./${{ matrix.service }}"
+          docker push "$IMG"
+
+  notify-platform:
+    needs: build
+    runs-on: self-hosted   # runner trong mạng công ty
+    steps:
+      - name: Gọi orchestrator (deploy-request)
+        run: |
+          curl -sf -X POST \
+            -H "Authorization: Bearer ${{ secrets.PLATFORM_DISPATCH_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "${{ github.api_url }}/repos/${PLATFORM_REPO}/dispatches" \
+            -d @- <<EOF
+          {
+            "event_type": "deploy-request",
+            "client_payload": {
+              "app": "${APP_NAME}",
+              "repo": "${{ github.repository }}",
+              "sha": "${{ github.sha }}",
+              "targets": "onprem"
+            }
+          }
+          EOF
+          echo "Đã gọi platform — theo dõi tiếp ở tab Actions của ${PLATFORM_REPO}"
