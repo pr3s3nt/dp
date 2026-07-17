@@ -105,6 +105,21 @@
                 volumeMounts:
                   - name: data
                     mountPath: /var/lib/postgresql/data
+                # Probe đúng khuôn StatefulSet.postgresql của công ty (feedback360 trên Rancher)
+                livenessProbe:
+                  exec:
+                    command: [pg_isready, -U, postgres, -d, {{ .Init.database | quote }}]
+                  initialDelaySeconds: 30
+                  periodSeconds: 10
+                  timeoutSeconds: 3
+                  failureThreshold: 3
+                readinessProbe:
+                  exec:
+                    command: [pg_isready, -U, postgres, -d, {{ .Init.database | quote }}]
+                  initialDelaySeconds: 5
+                  periodSeconds: 5
+                  timeoutSeconds: 3
+                  failureThreshold: 3
                 resources:
                   requests: { cpu: 100m, memory: 256Mi }
                   limits: { memory: 512Mi }
@@ -228,6 +243,9 @@
 #       database: okr                        # tên DB tạo sẵn (mặc định: appdb)
 #       image: mysql:8.0                     # mariadb:10.6 cũng dùng được (nhận MYSQL_* env)
 #       storage: 5Gi                         # dung lượng PVC
+#       config: |                            # my.cnf tùy biến -> ConfigMap mount vào conf.d
+#         [mysqld]                           #   (khuôn ConfigMap mysql/mysql-conf cụm cũ)
+#         character-set-server=utf8
 #       backup:                              # CronJob backup TÙY CHỌN (xem §backup dưới)
 #         enabled: true
 #         schedule: "0 18 * * *"             # giờ chạy mysqldump
@@ -302,11 +320,44 @@
                 volumeMounts:
                   - name: data
                     mountPath: /var/lib/mysql
+                  {{ if .Params.config }}
+                  - name: config
+                    mountPath: /etc/mysql/conf.d/custom.cnf   # image mysql/mariadb tự include conf.d
+                    subPath: custom.cnf
+                  {{ end }}
+                # Probe đúng khuôn StatefulSet.mysql của công ty (otm trên Rancher)
+                livenessProbe:
+                  exec:
+                    command:
+                      - sh
+                      - -c
+                      - mysqladmin -uroot -p"$MYSQL_ROOT_PASSWORD" ping > /dev/null 2>&1
+                  initialDelaySeconds: 30
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+                readinessProbe:
+                  exec:
+                    command:
+                      - sh
+                      - -c
+                      - mysql -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SELECT 1" > /dev/null 2>&1
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
                 # Resource đặt TẠI provisioner (datastore tự biết nhu cầu của mình);
                 # patch env chỉ set resource cho container CHƯA có -> không bị ghi đè.
+                # Mức theo chuẩn cụm cũ (okr/otm request 1Gi cho mysql).
                 resources:
-                  requests: { cpu: 100m, memory: 512Mi }
+                  requests: { cpu: 250m, memory: 1Gi }
                   limits: { memory: 1536Mi }
+            {{ if .Params.config }}
+            volumes:
+              - name: config
+                configMap:
+                  name: {{ .Init.name }}-config
+            {{ end }}
         volumeClaimTemplates:
           - metadata:
               name: data
@@ -327,6 +378,18 @@
         ports:
           - port: 3306
             targetPort: 3306
+    {{ if .Params.config }}
+    # my.cnf tùy biến (khuôn ConfigMap mysql/mysql-conf của công ty) — nằm trong git, review được
+    - apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: {{ .Init.name }}-config
+        labels:
+          app.kubernetes.io/component: datastore
+      data:
+        custom.cnf: |
+    {{ .Params.config | indent 10 }}
+    {{ end }}
     {{ if $backup.enabled }}
     - apiVersion: v1
       kind: PersistentVolumeClaim
@@ -427,6 +490,8 @@
 #       database: shift_handover             # tên DB logic app dùng (mặc định: appdb)
 #       image: mongo:6.0
 #       storage: 5Gi
+#       config: |                            # mongod.conf tùy biến -> ConfigMap + args --config
+#         storage: { wiredTiger: { engineConfig: { cacheSizeGB: 1 } } }
 #       backup: { enabled: true, schedule: "...", cleanupSchedule: "...", retentionDays: 7, storage: 10Gi }
 #
 # Biến xuất ra : host / port(27017) / name / username(root) / password(secretKeyRef) / authSource(admin)
@@ -479,6 +544,9 @@
               - name: mongodb
                 # Air-gap: harbor.example.com/dockerhub/library/mongo:6.0
                 image: {{ .Init.image }}
+                {{ if .Params.config }}
+                args: ["--config", "/etc/mongod.conf"]   # không có args thì file mount bị mongod bỏ qua
+                {{ end }}
                 env:
                   - name: MONGO_INITDB_ROOT_USERNAME
                     value: root
@@ -492,9 +560,41 @@
                 volumeMounts:
                   - name: data
                     mountPath: /data/db
+                  {{ if .Params.config }}
+                  - name: config
+                    mountPath: /etc/mongod.conf   # khuôn mount mongodb-config của shift-handover
+                    subPath: mongod.conf
+                  {{ end }}
+                # mongo >= 5.0 có mongosh; image cũ hơn đổi thành `mongo --quiet --eval ...`
+                livenessProbe:
+                  exec:
+                    command:
+                      - sh
+                      - -c
+                      - 'mongosh --quiet --eval "db.adminCommand({ping: 1})" > /dev/null 2>&1'
+                  initialDelaySeconds: 30
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+                readinessProbe:
+                  exec:
+                    command:
+                      - sh
+                      - -c
+                      - 'mongosh --quiet --eval "db.adminCommand({ping: 1})" > /dev/null 2>&1'
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 3
                 resources:
                   requests: { cpu: 100m, memory: 1Gi }
                   limits: { memory: 1536Mi }
+            {{ if .Params.config }}
+            volumes:
+              - name: config
+                configMap:
+                  name: {{ .Init.name }}-config
+            {{ end }}
         volumeClaimTemplates:
           - metadata:
               name: data
@@ -515,6 +615,18 @@
         ports:
           - port: 27017
             targetPort: 27017
+    {{ if .Params.config }}
+    # mongod.conf tùy biến (khuôn ConfigMap mongodb-config của shift-handover)
+    - apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: {{ .Init.name }}-config
+        labels:
+          app.kubernetes.io/component: datastore
+      data:
+        mongod.conf: |
+    {{ .Params.config | indent 10 }}
+    {{ end }}
     {{ if $backup.enabled }}
     - apiVersion: v1
       kind: PersistentVolumeClaim
@@ -679,6 +791,26 @@
                 volumeMounts:
                   - name: data
                     mountPath: /data
+                livenessProbe:
+                  exec:
+                    command:
+                      - sh
+                      - -c
+                      - {{ if .Params.auth }}redis-cli -a "$REDIS_PASSWORD" ping > /dev/null 2>&1{{ else }}redis-cli ping > /dev/null 2>&1{{ end }}
+                  initialDelaySeconds: 15
+                  periodSeconds: 10
+                  timeoutSeconds: 3
+                  failureThreshold: 3
+                readinessProbe:
+                  exec:
+                    command:
+                      - sh
+                      - -c
+                      - {{ if .Params.auth }}redis-cli -a "$REDIS_PASSWORD" ping > /dev/null 2>&1{{ else }}redis-cli ping > /dev/null 2>&1{{ end }}
+                  initialDelaySeconds: 5
+                  periodSeconds: 10
+                  timeoutSeconds: 3
+                  failureThreshold: 3
                 resources:
                   requests: { cpu: 50m, memory: 256Mi }
                   limits: { memory: 1Gi }

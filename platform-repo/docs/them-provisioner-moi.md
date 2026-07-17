@@ -15,6 +15,9 @@ không sửa block cũ, không copy-paste logic ra ngoài.
 | Resources | đặt NGAY trong provisioner (datastore tự biết nhu cầu); patch chỉ set cho container chưa có |
 | Password | sinh trong `state:` (giữ ổn định giữa các lần generate), không nằm trong `outputs` dạng plaintext |
 | Storage | `storageClassName: rook-ceph-block` (onprem), dung lượng qua `params.storage` |
+| Service DB | headless (`clusterIP: None`) cho StatefulSet — khuôn công ty (vd `mysql-prd`) |
+| Probe | liveness + readiness exec bằng client của chính DB (mysqladmin ping / pg_isready / mongosh ping); lệnh sh POSIX, KHÔNG dùng bash-ism `&>` |
+| File cấu hình DB | `params.config` (nội dung my.cnf/mongod.conf) → ConfigMap `<name>-config` + mount; ConfigMap nằm trong git (không phải secret) |
 
 Giữ đúng bảng trên thì `score.yaml` của app **không đổi** khi backend đổi
 (StatefulSet → RDS, secret tay → Sealed Secrets/ESO).
