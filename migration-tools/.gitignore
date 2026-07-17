@@ -1,0 +1,7 @@
+# Kết quả trích xuất và ánh xạ che — KHÔNG commit
+out/
+redaction.yaml
+*/redaction-map.json
+redaction-map.json
+__pycache__/
+*.pyc

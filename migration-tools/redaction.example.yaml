@@ -1,0 +1,47 @@
+# redaction.yaml — khai báo thông tin ĐỊNH DANH CÔNG TY cần che.
+# Copy thành redaction.yaml rồi điền giá trị thật của bạn. File này chỉ ở máy bạn.
+#
+# Mọi giá trị liệt kê ở company_identifiers sẽ được thay bằng placeholder ổn định
+# (<COMPANY>, <REGISTRY>...) trong cả inventory lẫn manifest. Match dài được thay trước.
+
+company_identifiers:
+  # Tên/slug công ty xuất hiện trong tên resource, label, domain...
+  - match: "acme-corp"
+    placeholder: "COMPANY"
+  - match: "acme"
+    placeholder: "COMPANY"
+  # Domain nội bộ
+  - match: "acme.local"
+    placeholder: "COMPANY_DOMAIN"
+  - match: "corp.acme.com"
+    placeholder: "COMPANY_DOMAIN"
+  # Harbor / registry host
+  - match: "harbor.acme.local"
+    placeholder: "REGISTRY"
+  # Có thể khai chuỗi đơn (tự đánh số placeholder)
+  # - "some-internal-hostname"
+
+# Dải IP nội bộ — IP thuộc các dải này sẽ bị che (ngoài các dải private RFC1918 mặc định).
+internal_cidrs:
+  - "10.0.0.0/8"
+  - "172.16.0.0/12"
+  - "192.168.0.0/16"
+
+# Che các lớp tự động (mặc định bật hết).
+redact_domains: true          # domain kiểu foo.bar.tld (trừ allowlist)
+redact_emails: true
+redact_ips: true
+redact_private_ip_only: true  # true = chỉ che IP private + internal_cidrs; false = che mọi IP không loopback
+redact_sensitive_env: true    # env/configmap key trông giống password/token
+
+# Domain công cộng KHÔNG cần che (không lộ danh tính).
+domain_allowlist:
+  - cluster.local
+  - svc.cluster.local
+  - kubernetes.default.svc
+  - docker.io
+  - quay.io
+  - gcr.io
+  - ghcr.io
+  - registry.k8s.io
+  - amazonaws.com
