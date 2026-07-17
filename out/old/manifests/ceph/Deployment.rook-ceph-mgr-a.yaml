@@ -1,0 +1,462 @@
+metadata:
+  name: rook-ceph-mgr-a
+  namespace: ceph
+  labels:
+    app: rook-ceph-mgr
+    ceph-version: 15.2.4-0
+    ceph_daemon_id: a
+    ceph_daemon_type: mgr
+    instance: a
+    mgr: a
+    rook-version: v1.4.2
+    rook_cluster: ceph
+  annotations:
+    banzaicloud.com/last-applied: '{"metadata":{"labels":{"app":"rook-ceph-mgr","ceph-version":"15.2.4-0","ceph_daemon_id":"a","ceph_daemon_type":"mgr","instance":"a","mgr":"a","rook-version":"v1.4.2","rook_cluster":"ceph"},"name":"rook-ceph-mgr-a","namespace":"ceph","ownerReferences":[{"apiVersion":"<DOMAIN_668>/v1","blockOwnerDeletion":true,"controller":true,"kind":"CephCluster","name":"rook-ceph","uid":"e00e0f95-2d72-4c1e-8b09-fd824f04c347"}]},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"rook-ceph-mgr","ceph_daemon_id":"a","instance":"a","mgr":"a","rook_cluster":"ceph"}},"strategy":{"type":"Recreate"},"template":{"metadata":{"annotations":{"<DOMAIN_180>/port":"9283","<DOMAIN_180>/scrape":"true"},"labels":{"app":"rook-ceph-mgr","ceph_daemon_id":"a","ceph_daemon_type":"mgr","instance":"a","mgr":"a","rook_cluster":"ceph"},"name":"rook-ceph-mgr-a"},"spec":{"affinity":{"nodeAffinity":{"requiredDuringSchedulingIgnoredDuringExecution":{"nodeSelectorTerms":[{"matchExpressions":[{"key":"role","operator":"In","values":["storage-ceph"]}]}]}}},"containers":[{"args":["--fsid=3794cf28-c199-4242-94e1-4e1f35f88262","--keyring=/etc/ceph/keyring-store/keyring","--log-to-stderr=true","--err-to-stderr=true","--mon-cluster-log-to-stderr=true","--log-stderr-prefix=debug
+      ","--default-log-to-file=false","--default-mon-cluster-log-to-file=false","--mon-host=$(ROOK_CEPH_MON_HOST)","--mon-initial-members=$(ROOK_CEPH_MON_INITIAL_MEMBERS)","--id=a","--setuser=ceph","--setgroup=ceph","--client-mount-uid=0","--client-mount-gid=0","--foreground","--public-addr=$(ROOK_POD_IP)"],"command":["ceph-mgr"],"env":[{"name":"CONTAINER_IMAGE","value":"ceph/ceph:v15.2.4"},{"name":"POD_NAME","valueFrom":{"fieldRef":{"fieldPath":"<DOMAIN_21>"}}},{"name":"POD_NAMESPACE","valueFrom":{"fieldRef":{"fieldPath":"<DOMAIN_20>"}}},{"name":"NODE_NAME","valueFrom":{"fieldRef":{"fieldPath":"<DOMAIN_162>"}}},{"name":"POD_MEMORY_LIMIT","valueFrom":{"resourceFieldRef":{"divisor":"0","resource":"<DOMAIN_168>"}}},{"name":"POD_MEMORY_REQUEST","valueFrom":{"resourceFieldRef":{"divisor":"0","resource":"<DOMAIN_171>"}}},{"name":"POD_CPU_LIMIT","valueFrom":{"resourceFieldRef":{"divisor":"1","resource":"<DOMAIN_167>"}}},{"name":"POD_CPU_REQUEST","valueFrom":{"resourceFieldRef":{"divisor":"0","resource":"<DOMAIN_170>"}}},{"name":"ROOK_CEPH_MON_HOST","valueFrom":{"secretKeyRef":{"key":"mon_host","name":"rook-ceph-config"}}},{"name":"ROOK_CEPH_MON_INITIAL_MEMBERS","valueFrom":{"secretKeyRef":{"key":"mon_initial_members","name":"rook-ceph-config"}}},{"name":"ROOK_OPERATOR_NAMESPACE","value":"rook-ceph"},{"name":"ROOK_CEPH_CLUSTER_CRD_VERSION","value":"v1"},{"name":"ROOK_CEPH_CLUSTER_CRD_NAME","value":"ceph"},{"name":"ROOK_POD_IP","valueFrom":{"fieldRef":{"fieldPath":"<DOMAIN_165>"}}}],"image":"ceph/ceph:v15.2.4","livenessProbe":{"httpGet":{"path":"/","port":9283},"initialDelaySeconds":60},"name":"mgr","ports":[{"containerPort":6800,"name":"mgr","protocol":"TCP"},{"containerPort":9283,"name":"http-metrics","protocol":"TCP"},{"containerPort":8443,"name":"dashboard","protocol":"TCP"}],"resources":{},"volumeMounts":[{"mountPath":"/etc/ceph","name":"rook-config-override","readOnly":true},{"mountPath":"/etc/ceph/keyring-store/","name":"rook-ceph-mgr-a-keyring","readOnly":true},{"mountPath":"/var/log/ceph","name":"rook-ceph-log"},{"mountPath":"/var/lib/ceph/crash","name":"rook-ceph-crash"},{"mountPath":"/var/lib/ceph/mgr/ceph-a","name":"ceph-daemon-data"}]}],"initContainers":[{"args":["--verbose","--recursive","ceph:ceph","/var/log/ceph","/var/lib/ceph/crash","/var/lib/ceph/mgr/ceph-a"],"command":["chown"],"image":"ceph/ceph:v15.2.4","name":"chown-container-data-dir","resources":{},"volumeMounts":[{"mountPath":"/etc/ceph","name":"rook-config-override","readOnly":true},{"mountPath":"/etc/ceph/keyring-store/","name":"rook-ceph-mgr-a-keyring","readOnly":true},{"mountPath":"/var/log/ceph","name":"rook-ceph-log"},{"mountPath":"/var/lib/ceph/crash","name":"rook-ceph-crash"},{"mountPath":"/var/lib/ceph/mgr/ceph-a","name":"ceph-daemon-data"}]},{"args":["--fsid=3794cf28-c199-4242-94e1-4e1f35f88262","--keyring=/etc/ceph/admin-keyring-store/keyring","--log-to-stderr=true","--err-to-stderr=true","--mon-cluster-log-to-stderr=true","--log-stderr-prefix=debug
+      ","--default-log-to-file=false","--default-mon-cluster-log-to-file=false","--mon-host=$(ROOK_CEPH_MON_HOST)","--mon-initial-members=$(ROOK_CEPH_MON_INITIAL_MEMBERS)","--setuser=ceph","--setgroup=ceph","config","set","mgr.a","mgr/dashboard/a/server_addr","$(ROOK_POD_IP)","--force","--verbose"],"command":["ceph"],"env":[{"name":"CONTAINER_IMAGE","value":"ceph/ceph:v15.2.4"},{"name":"POD_NAME","valueFrom":{"fieldRef":{"fieldPath":"<DOMAIN_21>"}}},{"name":"POD_NAMESPACE","valueFrom":{"fieldRef":{"fieldPath":"<DOMAIN_20>"}}},{"name":"NODE_NAME","valueFrom":{"fieldRef":{"fieldPath":"<DOMAIN_162>"}}},{"name":"POD_MEMORY_LIMIT","valueFrom":{"resourceFieldRef":{"divisor":"0","resource":"<DOMAIN_168>"}}},{"name":"POD_MEMORY_REQUEST","valueFrom":{"resourceFieldRef":{"divisor":"0","resource":"<DOMAIN_171>"}}},{"name":"POD_CPU_LIMIT","valueFrom":{"resourceFieldRef":{"divisor":"1","resource":"<DOMAIN_167>"}}},{"name":"POD_CPU_REQUEST","valueFrom":{"resourceFieldRef":{"divisor":"0","resource":"<DOMAIN_170>"}}},{"name":"ROOK_CEPH_MON_HOST","valueFrom":{"secretKeyRef":{"key":"mon_host","name":"rook-ceph-config"}}},{"name":"ROOK_CEPH_MON_INITIAL_MEMBERS","valueFrom":{"secretKeyRef":{"key":"mon_initial_members","name":"rook-ceph-config"}}},{"name":"ROOK_POD_IP","valueFrom":{"fieldRef":{"fieldPath":"<DOMAIN_165>"}}},{"name":"ROOK_OPERATOR_NAMESPACE","value":"rook-ceph"},{"name":"ROOK_CEPH_CLUSTER_CRD_VERSION","value":"v1"},{"name":"ROOK_CEPH_CLUSTER_CRD_NAME","value":"ceph"},{"name":"ROOK_POD_IP","valueFrom":{"fieldRef":{"fieldPath":"<DOMAIN_165>"}}}],"image":"ceph/ceph:v15.2.4","name":"init-set-dashboard-server-addr","resources":{},"volumeMounts":[{"mountPath":"/etc/ceph","name":"rook-config-override","readOnly":true},{"mountPath":"/etc/ceph/keyring-store/","name":"rook-ceph-mgr-a-keyring","readOnly":true},{"mountPath":"/var/log/ceph","name":"rook-ceph-log"},{"mountPath":"/var/lib/ceph/crash","name":"rook-ceph-crash"},{"mountPath":"/var/lib/ceph/mgr/ceph-a","name":"ceph-daemon-data"},{"mountPath":"/etc/ceph/admin-keyring-store/","name":"rook-ceph-admin-keyring","readOnly":true}]},{"args":["--fsid=3794cf28-c199-4242-94e1-4e1f35f88262","--keyring=/etc/ceph/admin-keyring-store/keyring","--log-to-stderr=true","--err-to-stderr=true","--mon-cluster-log-to-stderr=true","--log-stderr-prefix=debug
+      ","--default-log-to-file=false","--default-mon-cluster-log-to-file=false","--mon-host=$(ROOK_CEPH_MON_HOST)","--mon-initial-members=$(ROOK_CEPH_MON_INITIAL_MEMBERS)","--setuser=ceph","--setgroup=ceph","config","set","mgr.a","mgr/prometheus/a/server_addr","$(ROOK_POD_IP)","--force","--verbose"],"command":["ceph"],"env":[{"name":"CONTAINER_IMAGE","value":"ceph/ceph:v15.2.4"},{"name":"POD_NAME","valueFrom":{"fieldRef":{"fieldPath":"<DOMAIN_21>"}}},{"name":"POD_NAMESPACE","valueFrom":{"fieldRef":{"fieldPath":"<DOMAIN_20>"}}},{"name":"NODE_NAME","valueFrom":{"fieldRef":{"fieldPath":"<DOMAIN_162>"}}},{"name":"POD_MEMORY_LIMIT","valueFrom":{"resourceFieldRef":{"divisor":"0","resource":"<DOMAIN_168>"}}},{"name":"POD_MEMORY_REQUEST","valueFrom":{"resourceFieldRef":{"divisor":"0","resource":"<DOMAIN_171>"}}},{"name":"POD_CPU_LIMIT","valueFrom":{"resourceFieldRef":{"divisor":"1","resource":"<DOMAIN_167>"}}},{"name":"POD_CPU_REQUEST","valueFrom":{"resourceFieldRef":{"divisor":"0","resource":"<DOMAIN_170>"}}},{"name":"ROOK_CEPH_MON_HOST","valueFrom":{"secretKeyRef":{"key":"mon_host","name":"rook-ceph-config"}}},{"name":"ROOK_CEPH_MON_INITIAL_MEMBERS","valueFrom":{"secretKeyRef":{"key":"mon_initial_members","name":"rook-ceph-config"}}},{"name":"ROOK_POD_IP","valueFrom":{"fieldRef":{"fieldPath":"<DOMAIN_165>"}}},{"name":"ROOK_OPERATOR_NAMESPACE","value":"rook-ceph"},{"name":"ROOK_CEPH_CLUSTER_CRD_VERSION","value":"v1"},{"name":"ROOK_CEPH_CLUSTER_CRD_NAME","value":"ceph"},{"name":"ROOK_POD_IP","valueFrom":{"fieldRef":{"fieldPath":"<DOMAIN_165>"}}}],"image":"ceph/ceph:v15.2.4","name":"init-set-prometheus-server-addr","resources":{},"volumeMounts":[{"mountPath":"/etc/ceph","name":"rook-config-override","readOnly":true},{"mountPath":"/etc/ceph/keyring-store/","name":"rook-ceph-mgr-a-keyring","readOnly":true},{"mountPath":"/var/log/ceph","name":"rook-ceph-log"},{"mountPath":"/var/lib/ceph/crash","name":"rook-ceph-crash"},{"mountPath":"/var/lib/ceph/mgr/ceph-a","name":"ceph-daemon-data"},{"mountPath":"/etc/ceph/admin-keyring-store/","name":"rook-ceph-admin-keyring","readOnly":true}]}],"restartPolicy":"Always","serviceAccountName":"rook-ceph-mgr","tolerations":[{"effect":"NoExecute","key":"<DOMAIN_667>/unreachable","operator":"Exists","tolerationSeconds":5}],"volumes":[{"configMap":{"items":[{"key":"config","mode":292,"path":"<DOMAIN_666>"}],"name":"rook-config-override"},"name":"rook-config-override"},{"name":"rook-ceph-mgr-a-keyring","secret":{"secretName":"rook-ceph-mgr-a-keyring"}},{"hostPath":{"path":"/var/lib/rook/ceph/log"},"name":"rook-ceph-log"},{"hostPath":{"path":"/var/lib/rook/ceph/crash"},"name":"rook-ceph-crash"},{"emptyDir":{},"name":"ceph-daemon-data"},{"name":"rook-ceph-admin-keyring","secret":{"secretName":"rook-ceph-admin-keyring"}}]}}},"status":{}}'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rook-ceph-mgr
+      ceph_daemon_id: a
+      instance: a
+      mgr: a
+      rook_cluster: ceph
+  template:
+    metadata:
+      name: rook-ceph-mgr-a
+      labels:
+        app: rook-ceph-mgr
+        ceph_daemon_id: a
+        ceph_daemon_type: mgr
+        instance: a
+        mgr: a
+        rook_cluster: ceph
+      annotations:
+        prometheus.io/port: '9283'
+        prometheus.io/scrape: 'true'
+    spec:
+      volumes:
+      - name: rook-config-override
+        configMap:
+          name: rook-config-override
+          items:
+          - key: config
+            path: <DOMAIN_666>
+            mode: 292
+          defaultMode: 420
+      - name: rook-ceph-mgr-a-keyring
+        secret:
+          secretName: <REDACTED:env>
+          defaultMode: 420
+      - name: rook-ceph-log
+        hostPath:
+          path: /var/lib/rook/ceph/log
+          type: ''
+      - name: rook-ceph-crash
+        hostPath:
+          path: /var/lib/rook/ceph/crash
+          type: ''
+      - name: ceph-daemon-data
+        emptyDir: {}
+      - name: rook-ceph-admin-keyring
+        secret:
+          secretName: <REDACTED:env>
+          defaultMode: 420
+      initContainers:
+      - name: chown-container-data-dir
+        image: ceph/ceph:v15.2.4
+        command:
+        - chown
+        args:
+        - --verbose
+        - --recursive
+        - ceph:ceph
+        - /var/log/ceph
+        - /var/lib/ceph/crash
+        - /var/lib/ceph/mgr/ceph-a
+        resources: {}
+        volumeMounts:
+        - name: rook-config-override
+          readOnly: true
+          mountPath: /etc/ceph
+        - name: rook-ceph-mgr-a-keyring
+          readOnly: true
+          mountPath: /etc/ceph/keyring-store/
+        - name: rook-ceph-log
+          mountPath: /var/log/ceph
+        - name: rook-ceph-crash
+          mountPath: /var/lib/ceph/crash
+        - name: ceph-daemon-data
+          mountPath: /var/lib/ceph/mgr/ceph-a
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: false
+      - name: init-set-dashboard-server-addr
+        image: ceph/ceph:v15.2.4
+        command:
+        - ceph
+        args:
+        - --fsid=3794cf28-c199-4242-94e1-4e1f35f88262
+        - --keyring=/etc/ceph/admin-keyring-store/keyring
+        - --log-to-stderr=true
+        - --err-to-stderr=true
+        - --mon-cluster-log-to-stderr=true
+        - '--log-stderr-prefix=debug '
+        - --default-log-to-file=false
+        - --default-mon-cluster-log-to-file=false
+        - --mon-host=$(ROOK_CEPH_MON_HOST)
+        - --mon-initial-members=$(ROOK_CEPH_MON_INITIAL_MEMBERS)
+        - --setuser=ceph
+        - --setgroup=ceph
+        - config
+        - set
+        - mgr.a
+        - mgr/dashboard/a/server_addr
+        - $(ROOK_POD_IP)
+        - --force
+        - --verbose
+        env:
+        - name: CONTAINER_IMAGE
+          value: ceph/ceph:v15.2.4
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_21>
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_20>
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_162>
+        - name: POD_MEMORY_LIMIT
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_168>
+              divisor: '0'
+        - name: POD_MEMORY_REQUEST
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_171>
+              divisor: '0'
+        - name: POD_CPU_LIMIT
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_167>
+              divisor: '1'
+        - name: POD_CPU_REQUEST
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_170>
+              divisor: '0'
+        - name: ROOK_CEPH_MON_HOST
+          valueFrom:
+            secretKeyRef:
+              name: rook-ceph-config
+              key: mon_host
+        - name: ROOK_CEPH_MON_INITIAL_MEMBERS
+          valueFrom:
+            secretKeyRef:
+              name: rook-ceph-config
+              key: mon_initial_members
+        - name: ROOK_POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_165>
+        - name: ROOK_OPERATOR_NAMESPACE
+          value: rook-ceph
+        - name: ROOK_CEPH_CLUSTER_CRD_VERSION
+          value: v1
+        - name: ROOK_CEPH_CLUSTER_CRD_NAME
+          value: ceph
+        - name: ROOK_POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_165>
+        resources: {}
+        volumeMounts:
+        - name: rook-config-override
+          readOnly: true
+          mountPath: /etc/ceph
+        - name: rook-ceph-mgr-a-keyring
+          readOnly: true
+          mountPath: /etc/ceph/keyring-store/
+        - name: rook-ceph-log
+          mountPath: /var/log/ceph
+        - name: rook-ceph-crash
+          mountPath: /var/lib/ceph/crash
+        - name: ceph-daemon-data
+          mountPath: /var/lib/ceph/mgr/ceph-a
+        - name: rook-ceph-admin-keyring
+          readOnly: true
+          mountPath: /etc/ceph/admin-keyring-store/
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      - name: init-set-prometheus-server-addr
+        image: ceph/ceph:v15.2.4
+        command:
+        - ceph
+        args:
+        - --fsid=3794cf28-c199-4242-94e1-4e1f35f88262
+        - --keyring=/etc/ceph/admin-keyring-store/keyring
+        - --log-to-stderr=true
+        - --err-to-stderr=true
+        - --mon-cluster-log-to-stderr=true
+        - '--log-stderr-prefix=debug '
+        - --default-log-to-file=false
+        - --default-mon-cluster-log-to-file=false
+        - --mon-host=$(ROOK_CEPH_MON_HOST)
+        - --mon-initial-members=$(ROOK_CEPH_MON_INITIAL_MEMBERS)
+        - --setuser=ceph
+        - --setgroup=ceph
+        - config
+        - set
+        - mgr.a
+        - mgr/prometheus/a/server_addr
+        - $(ROOK_POD_IP)
+        - --force
+        - --verbose
+        env:
+        - name: CONTAINER_IMAGE
+          value: ceph/ceph:v15.2.4
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_21>
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_20>
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_162>
+        - name: POD_MEMORY_LIMIT
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_168>
+              divisor: '0'
+        - name: POD_MEMORY_REQUEST
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_171>
+              divisor: '0'
+        - name: POD_CPU_LIMIT
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_167>
+              divisor: '1'
+        - name: POD_CPU_REQUEST
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_170>
+              divisor: '0'
+        - name: ROOK_CEPH_MON_HOST
+          valueFrom:
+            secretKeyRef:
+              name: rook-ceph-config
+              key: mon_host
+        - name: ROOK_CEPH_MON_INITIAL_MEMBERS
+          valueFrom:
+            secretKeyRef:
+              name: rook-ceph-config
+              key: mon_initial_members
+        - name: ROOK_POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_165>
+        - name: ROOK_OPERATOR_NAMESPACE
+          value: rook-ceph
+        - name: ROOK_CEPH_CLUSTER_CRD_VERSION
+          value: v1
+        - name: ROOK_CEPH_CLUSTER_CRD_NAME
+          value: ceph
+        - name: ROOK_POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_165>
+        resources: {}
+        volumeMounts:
+        - name: rook-config-override
+          readOnly: true
+          mountPath: /etc/ceph
+        - name: rook-ceph-mgr-a-keyring
+          readOnly: true
+          mountPath: /etc/ceph/keyring-store/
+        - name: rook-ceph-log
+          mountPath: /var/log/ceph
+        - name: rook-ceph-crash
+          mountPath: /var/lib/ceph/crash
+        - name: ceph-daemon-data
+          mountPath: /var/lib/ceph/mgr/ceph-a
+        - name: rook-ceph-admin-keyring
+          readOnly: true
+          mountPath: /etc/ceph/admin-keyring-store/
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      containers:
+      - name: mgr
+        image: ceph/ceph:v15.2.4
+        command:
+        - ceph-mgr
+        args:
+        - --fsid=3794cf28-c199-4242-94e1-4e1f35f88262
+        - --keyring=/etc/ceph/keyring-store/keyring
+        - --log-to-stderr=true
+        - --err-to-stderr=true
+        - --mon-cluster-log-to-stderr=true
+        - '--log-stderr-prefix=debug '
+        - --default-log-to-file=false
+        - --default-mon-cluster-log-to-file=false
+        - --mon-host=$(ROOK_CEPH_MON_HOST)
+        - --mon-initial-members=$(ROOK_CEPH_MON_INITIAL_MEMBERS)
+        - --id=a
+        - --setuser=ceph
+        - --setgroup=ceph
+        - --client-mount-uid=0
+        - --client-mount-gid=0
+        - --foreground
+        - --public-addr=$(ROOK_POD_IP)
+        ports:
+        - name: mgr
+          containerPort: 6800
+          protocol: TCP
+        - name: http-metrics
+          containerPort: 9283
+          protocol: TCP
+        - name: dashboard
+          containerPort: 8443
+          protocol: TCP
+        env:
+        - name: CONTAINER_IMAGE
+          value: ceph/ceph:v15.2.4
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_21>
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_20>
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_162>
+        - name: POD_MEMORY_LIMIT
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_168>
+              divisor: '0'
+        - name: POD_MEMORY_REQUEST
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_171>
+              divisor: '0'
+        - name: POD_CPU_LIMIT
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_167>
+              divisor: '1'
+        - name: POD_CPU_REQUEST
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_170>
+              divisor: '0'
+        - name: ROOK_CEPH_MON_HOST
+          valueFrom:
+            secretKeyRef:
+              name: rook-ceph-config
+              key: mon_host
+        - name: ROOK_CEPH_MON_INITIAL_MEMBERS
+          valueFrom:
+            secretKeyRef:
+              name: rook-ceph-config
+              key: mon_initial_members
+        - name: ROOK_OPERATOR_NAMESPACE
+          value: rook-ceph
+        - name: ROOK_CEPH_CLUSTER_CRD_VERSION
+          value: v1
+        - name: ROOK_CEPH_CLUSTER_CRD_NAME
+          value: ceph
+        - name: ROOK_POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_165>
+        resources: {}
+        volumeMounts:
+        - name: rook-config-override
+          readOnly: true
+          mountPath: /etc/ceph
+        - name: rook-ceph-mgr-a-keyring
+          readOnly: true
+          mountPath: /etc/ceph/keyring-store/
+        - name: rook-ceph-log
+          mountPath: /var/log/ceph
+        - name: rook-ceph-crash
+          mountPath: /var/lib/ceph/crash
+        - name: ceph-daemon-data
+          mountPath: /var/lib/ceph/mgr/ceph-a
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9283
+            scheme: HTTP
+          initialDelaySeconds: 60
+          timeoutSeconds: 1
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: false
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      serviceAccountName: rook-ceph-mgr
+      serviceAccount: rook-ceph-mgr
+      securityContext: {}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: role
+                operator: In
+                values:
+                - storage-ceph
+      schedulerName: default-scheduler
+      tolerations:
+      - key: <DOMAIN_667>/unreachable
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 5
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

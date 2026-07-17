@@ -1,0 +1,24 @@
+metadata:
+  name: ceph-osd-set-data-0rxxds
+  generateName: ceph-osd-set-data-0
+  namespace: rook-ceph
+  labels:
+    ceph.rook.io/DeviceSet: ceph-osd-set
+    ceph.rook.io/DeviceSetPVCId: ceph-osd-set-data-0
+    ceph.rook.io/cephImageAtCreation: quay.io_ceph_ceph_v19.2.3
+    ceph.rook.io/rookImageAtCreation: docker.io_rook_ceph_v1.19.2
+    ceph.rook.io/setIndex: '0'
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2500Gi
+  volumeName: osd-pv-213
+  storageClassName: local-blk
+  volumeMode: Block
+apiVersion: v1
+kind: PersistentVolumeClaim

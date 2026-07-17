@@ -1,0 +1,16 @@
+metadata:
+  name: rb-aql6bw2v6c
+  namespace: cattle-fleet-clusters-system
+  labels:
+    authz.cluster.cattle.io/rtb-owner-updated: <REDACTED:env>
+    cattle.io/creator: norman
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-pg7qxfe7lh
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: ClusterRole
+  name: edit
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

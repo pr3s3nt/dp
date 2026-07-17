@@ -1,0 +1,18 @@
+metadata:
+  name: rook-ceph-cmd-reporter
+  namespace: rook-ceph
+  labels:
+    app.kubernetes.io/name: rook-ceph
+    app.kubernetes.io/part-of: rook-ceph-operator
+    operator: rook
+    storage-backend: ceph
+subjects:
+- kind: ServiceAccount
+  name: rook-ceph-cmd-reporter
+  namespace: rook-ceph
+roleRef:
+  apiGroup: <DOMAIN_1>
+  kind: Role
+  name: rook-ceph-cmd-reporter
+apiVersion: <DOMAIN_1>/v1
+kind: RoleBinding

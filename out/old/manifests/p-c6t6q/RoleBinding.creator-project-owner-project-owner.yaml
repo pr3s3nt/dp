@@ -1,0 +1,15 @@
+metadata:
+  name: creator-project-owner-project-owner
+  namespace: p-c6t6q
+  labels:
+    cattle.io/creator: norman
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-v4ccd
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: project-owner
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

@@ -1,0 +1,23 @@
+# APP MẪU MIGRATION — feedback360/frontend (nginx static, port 80)
+# Chứng minh: route đa host trong cùng app — FE host khác BE host (Ingress.feedback360 cũ).
+apiVersion: score.dev/v1b1
+
+metadata:
+  name: feedback360-frontend
+
+containers:
+  main:
+    image: "."
+
+service:
+  ports:
+    http:
+      port: 80
+      targetPort: 80
+
+resources:
+  site:
+    type: route
+    params:
+      host: feedback360.example.com       # TODO: đổi domain thật
+      port: 80

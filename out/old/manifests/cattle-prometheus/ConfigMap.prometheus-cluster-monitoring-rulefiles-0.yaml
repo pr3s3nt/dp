@@ -1,0 +1,21 @@
+metadata:
+  name: prometheus-cluster-monitoring-rulefiles-0
+  namespace: cattle-prometheus
+  labels:
+    managed-by: prometheus-operator
+    prometheus-name: cluster-monitoring
+data:
+  cattle-prometheus-compatible-v117-deprecated-apiserver-metrics.yaml: "groups:\n\
+    - name: apiserver_metrics.rules\n  rules:\n  - expr: apiserver_request_total\n\
+    \    record: apiserver_request_count\n"
+  cattle-prometheus-local.yaml: "groups:\n- name: local:etcd-alert\n  rules:\n  -\
+    \ alert: A high number of leader changes within the etcd cluster are happening\n\
+    \    annotations:\n      current_value: '{{ .Value }}'\n    expr: increase(etcd_server_leader_changes_seen_total[1h])>3\n\
+    \    for: 3m\n    labels:\n      alert_name: A high number of leader changes within\
+    \ the etcd cluster are happening\n      alert_type: metric\n      cluster_name:\
+    \ 'local (ID: local)'\n      comparison: greater than\n      duration: 3m\n  \
+    \    expression: increase(etcd_server_leader_changes_seen_total[1h])>3\n     \
+    \ group_id: local:etcd-alert\n      rule_id: local:etcd-alert_high-number-of-leader-changes\n\
+    \      severity: warning\n      threshold_value: \"3\"\n"
+apiVersion: v1
+kind: ConfigMap

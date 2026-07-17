@@ -1,0 +1,17 @@
+metadata:
+  name: survey-aqei-pvc
+  namespace: survey-doe
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  volumeName: survey-aqei-pv
+  storageClassName: survey-aqei-storage
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

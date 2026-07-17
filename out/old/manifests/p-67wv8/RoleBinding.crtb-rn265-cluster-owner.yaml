@@ -1,0 +1,16 @@
+metadata:
+  name: crtb-rn265-cluster-owner
+  namespace: p-67wv8
+  labels:
+    cattle.io/creator: norman
+    local_crtb-rn265: crtb-in-project-binding-owner
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-75yktoly4h
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: cluster-owner
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

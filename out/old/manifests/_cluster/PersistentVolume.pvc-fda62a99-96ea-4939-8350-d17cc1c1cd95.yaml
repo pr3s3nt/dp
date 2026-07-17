@@ -1,0 +1,35 @@
+metadata:
+  name: pvc-fda62a99-96ea-4939-8350-d17cc1c1cd95
+  annotations:
+    pv.kubernetes.io/provisioned-by: <DOMAIN_529>
+spec:
+  capacity:
+    storage: 10Gi
+  csi:
+    driver: <DOMAIN_529>
+    volumeHandle: 0001-0004-ceph-0000000000000002-edaad761-24ee-11ee-b728-b66af3768d5f
+    fsType: ext4
+    volumeAttributes:
+      clusterID: ceph
+      imageFeatures: layering
+      imageFormat: '2'
+      imageName: csi-vol-edaad761-24ee-11ee-b728-b66af3768d5f
+      journalPool: ceph-replica-pool
+      pool: ceph-replica-pool
+      radosNamespace: ''
+      storage.kubernetes.io/csiProvisionerIdentity: <DOMAIN_532>
+    nodeStageSecretRef:
+      name: rook-csi-rbd-node
+      namespace: ceph
+  accessModes:
+  - ReadWriteOnce
+  claimRef:
+    kind: PersistentVolumeClaim
+    namespace: dap
+    name: dap-prd-pvc
+    apiVersion: v1
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolume

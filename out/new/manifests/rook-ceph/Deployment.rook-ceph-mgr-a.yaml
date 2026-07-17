@@ -1,0 +1,420 @@
+metadata:
+  name: rook-ceph-mgr-a
+  namespace: rook-ceph
+  labels:
+    app: rook-ceph-mgr
+    app.kubernetes.io/component: <DOMAIN_64>
+    app.kubernetes.io/created-by: rook-ceph-operator
+    app.kubernetes.io/instance: a
+    app.kubernetes.io/managed-by: rook-ceph-operator
+    app.kubernetes.io/name: ceph-mgr
+    app.kubernetes.io/part-of: rook-ceph
+    ceph-version: 19.2.3-0
+    ceph_daemon_id: a
+    ceph_daemon_type: mgr
+    instance: a
+    mgr: a
+    mgr_role: active
+    rook-version: v1.19.2
+    rook.io/operator-namespace: rook-ceph
+    rook_cluster: rook-ceph
+  annotations:
+    banzaicloud.com/last-applied: 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
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rook-ceph-mgr
+      ceph_daemon_id: a
+      instance: a
+      mgr: a
+      rook_cluster: rook-ceph
+  template:
+    metadata:
+      name: rook-ceph-mgr-a
+      labels:
+        app: rook-ceph-mgr
+        app.kubernetes.io/component: <DOMAIN_64>
+        app.kubernetes.io/created-by: rook-ceph-operator
+        app.kubernetes.io/instance: a
+        app.kubernetes.io/managed-by: rook-ceph-operator
+        app.kubernetes.io/name: ceph-mgr
+        app.kubernetes.io/part-of: rook-ceph
+        ceph_daemon_id: a
+        ceph_daemon_type: mgr
+        instance: a
+        mgr: a
+        mgr_role: active
+        rook.io/operator-namespace: rook-ceph
+        rook_cluster: rook-ceph
+      annotations:
+        cephx-key-identifier: '122112'
+        prometheus.io/port: '9283'
+        prometheus.io/scrape: 'true'
+    spec:
+      volumes:
+      - name: rook-config-override
+        projected:
+          sources:
+          - configMap:
+              name: rook-config-override
+              items:
+              - key: config
+                path: <DOMAIN_100>
+                mode: 292
+          defaultMode: 420
+      - name: rook-ceph-mgr-a-keyring
+        secret:
+          secretName: <REDACTED:env>
+          defaultMode: 420
+      - name: ceph-daemons-sock-dir
+        hostPath:
+          path: /var/lib/rook/exporter
+          type: DirectoryOrCreate
+      - name: rook-ceph-log
+        hostPath:
+          path: /var/lib/rook/rook-ceph/log
+          type: ''
+      - name: rook-ceph-crash
+        hostPath:
+          path: /var/lib/rook/rook-ceph/crash
+          type: ''
+      - name: ceph-daemon-data
+        emptyDir: {}
+      - name: rook-config
+        emptyDir: {}
+      - name: default-config-dir
+        emptyDir: {}
+      - name: ceph-admin-secret
+        secret:
+          secretName: <REDACTED:env>
+          items:
+          - key: ceph-secret
+            path: <DOMAIN_108>
+          defaultMode: 420
+      initContainers:
+      - name: chown-container-data-dir
+        image: quay.io/ceph/ceph:v19.2.3
+        command:
+        - chown
+        args:
+        - --verbose
+        - --recursive
+        - ceph:ceph
+        - /var/log/ceph
+        - /var/lib/ceph/crash
+        - /run/ceph
+        - /var/lib/ceph/mgr/ceph-a
+        resources: {}
+        volumeMounts:
+        - name: rook-config-override
+          readOnly: true
+          mountPath: /etc/ceph
+        - name: ceph-daemons-sock-dir
+          mountPath: /run/ceph
+        - name: rook-ceph-mgr-a-keyring
+          readOnly: true
+          mountPath: /etc/ceph/keyring-store/
+        - name: rook-ceph-log
+          mountPath: /var/log/ceph
+        - name: rook-ceph-crash
+          mountPath: /var/lib/ceph/crash
+        - name: ceph-daemon-data
+          mountPath: /var/lib/ceph/mgr/ceph-a
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+          privileged: false
+      containers:
+      - name: mgr
+        image: quay.io/ceph/ceph:v19.2.3
+        command:
+        - ceph-mgr
+        args:
+        - --fsid=cb383da1-48b5-41ca-83b1-bac1627ea207
+        - --keyring=/etc/ceph/keyring-store/keyring
+        - --default-log-to-stderr=true
+        - --default-err-to-stderr=true
+        - --default-mon-cluster-log-to-stderr=true
+        - '--default-log-stderr-prefix=debug '
+        - --default-log-to-file=false
+        - --default-mon-cluster-log-to-file=false
+        - --mon-host=$(ROOK_CEPH_MON_HOST)
+        - --mon-initial-members=$(ROOK_CEPH_MON_INITIAL_MEMBERS)
+        - --id=a
+        - --setuser=ceph
+        - --setgroup=ceph
+        - --client-mount-uid=0
+        - --client-mount-gid=0
+        - --foreground
+        - --public-addr=$(ROOK_POD_IP)
+        workingDir: /var/log/ceph
+        ports:
+        - name: mgr
+          containerPort: 6800
+          protocol: TCP
+        - name: http-metrics
+          containerPort: 9283
+          protocol: TCP
+        - name: dashboard
+          containerPort: 8443
+          protocol: TCP
+        env:
+        - name: CONTAINER_IMAGE
+          value: quay.io/ceph/ceph:v19.2.3
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_24>
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_72>
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_66>
+        - name: POD_MEMORY_LIMIT
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_101>
+              divisor: '0'
+        - name: POD_MEMORY_REQUEST
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_102>
+              divisor: '0'
+        - name: POD_CPU_LIMIT
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_103>
+              divisor: '1'
+        - name: POD_CPU_REQUEST
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_104>
+              divisor: '0'
+        - name: CEPH_USE_RANDOM_NONCE
+          value: 'true'
+        - name: ROOK_MSGR2
+          value: msgr2_false_encryption_false_compression_false
+        - name: ROOK_CEPH_MON_HOST
+          valueFrom:
+            secretKeyRef:
+              name: rook-ceph-config
+              key: mon_host
+        - name: ROOK_CEPH_MON_INITIAL_MEMBERS
+          valueFrom:
+            secretKeyRef:
+              name: rook-ceph-config
+              key: mon_initial_members
+        - name: ROOK_OPERATOR_NAMESPACE
+          value: rook-ceph
+        - name: ROOK_CEPH_CLUSTER_CRD_VERSION
+          value: v1
+        - name: ROOK_CEPH_CLUSTER_CRD_NAME
+          value: rook-ceph
+        - name: CEPH_ARGS
+          value: --mon-host $(ROOK_CEPH_MON_HOST) --keyring /etc/ceph/keyring-store/keyring
+        - name: ROOK_POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_71>
+        resources: {}
+        volumeMounts:
+        - name: rook-config-override
+          readOnly: true
+          mountPath: /etc/ceph
+        - name: ceph-daemons-sock-dir
+          mountPath: /run/ceph
+        - name: rook-ceph-mgr-a-keyring
+          readOnly: true
+          mountPath: /etc/ceph/keyring-store/
+        - name: rook-ceph-log
+          mountPath: /var/log/ceph
+        - name: rook-ceph-crash
+          mountPath: /var/lib/ceph/crash
+        - name: ceph-daemon-data
+          mountPath: /var/lib/ceph/mgr/ceph-a
+        livenessProbe:
+          exec:
+            command:
+            - env
+            - -i
+            - sh
+            - -c
+            - "\noutp=\"$(ceph --admin-daemon /run/ceph/<DOMAIN_109> status 2>&1)\"\
+              \nrc=$?\nif [ $rc -ne 0 ]; then\n\techo \"ceph daemon health check failed\
+              \ with the following output:\"\n\techo \"$outp\" | sed -e 's/^/> /g'\n\
+              \texit $rc\nfi\n"
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        startupProbe:
+          exec:
+            command:
+            - env
+            - -i
+            - sh
+            - -c
+            - "\noutp=\"$(ceph --admin-daemon /run/ceph/<DOMAIN_109> status 2>&1)\"\
+              \nrc=$?\nif [ $rc -ne 0 ]; then\n\techo \"ceph daemon health check failed\
+              \ with the following output:\"\n\techo \"$outp\" | sed -e 's/^/> /g'\n\
+              \texit $rc\nfi\n"
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 6
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+          privileged: false
+      - name: watch-active
+        image: docker.io/rook/ceph:v1.19.2
+        args:
+        - ceph
+        - mgr
+        - watch-active
+        env:
+        - name: ROOK_CLUSTER_ID
+          value: 6ef43355-6835-4968-90b8-cc50af05aa2c
+        - name: ROOK_CLUSTER_NAME
+          value: rook-ceph
+        - name: ROOK_PRIVATE_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_71>
+        - name: ROOK_PUBLIC_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_71>
+        - name: POD_NAMESPACE
+          value: rook-ceph
+        - name: ROOK_MON_ENDPOINTS
+          valueFrom:
+            configMapKeyRef:
+              name: rook-ceph-mon-endpoints
+              key: data
+        - name: ROOK_CEPH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: rook-ceph-mon
+              key: ceph-username
+        - name: ROOK_CEPH_CONFIG_OVERRIDE
+          value: /etc/rook/config/<DOMAIN_110>
+        - name: ROOK_DASHBOARD_ENABLED
+          value: 'true'
+        - name: ROOK_MONITORING_ENABLED
+          value: 'false'
+        - name: ROOK_UPDATE_INTERVAL
+          value: 15s
+        - name: ROOK_DAEMON_NAME
+          value: a
+        - name: ROOK_CEPH_VERSION
+          value: ceph version 19.2.3-0 squid
+        resources: {}
+        volumeMounts:
+        - name: rook-config
+          mountPath: /var/lib/rook
+        - name: default-config-dir
+          mountPath: /etc/ceph
+        - name: ceph-admin-secret
+          readOnly: true
+          mountPath: /var/lib/rook-ceph-mon
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+          privileged: false
+      - name: log-collector
+        image: quay.io/ceph/ceph:v19.2.3
+        command:
+        - /bin/bash
+        - -x
+        - -e
+        - -m
+        - -c
+        - "\nCEPH_CLIENT_ID=ceph-mgr.a\nPERIODICITY=daily\nLOG_ROTATE_CEPH_FILE=/etc/logrotate.d/ceph\n\
+          LOG_MAX_SIZE=500M\nROTATE=7\nADDITIONAL_LOG_FILES=\n\n# edit the logrotate\
+          \ file to only rotate a specific daemon log\n# otherwise we will logrotate\
+          \ log files without reloading certain daemons\n# this might happen when\
+          \ multiple daemons run on the same machine\nsed -i \"s|*.log|$CEPH_CLIENT_ID.log\
+          \ $ADDITIONAL_LOG_FILES|\" \"$LOG_ROTATE_CEPH_FILE\"\n\n# replace default\
+          \ daily with given user input\nsed --in-place \"s/daily/$PERIODICITY/g\"\
+          \ \"$LOG_ROTATE_CEPH_FILE\"\n\n# replace rotate count, default 7 for all\
+          \ ceph daemons other than rbd-mirror\nsed --in-place \"s/rotate 7/rotate\
+          \ $ROTATE/g\" \"$LOG_ROTATE_CEPH_FILE\"\n\nif [ \"$LOG_MAX_SIZE\" != \"\
+          0\" ]; then\n\t# adding maxsize $LOG_MAX_SIZE at the 4th line of the logrotate\
+          \ config file with 4 spaces to maintain indentation\n\tsed --in-place \"\
+          4i \\ \\ \\ \\ maxsize $LOG_MAX_SIZE\" \"$LOG_ROTATE_CEPH_FILE\"\nfi\n\n\
+          while true; do\n\t# we don't force the logrorate but we let the logrotate\
+          \ binary handle the rotation based on user's input for periodicity and size\n\
+          \tlogrotate --verbose \"$LOG_ROTATE_CEPH_FILE\"\n\tsleep 15m\ndone\n"
+        resources: {}
+        volumeMounts:
+        - name: rook-config-override
+          readOnly: true
+          mountPath: /etc/ceph
+        - name: ceph-daemons-sock-dir
+          mountPath: /run/ceph
+        - name: rook-ceph-log
+          mountPath: /var/log/ceph
+        - name: rook-ceph-crash
+          mountPath: /var/lib/ceph/crash
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+          privileged: false
+        tty: true
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      serviceAccountName: rook-ceph-mgr
+      serviceAccount: rook-ceph-mgr
+      shareProcessNamespace: true
+      securityContext: {}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: rook-ceph-mgr
+                rook_cluster: rook-ceph
+            topologyKey: <DOMAIN_43>/hostname
+      schedulerName: default-scheduler
+      tolerations:
+      - key: <DOMAIN_105>/unreachable
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 5
+      priorityClassName: system-cluster-critical
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

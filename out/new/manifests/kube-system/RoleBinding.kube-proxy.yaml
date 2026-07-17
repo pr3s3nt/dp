@@ -1,0 +1,13 @@
+metadata:
+  name: kube-proxy
+  namespace: kube-system
+subjects:
+- kind: Group
+  apiGroup: <DOMAIN_1>
+  name: system:bootstrappers:kubeadm:default-node-token
+roleRef:
+  apiGroup: <DOMAIN_1>
+  kind: Role
+  name: kube-proxy
+apiVersion: <DOMAIN_1>/v1
+kind: RoleBinding

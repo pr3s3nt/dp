@@ -1,0 +1,68 @@
+metadata:
+  name: argo-rollouts
+  namespace: argo-rollouts
+  labels:
+    app.kubernetes.io/component: rollouts-controller
+    app.kubernetes.io/name: argo-rollouts
+    app.kubernetes.io/part-of: argo-rollouts
+  annotations: {}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argo-rollouts
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argo-rollouts
+    spec:
+      containers:
+      - name: argo-rollouts
+        image: <COMPANY>-<DOMAIN_607>/argocd/argo-rollouts:v1.2.0
+        ports:
+        - name: metrics
+          containerPort: 8090
+          protocol: TCP
+        - name: healthz
+          containerPort: 8080
+          protocol: TCP
+        resources: {}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: healthz
+            scheme: HTTP
+          initialDelaySeconds: 30
+          timeoutSeconds: 10
+          periodSeconds: 20
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: metrics
+            scheme: HTTP
+          initialDelaySeconds: 10
+          timeoutSeconds: 4
+          periodSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      serviceAccountName: argo-rollouts
+      serviceAccount: argo-rollouts
+      securityContext:
+        runAsNonRoot: true
+      imagePullSecrets:
+      - name: registrypullsecret
+      schedulerName: default-scheduler
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

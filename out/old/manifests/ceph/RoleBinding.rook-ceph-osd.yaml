@@ -1,0 +1,14 @@
+metadata:
+  name: rook-ceph-osd
+  namespace: ceph
+  annotations: {}
+subjects:
+- kind: ServiceAccount
+  name: rook-ceph-osd
+  namespace: ceph
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: rook-ceph-osd
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

@@ -1,0 +1,75 @@
+metadata:
+  name: passbolt-mysql-cleanup-backup
+  namespace: passbolt-v4
+spec:
+  schedule: 0 19 * * *
+  concurrencyPolicy: Allow
+  suspend: false
+  jobTemplate:
+    metadata: {}
+    spec:
+      template:
+        metadata: {}
+        spec:
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: passbolt-mysql-backup-pvc
+          containers:
+          - name: cleanup
+            image: <COMPANY>-<DOMAIN_607>/passbolt/mysql:5.6
+            command:
+            - /bin/sh
+            - -c
+            - 'echo "Starting backup cleanup at $(date)"
+
+              echo "Removing backups older than 7 days..."
+
+
+              # Đếm số backup trước khi cleanup
+
+              echo "Backups before cleanup:"
+
+              ls -la /backup/ | grep passbolt-backup | wc -l
+
+
+              # Xóa các backup cũ hơn 7 ngày
+
+              find /backup -name "passbolt-backup-*.sql" -type f -mtime +7 -exec rm
+              -f {} \; 2>/dev/null || true
+
+
+              echo "Cleanup completed"
+
+              echo "Backups remaining:"
+
+              ls -la /backup/ | grep passbolt-backup
+
+              '
+            resources: {}
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backup
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            imagePullPolicy: IfNotPresent
+          restartPolicy: OnFailure
+          terminationGracePeriodSeconds: 30
+          dnsPolicy: ClusterFirst
+          securityContext: {}
+          imagePullSecrets:
+          - name: registrypullsecret
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: <DOMAIN_138>/hostname
+                    operator: In
+                    values:
+                    - <CLEANUP_HOST_4>
+          schedulerName: default-scheduler
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+apiVersion: batch/v1beta1
+kind: CronJob

@@ -1,0 +1,66 @@
+metadata:
+  name: rke2-machineconfig-cleanup-cronjob-29736005
+  namespace: fleet-local
+  labels:
+    batch.kubernetes.io/controller-uid: 1ba50a40-4557-4e67-96b6-8781f3cc8733
+    batch.kubernetes.io/job-name: rke2-machineconfig-cleanup-cronjob-29736005
+    controller-uid: 1ba50a40-4557-4e67-96b6-8781f3cc8733
+    job-name: rke2-machineconfig-cleanup-cronjob-29736005
+  annotations:
+    batch.kubernetes.io/cronjob-scheduled-timestamp: '2026-07-16T00:05:00Z'
+spec:
+  parallelism: 1
+  completions: 1
+  backoffLimit: 10
+  selector:
+    matchLabels:
+      batch.kubernetes.io/controller-uid: 1ba50a40-4557-4e67-96b6-8781f3cc8733
+  manualSelector: false
+  template:
+    metadata:
+      labels:
+        batch.kubernetes.io/controller-uid: 1ba50a40-4557-4e67-96b6-8781f3cc8733
+        batch.kubernetes.io/job-name: rke2-machineconfig-cleanup-cronjob-29736005
+        controller-uid: 1ba50a40-4557-4e67-96b6-8781f3cc8733
+        job-name: rke2-machineconfig-cleanup-cronjob-29736005
+    spec:
+      volumes:
+      - name: config-volume
+        configMap:
+          name: rke2-machineconfig-cleanup-script
+          defaultMode: 420
+      containers:
+      - name: rke2-machineconfig-cleanup-pod
+        image: rancher/rancher-agent:v2.14.2
+        command:
+        - /bin/sh
+        args:
+        - /helper/<DOMAIN_127>
+        env:
+        - name: CATTLE_SERVER
+          value: https://<DOMAIN_8>.<COMPANY_DOMAIN>
+        - name: CATTLE_CA_CHECKSUM
+        - name: CATTLE_TOKEN
+          value: <REDACTED:env>
+        resources: {}
+        volumeMounts:
+        - name: config-volume
+          mountPath: /helper
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          runAsUser: 65534
+          runAsGroup: 65534
+      restartPolicy: Never
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      serviceAccountName: rke2-machineconfig-cleanup-sa
+      serviceAccount: rke2-machineconfig-cleanup-sa
+      securityContext: {}
+      schedulerName: default-scheduler
+  completionMode: NonIndexed
+  suspend: false
+  podReplacementPolicy: TerminatingOrFailed
+apiVersion: batch/v1
+kind: Job

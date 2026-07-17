@@ -1,0 +1,15 @@
+metadata:
+  name: cattle-prometheus
+  labels:
+    cattle.io/creator: norman
+    field.cattle.io/projectId: p-wnc8s
+  annotations:
+    cattle.io/appIds: cluster-monitoring,monitoring-operator
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2020-11-17T02:52:19Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2020-11-17T02:52:24Z"}]}'
+    field.cattle.io/creatorId: u-b4qkhsnliz
+    field.cattle.io/projectId: local:p-wnc8s
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+    management.cattle.io/no-default-sa-token: <REDACTED:env>
+spec: {}
+apiVersion: v1
+kind: Namespace

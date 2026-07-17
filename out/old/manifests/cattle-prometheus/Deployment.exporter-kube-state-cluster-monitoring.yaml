@@ -1,0 +1,90 @@
+metadata:
+  name: exporter-kube-state-cluster-monitoring
+  namespace: cattle-prometheus
+  labels:
+    app: exporter-kube-state
+    chart: exporter-kube-state-0.0.1
+    heritage: Tiller
+    io.cattle.field/appId: cluster-monitoring
+    release: cluster-monitoring
+  annotations: {}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: exporter-kube-state
+      chart: exporter-kube-state-0.0.1
+      release: cluster-monitoring
+  template:
+    metadata:
+      labels:
+        app: exporter-kube-state
+        chart: exporter-kube-state-0.0.1
+        release: cluster-monitoring
+    spec:
+      containers:
+      - name: kube-state
+        image: rancher/coreos-kube-state-metrics:v1.9.7
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: http-metrics
+          containerPort: 8081
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 130Mi
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 100
+          timeoutSeconds: 30
+          periodSeconds: 30
+          successThreshold: 1
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/os: linux
+      serviceAccountName: exporter-kube-state-cluster-monitoring
+      serviceAccount: exporter-kube-state-cluster-monitoring
+      securityContext:
+        runAsUser: 65534
+        runAsNonRoot: true
+        fsGroup: 65534
+      schedulerName: default-scheduler
+      tolerations:
+      - key: <DOMAIN_658>/os
+        operator: Equal
+        value: linux
+        effect: NoSchedule
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

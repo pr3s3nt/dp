@@ -1,0 +1,7 @@
+metadata:
+  name: migratesystemagentvardirtodatadirectory
+  namespace: cattle-system
+data:
+  systemAgentVarDirMigrated: 'true'
+apiVersion: v1
+kind: ConfigMap

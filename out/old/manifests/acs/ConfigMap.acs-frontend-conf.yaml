@@ -1,0 +1,26 @@
+metadata:
+  name: acs-frontend-conf
+  namespace: acs
+  annotations: {}
+data:
+  default.conf: "server {\n    listen       80;\n    listen  [::]:80;\n    server_name\
+    \  localhost;\n\n    #access_log  /var/log/nginx/<DOMAIN_1>  main;\n    access_log\
+    \ /var/log/nginx/<DOMAIN_2>;\n    error_log /var/log/nginx/<DOMAIN_3>;\n    location\
+    \ / {\n        root   /usr/share/nginx/html;\n        index  <DOMAIN_4> <DOMAIN_5>;\n\
+    \        try_files $uri $uri/ /<DOMAIN_4>;\n    }\n\n    #error_page  404    \
+    \          /<DOMAIN_6>;\n\n    # redirect server error pages to the static page\
+    \ /<DOMAIN_7>\n    #\n    error_page   500 502 503 504  /<DOMAIN_7>;\n    location\
+    \ = /<DOMAIN_7> {\n        root   /usr/share/nginx/html;\n    }\n    location\
+    \ /acs {                                                                     \
+    \    \n        proxy_pass http://acs-backend-service:8080/acs;               \
+    \                           \n    }\n\n    # proxy the PHP scripts to Apache listening\
+    \ on 127.0.0.1:80\n    #\n    #location ~ \\.php$ {\n    #    proxy_pass   http://127.0.0.1;\n\
+    \    #}\n\n    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000\n\
+    \    #\n    #location ~ \\.php$ {\n    #    root           html;\n    #    fastcgi_pass\
+    \   127.0.0.1:9000;\n    #    fastcgi_index  <DOMAIN_8>;\n    #    fastcgi_param\
+    \  SCRIPT_FILENAME  /scripts$fastcgi_script_name;\n    #    include        fastcgi_params;\n\
+    \    #}\n\n    # deny access to .htaccess files, if Apache's document root\n \
+    \   # concurs with nginx's one\n    #\n    #location ~ /\\.ht {\n    #    deny\
+    \  all;\n    #}\n}\n\n"
+apiVersion: v1
+kind: ConfigMap

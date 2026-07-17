@@ -1,0 +1,16 @@
+metadata:
+  name: p-mjh6x-projectmember
+  namespace: c-6tfcq
+  labels:
+    cattle.io/creator: norman
+rules:
+- verbs:
+  - get
+  apiGroups:
+  - <DOMAIN_528>
+  resources:
+  - projects
+  resourceNames:
+  - p-mjh6x
+apiVersion: <DOMAIN_776>/v1
+kind: Role

@@ -1,0 +1,107 @@
+metadata:
+  name: harbor-portal
+  namespace: harbor
+  labels:
+    app: harbor
+    app.kubernetes.io/component: portal
+    app.kubernetes.io/instance: harbor
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: harbor
+    app.kubernetes.io/part-of: harbor
+    app.kubernetes.io/version: 2.15.1
+    chart: harbor
+    component: portal
+    heritage: Helm
+    release: harbor
+  annotations:
+    meta.helm.sh/release-name: harbor
+    meta.helm.sh/release-namespace: harbor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: harbor
+      component: portal
+      release: harbor
+  template:
+    metadata:
+      labels:
+        app: harbor
+        app.kubernetes.io/component: portal
+        app.kubernetes.io/instance: harbor
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: harbor
+        app.kubernetes.io/part-of: harbor
+        app.kubernetes.io/version: 2.15.1
+        chart: harbor
+        component: portal
+        heritage: Helm
+        release: harbor
+      annotations:
+        checksum/configmap: 3e15dd87a41c6a5e41612a6ee665e665451b6e9da46ab78390477338fd972e04
+    spec:
+      volumes:
+      - name: portal-config
+        configMap:
+          name: harbor-portal
+          defaultMode: 420
+      containers:
+      - name: portal
+        image: docker.io/goharbor/harbor-portal:v2.15.1
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources: {}
+        volumeMounts:
+        - name: portal-config
+          mountPath: /etc/nginx/<DOMAIN_98>
+          subPath: <DOMAIN_98>
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 300
+          timeoutSeconds: 1
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 1
+          timeoutSeconds: 1
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          seccompProfile:
+            type: RuntimeDefault
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 10000
+        fsGroup: 10000
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

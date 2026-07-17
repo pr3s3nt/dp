@@ -1,0 +1,23 @@
+metadata:
+  name: rancher-logging-fluentd
+  namespace: cattle-logging
+  labels:
+    app: fluentd
+    chart: fluentd-0.0.2
+    heritage: Tiller
+    io.cattle.field/appId: rancher-logging
+    release: rancher-logging
+spec:
+  ports:
+  - name: metric
+    protocol: TCP
+    port: 24231
+    targetPort: 24231
+  selector:
+    app: fluentd
+    chart: fluentd-0.0.2
+  clusterIP: <IP_49>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

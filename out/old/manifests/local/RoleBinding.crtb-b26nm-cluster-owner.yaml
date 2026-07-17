@@ -1,0 +1,15 @@
+metadata:
+  name: crtb-b26nm-cluster-owner
+  namespace: local
+  labels:
+    cattle.io/creator: norman
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-q79r7
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: cluster-owner
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

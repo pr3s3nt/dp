@@ -1,0 +1,14 @@
+metadata:
+  name: rook-ceph-mgr-psp
+  namespace: ceph
+  annotations: {}
+subjects:
+- kind: ServiceAccount
+  name: rook-ceph-mgr
+  namespace: ceph
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: ClusterRole
+  name: psp:rook
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

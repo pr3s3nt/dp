@@ -1,0 +1,21 @@
+metadata:
+  name: grafana-svc
+  namespace: svms
+  labels:
+    app: grafana-svc
+  annotations: {}
+spec:
+  ports:
+  - name: grafana
+    protocol: TCP
+    port: 13000
+    targetPort: 3000
+  selector:
+    app: grafana
+  clusterIP: <IP_121>
+  type: ClusterIP
+  externalIPs:
+  - <CLEANUP_IP_5>
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

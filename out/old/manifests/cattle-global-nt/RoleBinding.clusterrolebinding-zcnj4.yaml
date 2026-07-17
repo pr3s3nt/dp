@@ -1,0 +1,19 @@
+metadata:
+  name: clusterrolebinding-zcnj4
+  generateName: clusterrolebinding-
+  namespace: cattle-global-nt
+  labels:
+    authz.cluster.cattle.io/rtb-label-updated: <REDACTED:env>
+    authz.cluster.cattle.io/rtb-owner: <REDACTED:env>
+    authz.cluster.cattle.io/rtb-owner-updated: <REDACTED:env>
+    cattle.io/creator: norman
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-pg7qxfe7lh
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: ClusterRole
+  name: edit
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

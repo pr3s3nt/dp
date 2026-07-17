@@ -1,0 +1,30 @@
+metadata:
+  name: survey-aqei-pv
+  annotations:
+    pv.kubernetes.io/bound-by-controller: 'yes'
+spec:
+  capacity:
+    storage: 5Gi
+  hostPath:
+    path: /data/survey-aqei
+    type: DirectoryOrCreate
+  accessModes:
+  - ReadWriteOnce
+  claimRef:
+    kind: PersistentVolumeClaim
+    namespace: survey-doe
+    name: survey-aqei-pvc
+    apiVersion: v1
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: survey-aqei-storage
+  volumeMode: Filesystem
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: <DOMAIN_138>/hostname
+          operator: In
+          values:
+          - <CLEANUP_HOST_4>
+apiVersion: v1
+kind: PersistentVolume

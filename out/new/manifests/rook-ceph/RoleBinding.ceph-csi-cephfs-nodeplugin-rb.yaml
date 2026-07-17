@@ -1,0 +1,13 @@
+metadata:
+  name: ceph-csi-cephfs-nodeplugin-rb
+  namespace: rook-ceph
+subjects:
+- kind: ServiceAccount
+  name: ceph-csi-cephfs-nodeplugin-sa
+  namespace: rook-ceph
+roleRef:
+  apiGroup: <DOMAIN_1>
+  kind: Role
+  name: ceph-csi-cephfs-nodeplugin-r
+apiVersion: <DOMAIN_1>/v1
+kind: RoleBinding

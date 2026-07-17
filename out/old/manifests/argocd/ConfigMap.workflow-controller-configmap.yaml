@@ -1,0 +1,39 @@
+metadata:
+  name: workflow-controller-configmap
+  namespace: argocd
+  labels:
+    app.kubernetes.io/instance: argocd-workflow
+  annotations: {}
+data:
+  artifactRepository: "s3:\n  bucket: my-bucket\n  endpoint: minio:9000\n  insecure:\
+    \ true\n  accessKeySecret:\n    name: my-minio-cred\n    key: accesskey\n  secretKeySecret:\n\
+    \    name: my-minio-cred\n    key: secretkey\n"
+  executor: "resources:\n  requests:\n    cpu: 10m\n    memory: 64Mi\n"
+  images: "docker/whalesay:latest:\n   cmd: [cowsay]\n"
+  links: "- name: Workflow Link\n  scope: workflow\n  url: http://logging-facility?namespace=${<DOMAIN_20>}&workflowName=${<DOMAIN_21>}&startedAt=${<DOMAIN_22>}&finishedAt=${<DOMAIN_23>}\n\
+    - name: Pod Link\n  scope: pod\n  url: http://logging-facility?namespace=${<DOMAIN_20>}&podName=${<DOMAIN_21>}&startedAt=${<DOMAIN_22>}&finishedAt=${<DOMAIN_23>}\n\
+    - name: Pod Logs Link\n  scope: pod-logs\n  url: http://logging-facility?namespace=${<DOMAIN_20>}&podName=${<DOMAIN_21>}&startedAt=${<DOMAIN_22>}&finishedAt=${<DOMAIN_23>}\n\
+    - name: Event Source Logs Link\n  scope: event-source-logs\n  url: http://logging-facility?namespace=${<DOMAIN_20>}&podName=${<DOMAIN_21>}&startedAt=${<DOMAIN_22>}&finishedAt=${<DOMAIN_23>}\n\
+    - name: Sensor Logs Link\n  scope: sensor-logs\n  url: http://logging-facility?namespace=${<DOMAIN_20>}&podName=${<DOMAIN_21>}&startedAt=${<DOMAIN_22>}&finishedAt=${<DOMAIN_23>}\n"
+  metricsConfig: 'enabled: true
+
+    path: /metrics
+
+    port: 9090
+
+    '
+  namespaceParallelism: '10'
+  persistence: "connectionPool:\n  maxIdleConns: 100\n  maxOpenConns: 0\n  connMaxLifetime:\
+    \ 0s\nnodeStatusOffLoad: true\narchive: true\narchiveTTL: 7d\npostgresql:\n  host:\
+    \ postgres\n  port: 5432\n  database: postgres\n  tableName: argo_workflows\n\
+    \  userNameSecret:\n    name: argo-postgres-config\n    key: username\n  passwordSecret:\n\
+    \    name: argo-postgres-config\n    key: password\n"
+  retentionPolicy: 'completed: 10
+
+    failed: 3
+
+    errored: 3
+
+    '
+apiVersion: v1
+kind: ConfigMap

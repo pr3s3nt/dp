@@ -1,0 +1,23 @@
+metadata:
+  name: request-2k8nf
+  namespace: fleet-default
+  labels:
+    fleet.cattle.io/managed: 'true'
+    objectset.rio.cattle.io/hash: ba04fb736e15bcfa6d652536a6fd3bddfdb41c2c
+  annotations:
+    objectset.rio.cattle.io/applied: H4sIAAAAAAAA/5SSwavUMBDG/xWZc7uv7bbdWvCk4EFQeIgX2cMkmezGTZOaTFZw6f8u6aI+Hlb0mPk6M9/vm95gIkaFjDDeAJ3zjGy8i/npxReSHIl3wfidRGZLO+MfjIIRpE2RKZSBTiZyWLug2Ozx3xyF8nS9wAjaEvET7Vqjnc9YFy/eGadevb5PfvyfwQ4nghECfU0UuWwug9P/1BRnlPTTU6lIY7IMSwEy0Lr6o5koMk4zjC5ZW4BFQXbN5znHhA5PlMPhkOgv688YzzCCwKrV4rDvqe6E1Nirvmu6fY+9VnuhlFairWUjs50NwG2EAlbIR9IUyEmKMH6+Ac7mE4WYI92+AxQgrJeXD3nAG7K0nmDUaCMVIL3j4K2l8Kt0MS5T//lwG87T+hdVbVV1zUGUXTdg2R5aUWIvhrJ6OTTNcKBKYg3LcSkgJPub4W3wac6v5wxwLCBQ9ClIep+zyd/I0vXfVXyq3et3v/EhMnJa9SsFsWozsjzDcTkuPwIAAP//XI0vRCMDAAA
+    objectset.rio.cattle.io/id: cluster-registration
+    objectset.rio.cattle.io/owner-gvk: <DOMAIN_474>/v1alpha1, Kind=ClusterRegistration
+    objectset.rio.cattle.io/owner-name: request-2k8nf
+    objectset.rio.cattle.io/owner-namespace: fleet-default
+rules:
+- verbs:
+  - patch
+  apiGroups:
+  - <DOMAIN_474>
+  resources:
+  - clusters/status
+  resourceNames:
+  - c-n6zds
+apiVersion: <DOMAIN_776>/v1
+kind: Role

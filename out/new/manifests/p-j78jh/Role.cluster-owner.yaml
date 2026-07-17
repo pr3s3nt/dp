@@ -1,0 +1,20 @@
+metadata:
+  name: cluster-owner
+  namespace: p-j78jh
+  labels:
+    cattle.io/creator: norman
+rules:
+- verbs:
+  - '*'
+  apiGroups:
+  - ''
+  resources:
+  - secrets
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_51>
+  resources:
+  - projectroletemplatebindings
+apiVersion: <DOMAIN_1>/v1
+kind: Role

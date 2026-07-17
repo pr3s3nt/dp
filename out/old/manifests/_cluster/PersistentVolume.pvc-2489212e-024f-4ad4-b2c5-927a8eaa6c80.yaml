@@ -1,0 +1,35 @@
+metadata:
+  name: pvc-2489212e-024f-4ad4-b2c5-927a8eaa6c80
+  annotations:
+    pv.kubernetes.io/provisioned-by: <DOMAIN_529>
+spec:
+  capacity:
+    storage: 5Gi
+  csi:
+    driver: <DOMAIN_529>
+    volumeHandle: 0001-0004-ceph-0000000000000002-8fa941ab-2414-11ee-b728-b66af3768d5f
+    fsType: ext4
+    volumeAttributes:
+      clusterID: ceph
+      imageFeatures: layering
+      imageFormat: '2'
+      imageName: csi-vol-8fa941ab-2414-11ee-b728-b66af3768d5f
+      journalPool: ceph-replica-pool
+      pool: ceph-replica-pool
+      radosNamespace: ''
+      storage.kubernetes.io/csiProvisionerIdentity: <DOMAIN_532>
+    nodeStageSecretRef:
+      name: rook-csi-rbd-node
+      namespace: ceph
+  accessModes:
+  - ReadWriteOnce
+  claimRef:
+    kind: PersistentVolumeClaim
+    namespace: feedback360
+    name: mongodb-persistent-storage-feedback360-mongo-0
+    apiVersion: v1
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolume

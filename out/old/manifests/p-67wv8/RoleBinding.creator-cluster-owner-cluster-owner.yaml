@@ -1,0 +1,16 @@
+metadata:
+  name: creator-cluster-owner-cluster-owner
+  namespace: p-67wv8
+  labels:
+    cattle.io/creator: norman
+    local_creator-cluster-owner: crtb-in-project-binding-owner
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: user-9h9cp
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: cluster-owner
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

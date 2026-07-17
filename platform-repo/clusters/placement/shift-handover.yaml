@@ -1,0 +1,5 @@
+# shift-handover — TODO: đổi tên cụm thật (xem clusters/README.md).
+app: shift-handover
+clusters:
+  staging: shift-handover-staging
+  prod: shift-handover-prod

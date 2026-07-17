@@ -1,0 +1,16 @@
+metadata:
+  name: metrics-server-auth-reader
+  namespace: kube-system
+  labels:
+    k8s-app: metrics-server
+  annotations: {}
+subjects:
+- kind: ServiceAccount
+  name: metrics-server
+  namespace: kube-system
+roleRef:
+  apiGroup: <DOMAIN_1>
+  kind: Role
+  name: extension-apiserver-authentication-reader
+apiVersion: <DOMAIN_1>/v1
+kind: RoleBinding

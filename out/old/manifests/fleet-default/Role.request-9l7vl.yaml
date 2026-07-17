@@ -1,0 +1,24 @@
+metadata:
+  name: request-9l7vl
+  namespace: fleet-default
+  labels:
+    fleet.cattle.io/managed: 'true'
+    objectset.rio.cattle.io/hash: 1f98871d8b1e57cbbfdde4576178d7d9b9bf300e
+  annotations:
+    objectset.rio.cattle.io/applied: '{"metadata":{"name":"request-9l7vl","namespace":"fleet-default","creationTimestamp":null,"labels":{"<DOMAIN_474>/managed":"true","<DOMAIN_553>/hash":"1f98871d8b1e57cbbfdde4576178d7d9b9bf300e"},"annotations":{"<DOMAIN_553>/id":"cluster-registration","<DOMAIN_553>/owner-gvk":"<DOMAIN_474>/v1alpha1,
+      Kind=ClusterRegistration","<DOMAIN_553>/owner-name":"request-9l7vl","<DOMAIN_553>/owner-namespace":"fleet-default"},"ownerReferences":[{"apiVersion":"<DOMAIN_474>/v1alpha1","kind":"ClusterRegistration","name":"request-9l7vl","uid":"ca652045-6a1b-4b3e-9250-aa27ec96340b","controller":false,"blockOwnerDeletion":false}]},"rules":[{"verbs":["patch"],"apiGroups":["<DOMAIN_474>"],"resources":["clusters/status"],"resourceNames":["c-chr6h"]}]}'
+    objectset.rio.cattle.io/id: cluster-registration
+    objectset.rio.cattle.io/owner-gvk: <DOMAIN_474>/v1alpha1, Kind=ClusterRegistration
+    objectset.rio.cattle.io/owner-name: request-9l7vl
+    objectset.rio.cattle.io/owner-namespace: fleet-default
+rules:
+- verbs:
+  - patch
+  apiGroups:
+  - <DOMAIN_474>
+  resources:
+  - clusters/status
+  resourceNames:
+  - c-chr6h
+apiVersion: <DOMAIN_776>/v1
+kind: Role

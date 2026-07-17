@@ -1,0 +1,21 @@
+metadata:
+  name: crt-<COMPANY>-stg-creator-cluster-owner-r4ydk3muza
+  namespace: fleet-default
+  labels:
+    objectset.rio.cattle.io/hash: d44f53ce3afd40085d10062292424e2a220f64a7
+  annotations:
+    objectset.rio.cattle.io/applied: H4sIAAAAAAAA/5SRT2/UMBTEvwp65zgEr9sulrjAgQO3qpwQhxf7ZdfEf1L7OUCrfHeUBBBIFG2Plj0znvk9QiBGi4ygHwFjTIzsUizrMfVfyHAhbrNLrUFmT61LL50FDVj5LKacZjFLYTL3IidPvYvWxRM0T4rT10hZnOYRNASMeKJAkf94MB+aFx9ctG/e+VqY8m3ydEdh8sj09kL7iIFAg8mEnLIwu5PYLi8SlwnN5iCCON8zfxuVhaXZHV2Kdy5QYQwT6Fi9b8BjT/6/q52xnEGDVWq4Ohg64GBV1x2v7Kuuu5bytVRSkUQpu+Fa4c2a9rsGizIHIwqfxD87iay+2/EQ6gPCLvtVYPBELCwNWD2vniulWxo23JN7n1OdQEPu0bQr0pTdw9awHY+ldQkaGF1cga8c4Ik//bXv0kCp+wigPz035mPZEP2MqcLf3B9nWD4vPwIAAP//wO1C0asCAAA
+    objectset.rio.cattle.io/id: auth-prov-v2-crtb-rolebinding
+    objectset.rio.cattle.io/owner-gvk: <DOMAIN_528>/v3, Kind=ClusterRoleTemplateBinding
+    objectset.rio.cattle.io/owner-name: creator-cluster-owner
+    objectset.rio.cattle.io/owner-namespace: c-m-hqttxk4d
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-l7q8v
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: crt-<COMPANY>-stg-cluster-owner
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

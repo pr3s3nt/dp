@@ -1,0 +1,22 @@
+metadata:
+  name: request-mnk27
+  namespace: cluster-fleet-local-local-1a3d67d0a899
+  labels:
+    fleet.cattle.io/managed: 'true'
+    objectset.rio.cattle.io/hash: 283c5a882dad3abad13b6e5ac6f9f4d5eafdff1e
+  annotations:
+    objectset.rio.cattle.io/applied: H4sIAAAAAAAA/5yRT6/TMBDEvwracxxemj9NInFAHDhwe3BDHNb2ujV17GCvi6B63x0lJahCFMG7RIqsnZnfzAUmYtTICOMF0PvAyDb4tPwG+ZkUJ+Iy2lAqZHZU2vDSahhBuZyYooh0sInjegXF3Zvw1VMUh/MJRjCOiG/ezhW6+YhV8eKd9frVm6vy4/8Ie5wIRoj0JVNiMfnTbv9PR2lGRVsm4YJCB08FqEir8Qc7UWKcZhh9dq4Ah5Lc2s7vFBN6PNBSDcdMfzE/YjrCCLu+Vi32/U6jrlGirmrZUYuqM4NpdEtotDEVLXHu4N0CbHvcgPz8Vljrbq8fsB+GRSwGR49k1sFn+zaGPC/aElWJmY8h2u8re3nqU2kDFHCyfuHahgmO4Femq5/MXjsSmmYXvk3keTFK+doAjB8vm8Z7imer6LVSIXuGP6OJ+qEZ9rpDMeyNFA3KRsi6a4Wp6qaqpTbVrn0m/6enHwEAAP//P7FU2PQCAAA
+    objectset.rio.cattle.io/id: cluster-registration
+    objectset.rio.cattle.io/owner-gvk: <DOMAIN_474>/v1alpha1, Kind=ClusterRegistration
+    objectset.rio.cattle.io/owner-name: request-mnk27
+    objectset.rio.cattle.io/owner-namespace: fleet-local
+subjects:
+- kind: ServiceAccount
+  name: request-mnk27-30497d6a-97fb-4ab4-b365-f13413bdf125
+  namespace: cluster-fleet-local-local-1a3d67d0a899
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: ClusterRole
+  name: fleet-bundle-deployment
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

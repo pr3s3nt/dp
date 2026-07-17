@@ -1,0 +1,16 @@
+metadata:
+  name: okr-redis-service
+  namespace: okr-dep
+spec:
+  ports:
+  - name: okr-redis
+    protocol: TCP
+    port: 6379
+    targetPort: 6379
+  selector:
+    app: okr-redis
+  clusterIP: <IP_87>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

@@ -1,0 +1,18 @@
+metadata:
+  name: survey-doe-service
+  namespace: survey-doe
+  labels:
+    app: survey-doe
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+  selector:
+    app: survey-doe
+  clusterIP: <IP_118>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

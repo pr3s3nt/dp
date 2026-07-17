@@ -1,0 +1,15 @@
+metadata:
+  name: crtb-ms22v-cluster-member
+  namespace: local
+  labels:
+    cattle.io/creator: norman
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-o2yezawj4t
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: cluster-member
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

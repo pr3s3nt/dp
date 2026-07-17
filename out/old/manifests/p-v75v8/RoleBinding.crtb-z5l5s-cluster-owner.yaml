@@ -1,0 +1,16 @@
+metadata:
+  name: crtb-z5l5s-cluster-owner
+  namespace: p-v75v8
+  labels:
+    c-6tfcq_crtb-z5l5s: crtb-in-project-binding-owner
+    cattle.io/creator: norman
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-ulqmnp7jyh
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: cluster-owner
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

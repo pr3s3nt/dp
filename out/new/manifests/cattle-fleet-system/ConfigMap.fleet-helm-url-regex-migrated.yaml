@@ -1,0 +1,8 @@
+metadata:
+  name: fleet-helm-url-regex-migrated
+  namespace: cattle-fleet-system
+  annotations:
+    fleet.cattle.io/migration: Marks that the one-time helmRepoURLRegex migration
+      has run. Do not delete.
+apiVersion: v1
+kind: ConfigMap

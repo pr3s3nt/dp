@@ -1,0 +1,20 @@
+metadata:
+  name: mysql-grafana-mysql-grafana-0
+  namespace: svms
+  labels:
+    app: mysql-grafana
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_529>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  volumeName: pvc-182e2be5-b08e-4bba-86b3-44ce7fbd1c9e
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

@@ -1,0 +1,18 @@
+metadata:
+  name: acs-arangodb-expose
+  namespace: acs
+  annotations: {}
+spec:
+  ports:
+  - protocol: TCP
+    port: 19094
+    targetPort: 8529
+  selector:
+    app: acs-arangodb
+  clusterIP: <IP_29>
+  type: ClusterIP
+  externalIPs:
+  - <CLEANUP_IP_40>
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

@@ -1,0 +1,109 @@
+metadata:
+  name: fleet-agent
+  namespace: cattle-fleet-local-system
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    objectset.rio.cattle.io/hash: 362023f752e7f1989d8b652e029bd2c658ae7c44
+  annotations:
+    meta.helm.sh/release-name: fleet-agent-local
+    meta.helm.sh/release-namespace: cattle-fleet-local-system
+    objectset.rio.cattle.io/applied: H4sIAAAAAAAA/5RVXXOjNhT9L3omXttZ54M3CsqWWQIMdppmdjyMLC62ukKikvDGzfDfOwLs4G3GO31D0j3389zDG6rAkIIYgtw3RISQhhgmhbZHufkLqNFgJorJCSXGcJgw+YkVyEUlBzBXZAvCXG2kNNooUl/1Rlf9I5eU8Ct90AYq1DqIkw3wi553RO+Qi65v5tP5dXm7mMNtObu/uy/uNjeLOUzn95tiTm8WdwRu6efP1qkgFZyng/pLXRNqXy6mpGugNiEFNWeUaOTOHKSBAzVS2YeKGLqLTomTuv4pWGu9GEUMbA/IfWsdZKCqOTHQwUfd5b/yMuRCypIJZqw3JGQB3uhcKyhBKSiCRjGxXdIdFA1nYhtuhTxd41egjR0jcr8dMSAonArCr7UCrftBf3tD3+FwTGg0jWM3ZQ2KdP1AoUAO2hPegAUioxpA63bdOugHsO3OIHfWrm0xVApDmADVB6CyqogoLKaL0rteOwjEvjMYxvjbUxxEOMBplLw84niVZ9hPYj+McJY/J9lXnC2PCSAXLaaodU7YIAsf/hcg9h7xMvV8fLR4ULKyPSoZ8CKD8vSdEmN5eZzm5J1fbTty6H2xKS/9JMWjoJcIeIL6v2P/axjnYbzC2R9eNMLPFtVUn9l6q1WEcxxhfxUmcR5hb4nz4Cnz7HGEvL6My/Aqe8lTnIVJMI73K1SMn/MAe0EUxuM654szHP7TerZD9KLcT9KXPMPL5Cnz8TIPkud4ucqw9zjCl4RrQO3aQawiW3ujiKA7UJ9Gm+Lup5PZYjJHg1XacJ5KzqglcFjG0qQK9LsK/EcaFGjZKGr5a5dVA20UMwdfCgOvpts/zuWPVLE947AFrCnhpF+mLkMHUVKTDePMsM4LKpSsLbO9KEJ2FeojtjhBFJAiEfyQSWkeGIeBAK5doNZBe8mbCh5lI0y/L5X9HFj3afK92cB7Pd3JNvrMyFT1u4k9tGvbSisgy5GeWbASYEDbDZcauYgz0byij3uhGuHpL0o2NXJn0+nU6W9iKWwlff7D3ZMG1Rt1rtSeUfAotTnGHw3CSG5l5aRBUJZAjV1LOciarblXJlvFhHLZFLWSe1aAmpwX0ggrkYxw9g8U55KF/24IH9Gs0yzbvksB30VQ6svuhu6tj0MciqlqcwiY6kn28+A+fB1m1v9PiGk6grb/BgAA//8/t3oioQcAAA
+    objectset.rio.cattle.io/id: fleet-agent-bootstrap-cattle-fleet-local-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fleet-agent
+  template:
+    metadata:
+      labels:
+        app: fleet-agent
+    spec:
+      volumes:
+      - name: kube
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}
+      containers:
+      - name: fleet-agent
+        image: rancher/fleet-agent:v0.15.2
+        command:
+        - fleetagent
+        env:
+        - name: BUNDLEDEPLOYMENT_RECONCILER_WORKERS
+          value: '50'
+        - name: DRIFT_RECONCILER_WORKERS
+          value: '50'
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_72>
+        - name: AGENT_SCOPE
+          value: cattle-fleet-local-system
+        - name: CHECKIN_INTERVAL
+          value: 15m0s
+        - name: CATTLE_ELECTION_LEASE_DURATION
+          value: 30s
+        - name: CATTLE_ELECTION_RETRY_PERIOD
+          value: 10s
+        - name: CATTLE_ELECTION_RENEW_DEADLINE
+          value: 25s
+        - name: EXPERIMENTAL_COPY_RESOURCES_DOWNSTREAM
+          value: 'false'
+        resources: {}
+        volumeMounts:
+        - name: kube
+          mountPath: /.kube
+        - name: tmp
+          mountPath: /tmp
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/os: linux
+      serviceAccountName: fleet-agent
+      serviceAccount: fleet-agent
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: <DOMAIN_63>/agent
+                operator: In
+                values:
+                - 'true'
+      schedulerName: default-scheduler
+      tolerations:
+      - key: <DOMAIN_95>/uninitialized
+        operator: Equal
+        value: 'true'
+        effect: NoSchedule
+      - key: <DOMAIN_96>/os
+        operator: Equal
+        value: linux
+        effect: NoSchedule
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

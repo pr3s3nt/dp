@@ -1,0 +1,243 @@
+metadata:
+  name: argocd-repo-server
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: repo-server
+    app.kubernetes.io/instance: argocd
+    app.kubernetes.io/name: argocd-repo-server
+    app.kubernetes.io/part-of: argocd
+  annotations: {}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-repo-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argocd-repo-server
+    spec:
+      volumes:
+      - name: ssh-known-hosts
+        configMap:
+          name: argocd-ssh-known-hosts-cm
+          defaultMode: 420
+      - name: tls-certs
+        configMap:
+          name: argocd-tls-certs-cm
+          defaultMode: 420
+      - name: gpg-keys
+        configMap:
+          name: argocd-gpg-keys-cm
+          defaultMode: 420
+      - name: gpg-keyring
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}
+      - name: helm-working-dir
+        emptyDir: {}
+      - name: argocd-repo-server-tls
+        secret:
+          secretName: <REDACTED:env>
+          items:
+          - key: <DOMAIN_620>
+            path: <DOMAIN_620>
+          - key: <DOMAIN_621>
+            path: <DOMAIN_621>
+          - key: <DOMAIN_485>
+            path: <DOMAIN_485>
+          defaultMode: 420
+          optional: true
+      - name: var-files
+        emptyDir: {}
+      - name: plugins
+        emptyDir: {}
+      initContainers:
+      - name: copyutil
+        image: <COMPANY>-<DOMAIN_607>/argocd/argocd:v2.3.1
+        command:
+        - cp
+        - -n
+        - /usr/local/bin/argocd
+        - /var/run/argocd/argocd-cmp-server
+        resources: {}
+        volumeMounts:
+        - name: var-files
+          mountPath: /var/run/argocd
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      containers:
+      - name: argocd-repo-server
+        image: <COMPANY>-<DOMAIN_607>/argocd/argocd:v2.3.1
+        command:
+        - <DOMAIN_619>
+        - argocd-repo-server
+        - --redis
+        - argocd-redis:6379
+        ports:
+        - containerPort: 8081
+          protocol: TCP
+        - containerPort: 8084
+          protocol: TCP
+        env:
+        - name: no_proxy
+          value: 127.0.0.1,argocd-repo-server,argocd-application-controller,argocd-metrics,argocd-server,argocd-server-metrics,argocd-redis,argocd-dex-server,<IP_128>/8,<IP_8>/16,<CLEANUP_IP_39>/24
+        - name: ARGOCD_RECONCILIATION_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              name: argocd-cm
+              key: <DOMAIN_622>
+              optional: true
+        - name: ARGOCD_REPO_SERVER_LOGFORMAT
+          valueFrom:
+            configMapKeyRef:
+              name: argocd-cmd-params-cm
+              key: <DOMAIN_623>
+              optional: true
+        - name: ARGOCD_REPO_SERVER_LOGLEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: argocd-cmd-params-cm
+              key: <DOMAIN_624>
+              optional: true
+        - name: ARGOCD_REPO_SERVER_PARALLELISM_LIMIT
+          valueFrom:
+            configMapKeyRef:
+              name: argocd-cmd-params-cm
+              key: <DOMAIN_625>
+              optional: true
+        - name: ARGOCD_REPO_SERVER_DISABLE_TLS
+          valueFrom:
+            configMapKeyRef:
+              name: argocd-cmd-params-cm
+              key: <DOMAIN_626>
+              optional: true
+        - name: ARGOCD_TLS_MIN_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: argocd-cmd-params-cm
+              key: <DOMAIN_627>
+              optional: true
+        - name: ARGOCD_TLS_MAX_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: argocd-cmd-params-cm
+              key: <DOMAIN_628>
+              optional: true
+        - name: ARGOCD_TLS_CIPHERS
+          valueFrom:
+            configMapKeyRef:
+              name: argocd-cmd-params-cm
+              key: <DOMAIN_629>
+              optional: true
+        - name: ARGOCD_REPO_CACHE_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              name: argocd-cmd-params-cm
+              key: <DOMAIN_630>
+              optional: true
+        - name: REDIS_SERVER
+          valueFrom:
+            configMapKeyRef:
+              name: argocd-cmd-params-cm
+              key: <DOMAIN_631>
+              optional: true
+        - name: REDISDB
+          valueFrom:
+            configMapKeyRef:
+              name: argocd-cmd-params-cm
+              key: <DOMAIN_632>
+              optional: true
+        - name: ARGOCD_DEFAULT_CACHE_EXPIRATION
+          valueFrom:
+            configMapKeyRef:
+              name: argocd-cmd-params-cm
+              key: <DOMAIN_633>
+              optional: true
+        - name: HELM_CACHE_HOME
+          value: /helm-working-dir
+        - name: HELM_CONFIG_HOME
+          value: /helm-working-dir
+        - name: HELM_DATA_HOME
+          value: /helm-working-dir
+        resources: {}
+        volumeMounts:
+        - name: ssh-known-hosts
+          mountPath: /app/config/ssh
+        - name: tls-certs
+          mountPath: /app/config/tls
+        - name: gpg-keys
+          mountPath: /app/config/gpg/source
+        - name: gpg-keyring
+          mountPath: /app/config/gpg/keys
+        - name: argocd-repo-server-tls
+          mountPath: /app/config/reposerver/tls
+        - name: tmp
+          mountPath: /tmp
+        - name: helm-working-dir
+          mountPath: /helm-working-dir
+        - name: plugins
+          mountPath: /home/argocd/cmp-server/plugins
+        livenessProbe:
+          httpGet:
+            path: /healthz?full=true
+            port: 8084
+            scheme: HTTP
+          initialDelaySeconds: 30
+          timeoutSeconds: 1
+          periodSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8084
+            scheme: HTTP
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - all
+          runAsNonRoot: true
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      automountServiceAccountToken: false
+      securityContext: {}
+      imagePullSecrets:
+      - name: registrypullsecret
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: argocd-repo-server
+              topologyKey: <DOMAIN_138>/hostname
+          - weight: 5
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/part-of: argocd
+              topologyKey: <DOMAIN_138>/hostname
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

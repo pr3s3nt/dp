@@ -1,0 +1,98 @@
+metadata:
+  name: cluster-owner
+  namespace: p-t2pmj
+  labels:
+    cattle.io/creator: norman
+rules:
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - pipelinesettings
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - apprevisions
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - catalogtemplates
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - catalogtemplateversions
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectroletemplatebindings
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - pipelineexecutions
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectalertrules
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectmonitorgraphs
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - apps
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectcatalogs
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectloggings
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - secrets
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - sourcecodeproviderconfigs
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectalertgroups
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - pipelines
+apiVersion: <DOMAIN_776>/v1
+kind: Role

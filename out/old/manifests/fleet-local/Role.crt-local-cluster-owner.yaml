@@ -1,0 +1,30 @@
+metadata:
+  name: crt-local-cluster-owner
+  namespace: fleet-local
+  labels:
+    objectset.rio.cattle.io/hash: 9126bbcc55043786911d77062668766bbb19249f
+  annotations:
+    objectset.rio.cattle.io/applied: H4sIAAAAAAAA/7yRTY/TMBCG/wqaI7JLk+ajscSJAwckDqsVF9TD2Jm0Zh07sifhUOW/I7e7bIVU4LQ3e77eZ945w0iMPTKCOgN6HxjZBp/yN+gfZDgRb6ING4PMjjY2fLA9KMCZT3KKYZFLKWNwxDRODpmkCwYdiLvt4aenKI/LEygY0eORRvJ8U7DsxLsv1vcfH4Kjx+ex/xzocSRQYNycmKK8BP+rKU1ociesAkyky/6PdqTEOE6g/OycAIea3F9dOWE6gYKuKButjanrbbVr901XFH3bbpuyafZt02iti66suiGrvSBHvpom/4S/xRscEb+amyseaKBI3lAC9f0MONlvFJMNHhTk09j8tv54620BAp6szyf8dFWD3yAvw+frheuq37VIco8DyWq/RdmV21r2Q1eXZVdh32pYD6uAOLtXhM8xzFP+3UGAg4BIKczR0Ne8Xy69Kt9kLtFnO1JOLBT1JfgeDqt4M6XD+isAAP//CW0zlSMDAAA
+    objectset.rio.cattle.io/id: auth-prov-v2-roletemplate-local
+    objectset.rio.cattle.io/owner-gvk: <DOMAIN_528>/v3, Kind=RoleTemplate
+    objectset.rio.cattle.io/owner-name: cluster-owner
+    objectset.rio.cattle.io/owner-namespace: ''
+rules:
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_551>
+  resources:
+  - clusters
+  resourceNames:
+  - local
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_551>
+  resources:
+  - clusters
+  resourceNames:
+  - local
+apiVersion: <DOMAIN_776>/v1
+kind: Role

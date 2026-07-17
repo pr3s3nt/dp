@@ -1,0 +1,65 @@
+# APP MẪU MIGRATION — feedback360/backend (từ cụm 1.19, ns feedback360)
+# Chứng minh: postgres + app-config (pattern `be-secret` cũ) + route riêng cho BE.
+# Nguồn đối chiếu: out/old/manifests/feedback360/Deployment.feedback360-backend.yaml
+apiVersion: score.dev/v1b1
+
+metadata:
+  name: feedback360-backend
+
+containers:
+  main:                       # convention platform: container chính tên 'main', image do CI điền
+    image: "."
+    variables:
+      # ---- từ app-config: đúng bộ key của Secret `be-secret` trên cụm cũ.
+      # Ops điền giá trị 1 lần/namespace (kubectl patch secret feedback360-backend-app-config ...)
+      NODE_ENV: ${resources.config.NODE_ENV}
+      PORT: ${resources.config.PORT}
+      FRONTEND_URL: ${resources.config.FRONTEND_URL}
+      # DATABASE_URL kiểu prisma chứa cả password -> để ops điền nguyên chuỗi qua app-config
+      # (score-k8s không cho nối chuỗi quanh một giá trị secretKeyRef).
+      # Password DB nằm sẵn trong secret feedback360-backend-db-credentials.
+      DATABASE_URL: ${resources.config.DATABASE_URL}
+      DEFAULT_PASSWORD: ${resources.config.DEFAULT_PASSWORD}
+      JWT_SECRET: ${resources.config.JWT_SECRET}
+      JWT_EXPIRES_IN: ${resources.config.JWT_EXPIRES_IN}
+      KEYCLOAK_URL: ${resources.config.KEYCLOAK_URL}
+      KEYCLOAK_REALM: ${resources.config.KEYCLOAK_REALM}
+      KEYCLOAK_CLIENT_ID: ${resources.config.KEYCLOAK_CLIENT_ID}
+      # ---- từ provisioner postgres: app nào đọc từng phần thay vì DATABASE_URL thì dùng bộ này
+      DB_HOST: ${resources.db.host}
+      DB_PORT: ${resources.db.port}
+      DB_NAME: ${resources.db.name}
+      DB_USER: ${resources.db.username}
+      DB_PASSWORD: ${resources.db.password}
+
+service:
+  ports:
+    http:
+      port: 8000              # cụm cũ: feedback360-be-service port 8000
+      targetPort: 8000
+
+resources:
+  db:
+    type: postgres            # onprem -> StatefulSet; cloud -> RDS. App không đổi.
+    params:
+      database: feedback360   # giữ đúng tên DB cụm cũ để restore dump không phải đổi app
+      image: postgres:16-alpine
+  config:
+    type: app-config
+    params:
+      keys:
+        - NODE_ENV
+        - PORT
+        - FRONTEND_URL
+        - DATABASE_URL
+        - DEFAULT_PASSWORD
+        - JWT_SECRET
+        - JWT_EXPIRES_IN
+        - KEYCLOAK_URL
+        - KEYCLOAK_REALM
+        - KEYCLOAK_CLIENT_ID
+  api:
+    type: route               # cụm cũ: host riêng cho BE (đa host cùng app — xem frontend)
+    params:
+      host: api-feedback360.example.com   # TODO: đổi domain thật
+      port: 8000

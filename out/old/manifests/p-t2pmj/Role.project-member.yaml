@@ -1,0 +1,272 @@
+metadata:
+  name: project-member
+  namespace: p-t2pmj
+  labels:
+    cattle.io/creator: norman
+rules:
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - <DOMAIN_528>
+  resources:
+  - projectroletemplatebindings
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_782>
+  resources:
+  - apps
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_782>
+  resources:
+  - apprevisions
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_782>
+  resources:
+  - pipelines
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_782>
+  resources:
+  - pipelineexecutions
+- verbs:
+  - create
+  apiGroups:
+  - ''
+  resources:
+  - namespaces
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - '*'
+  resources:
+  - persistentvolumes
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - '*'
+  resources:
+  - storageclasses
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - '*'
+  resources:
+  - apiservices
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - persistentvolumeclaims
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_783>
+  resources:
+  - pods
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - <DOMAIN_528>
+  resources:
+  - clusterevents
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - <DOMAIN_528>
+  resources:
+  - notifiers
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_528>
+  resources:
+  - projectalertrules
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_528>
+  resources:
+  - projectalertgroups
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - <DOMAIN_528>
+  resources:
+  - projectloggings
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - <DOMAIN_528>
+  resources:
+  - clustercatalogs
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - <DOMAIN_528>
+  resources:
+  - projectcatalogs
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - <DOMAIN_528>
+  resources:
+  - projectmonitorgraphs
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - <DOMAIN_528>
+  resources:
+  - catalogtemplates
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - <DOMAIN_528>
+  resources:
+  - catalogtemplateversions
+- verbs:
+  - view
+  apiGroups:
+  - <DOMAIN_784>
+  resources:
+  - prometheus
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_157>
+  resources:
+  - prometheuses
+  - prometheusrules
+  - servicemonitors
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_785>
+  resources:
+  - destinationrules
+  - envoyfilters
+  - gateways
+  - serviceentries
+  - sidecars
+  - virtualservices
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_786>
+  resources:
+  - apikeys
+  - authorizations
+  - checknothings
+  - circonuses
+  - deniers
+  - fluentds
+  - handlers
+  - kubernetesenvs
+  - kuberneteses
+  - listcheckers
+  - listentries
+  - logentries
+  - memquotas
+  - metrics
+  - opas
+  - prometheuses
+  - quotas
+  - quotaspecbindings
+  - quotaspecs
+  - rbacs
+  - reportnothings
+  - rules
+  - solarwindses
+  - stackdrivers
+  - statsds
+  - stdios
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_787>
+  resources:
+  - policies
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_788>
+  resources:
+  - rbacconfigs
+  - serviceroles
+  - servicerolebindings
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_789>
+  resources:
+  - authorizationpolicies
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - <DOMAIN_781>
+  resources:
+  - clusterrepos
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - <DOMAIN_781>
+  resources:
+  - operations
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - <DOMAIN_781>
+  resources:
+  - releases
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - <DOMAIN_781>
+  resources:
+  - apps
+- verbs:
+  - get
+  apiGroups:
+  - <DOMAIN_528>
+  resources:
+  - clusters
+apiVersion: <DOMAIN_776>/v1
+kind: Role

@@ -1,0 +1,14 @@
+metadata:
+  name: r-cluster-<COMPANY>-stg-view
+  namespace: fleet-default
+rules:
+- verbs:
+  - get
+  apiGroups:
+  - <DOMAIN_551>
+  resources:
+  - clusters
+  resourceNames:
+  - <COMPANY>-stg
+apiVersion: <DOMAIN_776>/v1
+kind: Role

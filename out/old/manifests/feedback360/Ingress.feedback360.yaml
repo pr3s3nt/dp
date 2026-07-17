@@ -1,0 +1,30 @@
+metadata:
+  name: feedback360
+  namespace: feedback360
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"feedback360:feedback360-fe-service","ingressName":"feedback360:feedback360","hostname":"feedback360.<COMPANY_DOMAIN>","path":"/","allNodes":false},{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"feedback360:feedback360-be-service","ingressName":"feedback360:feedback360","hostname":"<DOMAIN_556>.<COMPANY_DOMAIN>","path":"/","allNodes":false}]'
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: feedback360.<COMPANY_DOMAIN>
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: feedback360-fe-service
+            port:
+              number: 80
+  - host: <DOMAIN_556>.<COMPANY_DOMAIN>
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: feedback360-be-service
+            port:
+              number: 8000
+apiVersion: <DOMAIN_775>/v1
+kind: Ingress

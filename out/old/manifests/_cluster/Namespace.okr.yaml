@@ -1,0 +1,8 @@
+metadata:
+  name: okr
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2021-06-24T04:11:18Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2021-06-24T04:11:18Z"}]}'
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+spec: {}
+apiVersion: v1
+kind: Namespace

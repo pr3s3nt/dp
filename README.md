@@ -47,13 +47,15 @@ v2/
 
 | Chủ đề | Quyết định |
 |---|---|
-| Giao diện dev | Chỉ `score.yaml` (3 loại resource: `postgres`, `route`, `service`) |
+| Giao diện dev | Chỉ `score.yaml` — 7 loại resource: `postgres`, `mysql` (gồm mariadb), `mongodb`, `redis`, `app-config`, `route`, `service` |
 | Render | score-k8s + catalog provisioner + patch template theo env — không Kustomize/Helm |
 | Config repo | 1 app = 1 repo `<app>-config`, manifest render sẵn, máy ghi người review |
-| Phát hiện app | ApplicationSet SCM provider quét org tìm `*-config` → thêm app = tạo repo |
+| Phát hiện app & placement | onprem: ApplicationSet đọc `platform-repo/clusters/placement/<app>.yaml` — thêm app = tạo repo `<app>-config` + 1 file placement; **mỗi app deploy lên cụm k8s riêng** ghi trong file đó (`in-cluster` = cụm quản lý). Cloud: appset quét org như cũ |
 | Namespace | `<app>-<env>` (mọi service của app chung namespace) |
 | Sync | staging auto (prune+selfHeal); prod manual |
-| Secret | Provisioner tự sinh password → Secret; CI tách khỏi git, `kubectl create` (giữ nguyên nếu đã có); app đọc qua `secretKeyRef`; convention `<workload>-db-credentials` |
+| Secret | Provisioner tự sinh password → Secret; CI tách khỏi git, `kubectl create` (giữ nguyên nếu đã có); app đọc qua `secretKeyRef`; convention `<workload>-db-credentials` (redis: `-redis-credentials`, config app: `-app-config`) |
+| Backup DB | Tùy chọn `params.backup` của provisioner mysql/mongodb → CronJob `*-auto-backup` + `*-cleanup-backup` + PVC riêng |
+| Migration 1.19→1.35 | Catalog phủ ~22 app nghiệp vụ; mapping + đánh giá keycloak/svms/arangodb: `platform-repo/docs/mapping-k8s-cu-sang-score.md`; app mẫu: `platform-repo/score/examples/migration/`; chạy thử: `HUONG-DAN-THUC-THI.md` |
 | Promotion | Nút bấm (workflow_dispatch) → orchestrator tạo commit đổi tag prod; mode `re-render` khi score.yaml đổi cấu trúc; không build lại image |
 | CI vs Platform | CI app chỉ build + dispatch; orchestrator (platform-repo) render/secret/commit — credential tập trung 1 chỗ |
 | Ghim hạ tầng | `platform.lock` mỗi app ghim tag catalog (provisioners+patches); sửa platform không lan sang app đang chạy; catalog-ci render-diff khi PR — xem CHIEN-LUOC-MIGRATION-VA-CAP-NHAT.md |

@@ -1,0 +1,29 @@
+metadata:
+  name: mongodb-backup-pv
+  annotations:
+    pv.kubernetes.io/bound-by-controller: 'yes'
+spec:
+  capacity:
+    storage: 20Gi
+  hostPath:
+    path: /home/<CLEANUP_USER_1>/ptt.hang2/shift_handover/backup
+    type: ''
+  accessModes:
+  - ReadWriteMany
+  claimRef:
+    kind: PersistentVolumeClaim
+    namespace: shift-handover
+    name: mongodb-backup-pvc
+    apiVersion: v1
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: <DOMAIN_138>/hostname
+          operator: In
+          values:
+          - <CLEANUP_HOST_4>
+apiVersion: v1
+kind: PersistentVolume

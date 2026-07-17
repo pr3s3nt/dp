@@ -1,0 +1,25 @@
+metadata:
+  name: data-harbor-trivy-0
+  namespace: harbor
+  labels:
+    app: harbor
+    chart: harbor
+    component: trivy
+    heritage: Helm
+    release: harbor
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_52>
+    volume.kubernetes.io/storage-provisioner: <DOMAIN_52>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  volumeName: pvc-c4bfee0f-56f2-43c0-8f78-7eed68e4fc17
+  storageClassName: rook-ceph-block
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

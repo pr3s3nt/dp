@@ -1,0 +1,35 @@
+metadata:
+  name: jfrog-container-registry-artifactory
+  namespace: artifactory
+  labels:
+    app: artifactory
+    chart: artifactory-107.41.4
+    heritage: Helm
+    release: jfrog-container-registry
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"artifactory:jfrog-container-registry-artifactory","ingressName":"artifactory:jfrog-container-registry-artifactory","hostname":"artifactory.<COMPANY><DOMAIN_14>","path":"/","allNodes":false},{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"artifactory:jfrog-container-registry-artifactory","ingressName":"artifactory:jfrog-container-registry-artifactory","hostname":"artifactory.<COMPANY><DOMAIN_14>","path":"/artifactory","allNodes":false}]'
+    nginx.ingress.kubernetes.io/proxy-body-size: '0'
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '600'
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '600'
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: artifactory.<COMPANY><DOMAIN_14>
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: jfrog-container-registry-artifactory
+            port:
+              number: 8082
+      - path: /artifactory
+        pathType: Prefix
+        backend:
+          service:
+            name: jfrog-container-registry-artifactory
+            port:
+              number: 8081
+apiVersion: <DOMAIN_775>/v1
+kind: Ingress

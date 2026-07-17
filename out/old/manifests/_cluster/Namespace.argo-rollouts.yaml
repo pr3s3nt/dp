@@ -1,0 +1,8 @@
+metadata:
+  name: argo-rollouts
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2022-04-26T09:13:43Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2022-04-26T09:13:43Z"}]}'
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+spec: {}
+apiVersion: v1
+kind: Namespace

@@ -1,0 +1,18 @@
+metadata:
+  name: face-reco-fe-cm
+  namespace: face-reco
+  labels:
+    appname: face-reco
+  annotations: {}
+data:
+  default.conf: "server {\n  listen       80;\n  listen  [::]:80;\n  client_max_body_size\
+    \ 1000M;\n\n  #charset koi8-r;\n  #access_log  /var/log/nginx/<DOMAIN_1>  main;\n\
+    \n  location / {\n      root   /usr/share/nginx/html;\n      index  <DOMAIN_4>\
+    \ <DOMAIN_5>;\n      try_files $uri $uri/ /<DOMAIN_4>;\n  }\n\n  #error_page \
+    \ 404              /<DOMAIN_6>;\n\n  # redirect server error pages to the static\
+    \ page /<DOMAIN_7>\n  error_page   500 502 503 504  /<DOMAIN_7>;\n  location =\
+    \ /<DOMAIN_7> {\n      root   /usr/share/nginx/html;\n  }\n\n  location /FaceRecognition-0.0.1\
+    \ {\n    #proxy_pass http://face-reco-be-svc.face-reco.svc.cluster.local:39061/FaceRecognition-0.0.1;\n\
+    \    proxy_pass http://<CLEANUP_IP_5>:39061/FaceRecognition-0.0.1;\n  }\n}\n"
+apiVersion: v1
+kind: ConfigMap

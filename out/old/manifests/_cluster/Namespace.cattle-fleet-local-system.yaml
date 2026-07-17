@@ -1,0 +1,15 @@
+metadata:
+  name: cattle-fleet-local-system
+  labels:
+    field.cattle.io/projectId: p-wnc8s
+    objectset.rio.cattle.io/hash: 362023f752e7f1989d8b652e029bd2c658ae7c44
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2022-07-28T08:35:21Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2022-07-28T08:35:27Z"}]}'
+    field.cattle.io/projectId: local:p-wnc8s
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+    management.cattle.io/no-default-sa-token: <REDACTED:env>
+    objectset.rio.cattle.io/applied: H4sIAAAAAAAA/3zNzW7CMBAE4HeZc5yCIX9+iB57Xzub4tbxRtlVpQrx7ijiznE0o2/uoC1/8a5ZKgL+zmjwm+uMgE9aWTdKjAYrG81khHAH1SpGlqXqESX+cDJla/csbSKzwm2Wj3wYS2E2R99czUURU9tpc6+Re5VFEhWn/2q84tGgUOTyVr6R3hBw6f3JX5ah8zws52mc5jH2neeTn+LsU9+NxEO6Xg+00soIeHP8eAYAAP//jWH4RQoBAAA
+    objectset.rio.cattle.io/id: fleet-agent-bootstrap-cattle-fleet-local-system
+spec: {}
+apiVersion: v1
+kind: Namespace

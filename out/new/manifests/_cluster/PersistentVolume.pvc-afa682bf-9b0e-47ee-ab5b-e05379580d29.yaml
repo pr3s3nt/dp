@@ -1,0 +1,42 @@
+metadata:
+  name: pvc-afa682bf-9b0e-47ee-ab5b-e05379580d29
+  annotations:
+    pv.kubernetes.io/provisioned-by: <DOMAIN_52>
+    volume.kubernetes.io/provisioner-deletion-secret-name: <REDACTED:env>
+    volume.kubernetes.io/provisioner-deletion-secret-namespace: <REDACTED:env>
+spec:
+  capacity:
+    storage: 20Gi
+  csi:
+    driver: <DOMAIN_52>
+    volumeHandle: 0001-0009-rook-ceph-0000000000000001-909cd9b4-ae41-473b-9247-09373ed3585d
+    fsType: ext4
+    volumeAttributes:
+      clusterID: rook-ceph
+      imageFeatures: layering
+      imageFormat: '2'
+      imageName: csi-vol-909cd9b4-ae41-473b-9247-09373ed3585d
+      journalPool: replicapool
+      pool: replicapool
+      storage.kubernetes.io/csiProvisionerIdentity: <DOMAIN_53>
+    controllerPublishSecretRef:
+      name: rook-csi-rbd-provisioner
+      namespace: rook-ceph
+    nodeStageSecretRef:
+      name: rook-csi-rbd-node
+      namespace: rook-ceph
+    controllerExpandSecretRef:
+      name: rook-csi-rbd-provisioner
+      namespace: rook-ceph
+  accessModes:
+  - ReadWriteOnce
+  claimRef:
+    kind: PersistentVolumeClaim
+    namespace: harbor
+    name: database-data-harbor-database-0
+    apiVersion: v1
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: rook-ceph-block
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolume

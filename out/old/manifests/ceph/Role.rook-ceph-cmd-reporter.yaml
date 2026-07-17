@@ -1,0 +1,19 @@
+metadata:
+  name: rook-ceph-cmd-reporter
+  namespace: ceph
+  annotations: {}
+rules:
+- verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+  apiGroups:
+  - ''
+  resources:
+  - pods
+  - configmaps
+apiVersion: <DOMAIN_776>/v1
+kind: Role

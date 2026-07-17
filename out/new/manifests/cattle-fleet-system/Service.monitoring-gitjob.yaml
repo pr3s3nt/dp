@@ -1,0 +1,29 @@
+metadata:
+  name: monitoring-gitjob
+  namespace: cattle-fleet-system
+  labels:
+    app: gitjob
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: fleet
+    meta.helm.sh/release-namespace: cattle-fleet-system
+spec:
+  ports:
+  - name: metrics
+    protocol: TCP
+    port: 8081
+    targetPort: 8081
+  selector:
+    app: gitjob
+    fleet.cattle.io/shard-default: 'true'
+  clusterIP: <IP_14>
+  clusterIPs:
+  - <IP_14>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  internalTrafficPolicy: Cluster
+apiVersion: v1
+kind: Service

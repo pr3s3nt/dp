@@ -1,0 +1,12 @@
+metadata:
+  name: u-zoriiln52e
+  labels:
+    cattle.io/creator: norman
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2020-10-19T04:06:30Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2020-10-19T04:06:30Z"}]}'
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+    management.cattle.io/no-default-sa-token: <REDACTED:env>
+    management.cattle.io/system-namespace: 'true'
+spec: {}
+apiVersion: v1
+kind: Namespace

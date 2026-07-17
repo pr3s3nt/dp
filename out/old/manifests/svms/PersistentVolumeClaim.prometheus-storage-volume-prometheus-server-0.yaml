@@ -1,0 +1,20 @@
+metadata:
+  name: prometheus-storage-volume-prometheus-server-0
+  namespace: svms
+  labels:
+    app: prometheus-server
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_529>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Gi
+  volumeName: pvc-cf9aab2e-bd54-4e20-987b-5337011930a5
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

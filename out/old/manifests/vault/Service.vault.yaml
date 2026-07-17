@@ -1,0 +1,31 @@
+metadata:
+  name: vault
+  namespace: vault
+  labels:
+    app.kubernetes.io/instance: vault
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: vault
+    helm.sh/chart: vault-0.8.0
+  annotations:
+    meta.helm.sh/release-name: vault
+    meta.helm.sh/release-namespace: vault
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8200
+    targetPort: 8200
+  - name: https-internal
+    protocol: TCP
+    port: 8201
+    targetPort: 8201
+  selector:
+    app.kubernetes.io/instance: vault
+    app.kubernetes.io/name: vault
+    component: server
+  clusterIP: <IP_125>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+  publishNotReadyAddresses: true
+apiVersion: v1
+kind: Service

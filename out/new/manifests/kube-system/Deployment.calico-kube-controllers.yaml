@@ -1,0 +1,78 @@
+metadata:
+  name: calico-kube-controllers
+  namespace: kube-system
+  labels:
+    k8s-app: calico-kube-controllers
+  annotations: {}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: calico-kube-controllers
+  template:
+    metadata:
+      name: calico-kube-controllers
+      namespace: kube-system
+      labels:
+        k8s-app: calico-kube-controllers
+      annotations:
+        kubectl.kubernetes.io/restartedAt: '2026-07-10T11:16:36Z'
+    spec:
+      containers:
+      - name: calico-kube-controllers
+        image: quay.io/calico/kube-controllers:v3.31.4
+        env:
+        - name: ENABLED_CONTROLLERS
+          value: node,loadbalancer
+        - name: DATASTORE_TYPE
+          value: kubernetes
+        resources: {}
+        livenessProbe:
+          exec:
+            command:
+            - /usr/bin/check-status
+            - -l
+          initialDelaySeconds: 10
+          timeoutSeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 6
+        readinessProbe:
+          exec:
+            command:
+            - /usr/bin/check-status
+            - -r
+          timeoutSeconds: 1
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          runAsNonRoot: true
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/os: linux
+      serviceAccountName: calico-kube-controllers
+      serviceAccount: calico-kube-controllers
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      schedulerName: default-scheduler
+      tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - key: <DOMAIN_94>/master
+        effect: NoSchedule
+      - key: <DOMAIN_94>/control-plane
+        effect: NoSchedule
+      priorityClassName: system-cluster-critical
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

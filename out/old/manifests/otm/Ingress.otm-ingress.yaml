@@ -1,0 +1,22 @@
+metadata:
+  name: otm-ingress
+  namespace: otm
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"otm:otm-fe","ingressName":"otm:otm-ingress","hostname":"otm.<COMPANY_DOMAIN>","path":"/","allNodes":false}]'
+    ingress.kubernetes.io/app-root: /
+    ingress.kubernetes.io/proxy-body-size: 100M
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: otm.<COMPANY_DOMAIN>
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: otm-fe
+            port:
+              number: 8080
+apiVersion: <DOMAIN_775>/v1
+kind: Ingress

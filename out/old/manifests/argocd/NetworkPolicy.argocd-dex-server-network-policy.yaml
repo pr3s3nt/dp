@@ -1,0 +1,29 @@
+metadata:
+  name: argocd-dex-server-network-policy
+  namespace: argocd
+  labels:
+    app.kubernetes.io/instance: argocd
+  annotations: {}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-dex-server
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 5556
+    - protocol: TCP
+      port: 5557
+    from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: argocd-server
+  - ports:
+    - protocol: TCP
+      port: 5558
+    from:
+    - namespaceSelector: {}
+  policyTypes:
+  - Ingress
+apiVersion: <DOMAIN_775>/v1
+kind: NetworkPolicy

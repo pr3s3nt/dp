@@ -1,0 +1,22 @@
+metadata:
+  name: okr-ingress
+  namespace: okr
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"okr:okr-fe-expose","ingressName":"okr:okr-ingress","hostname":"okr-old.<COMPANY_DOMAIN>","path":"/","allNodes":false}]'
+    ingress.kubernetes.io/app-root: /
+    ingress.kubernetes.io/proxy-body-size: 100M
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: okr-old.<COMPANY_DOMAIN>
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: okr-fe-expose
+            port:
+              number: 80
+apiVersion: <DOMAIN_775>/v1
+kind: Ingress

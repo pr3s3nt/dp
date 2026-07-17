@@ -1,0 +1,21 @@
+metadata:
+  name: kibana
+  namespace: elk
+  labels:
+    app: kibana
+  annotations: {}
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    port: 5601
+    targetPort: 5601
+  selector:
+    app: kibana
+  clusterIP: <IP_60>
+  type: ClusterIP
+  externalIPs:
+  - <CLEANUP_IP_5>
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

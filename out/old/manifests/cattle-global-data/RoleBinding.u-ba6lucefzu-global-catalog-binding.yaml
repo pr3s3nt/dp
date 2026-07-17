@@ -1,0 +1,15 @@
+metadata:
+  name: u-ba6lucefzu-global-catalog-binding
+  namespace: cattle-global-data
+  labels:
+    cattle.io/creator: norman
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-ba6lucefzu
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: global-catalog
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

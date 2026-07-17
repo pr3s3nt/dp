@@ -1,0 +1,35 @@
+metadata:
+  name: pvc-a5d5bd52-2d6a-4e2e-aeff-2447256ced71
+  annotations:
+    pv.kubernetes.io/provisioned-by: <DOMAIN_529>
+spec:
+  capacity:
+    storage: 100Gi
+  csi:
+    driver: <DOMAIN_529>
+    volumeHandle: 0001-0004-ceph-0000000000000002-959a0053-2f57-11ee-b728-b66af3768d5f
+    fsType: ext4
+    volumeAttributes:
+      clusterID: ceph
+      imageFeatures: layering
+      imageFormat: '2'
+      imageName: csi-vol-959a0053-2f57-11ee-b728-b66af3768d5f
+      journalPool: ceph-replica-pool
+      pool: ceph-replica-pool
+      radosNamespace: ''
+      storage.kubernetes.io/csiProvisionerIdentity: <DOMAIN_532>
+    nodeStageSecretRef:
+      name: rook-csi-rbd-node
+      namespace: ceph
+  accessModes:
+  - ReadWriteOnce
+  claimRef:
+    kind: PersistentVolumeClaim
+    namespace: moodle-v2
+    name: data-moodle-mariadb-0
+    apiVersion: v1
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolume

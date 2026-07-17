@@ -1,0 +1,16 @@
+metadata:
+  name: u-b4qkhsnliz-admin-cluster-owner
+  namespace: p-j78jh
+  labels:
+    cattle.io/creator: norman
+    local_u-b4qkhsnliz-admin: crtb-in-project-binding-owner
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_1>
+  name: u-b4qkhsnliz
+roleRef:
+  apiGroup: <DOMAIN_1>
+  kind: Role
+  name: cluster-owner
+apiVersion: <DOMAIN_1>/v1
+kind: RoleBinding

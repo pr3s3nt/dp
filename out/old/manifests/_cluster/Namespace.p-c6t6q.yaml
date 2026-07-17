@@ -1,0 +1,9 @@
+metadata:
+  name: p-c6t6q
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2023-07-06T04:23:31Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2023-07-06T04:23:31Z"}]}'
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+    management.cattle.io/system-namespace: 'true'
+spec: {}
+apiVersion: v1
+kind: Namespace

@@ -1,0 +1,20 @@
+metadata:
+  name: ingress-nginx
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+    app.kubernetes.io/version: 1.2.1
+  annotations: {}
+subjects:
+- kind: ServiceAccount
+  name: ingress-nginx
+  namespace: ingress-nginx
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: ingress-nginx
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

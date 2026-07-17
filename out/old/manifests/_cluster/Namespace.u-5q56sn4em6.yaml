@@ -1,0 +1,11 @@
+metadata:
+  name: u-5q56sn4em6
+  labels:
+    cattle.io/creator: norman
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2025-02-18T02:31:11Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2025-02-18T02:31:11Z"}]}'
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+    management.cattle.io/system-namespace: 'true'
+spec: {}
+apiVersion: v1
+kind: Namespace

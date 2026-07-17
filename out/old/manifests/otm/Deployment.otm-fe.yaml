@@ -1,0 +1,46 @@
+metadata:
+  name: otm-fe
+  namespace: otm
+  labels:
+    app.kubernetes.io/instance: otm-fe
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<CLEANUP_IP_10>"],"port":31088,"protocol":"TCP","serviceName":"otm:otm-fe","allNodes":true},{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"otm:otm-fe","ingressName":"otm:otm-ingress","hostname":"otm.<COMPANY_DOMAIN>","path":"/","allNodes":false}]'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otm-fe
+  template:
+    metadata:
+      labels:
+        app: otm-fe
+    spec:
+      containers:
+      - name: otm-fe
+        image: artifactory.<COMPANY><DOMAIN_14>:30807/docker-local/otm/stg/fe:60
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources:
+          limits:
+            cpu: '2'
+            memory: 2Gi
+          requests:
+            cpu: '1'
+            memory: 2Gi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+      - name: otm-pull-image
+      schedulerName: default-scheduler
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

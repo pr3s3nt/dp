@@ -1,0 +1,16 @@
+metadata:
+  name: p-67wv8-creator-project-owner-project-owner
+  namespace: local
+  labels:
+    cattle.io/creator: norman
+    p-67wv8_creator-project-owner: prtb-in-cluster-binding-owner
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-p7vaiakhge
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: project-owner
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

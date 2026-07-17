@@ -1,0 +1,34 @@
+metadata:
+  name: harbor-registry
+  namespace: harbor
+  labels:
+    app: harbor
+    app.kubernetes.io/component: registry
+    app.kubernetes.io/instance: harbor
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: harbor
+    app.kubernetes.io/part-of: harbor
+    app.kubernetes.io/version: 2.15.1
+    chart: harbor
+    component: registry
+    heritage: Helm
+    release: harbor
+  annotations:
+    helm.sh/resource-policy: keep
+    meta.helm.sh/release-name: harbor
+    meta.helm.sh/release-namespace: harbor
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_52>
+    volume.kubernetes.io/storage-provisioner: <DOMAIN_52>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1500Gi
+  volumeName: pvc-7b436157-0638-43a7-88e8-ee0c8521fe20
+  storageClassName: rook-ceph-block
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

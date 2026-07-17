@@ -1,0 +1,87 @@
+metadata:
+  name: okr-frontend
+  namespace: okr-dep
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"okr-dep:okr-fe-expose","ingressName":"okr-dep:okr-ingress","hostname":"okr.<COMPANY_DOMAIN>","path":"/","allNodes":false}]'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: okr-frontend
+  template:
+    metadata:
+      labels:
+        app: okr-frontend
+        app.kubernetes.io/managed-by: spinnaker
+        app.kubernetes.io/name: okr
+      annotations:
+        artifact.spinnaker.io/location: <REDACTED:env>
+        artifact.spinnaker.io/name: <REDACTED:env>
+        artifact.spinnaker.io/type: <REDACTED:env>
+        moniker.spinnaker.io/application: <REDACTED:env>
+        moniker.spinnaker.io/cluster: <REDACTED:env>
+    spec:
+      volumes:
+      - name: time-zone
+        hostPath:
+          path: /usr/share/zoneinfo/Asia/Ho_Chi_Minh
+          type: ''
+      - name: okr-config-volume
+        configMap:
+          name: okr-frontend-conf
+          defaultMode: 420
+      containers:
+      - name: okr-frontend
+        image: <COMPANY>-<DOMAIN_607>/okr/frontend/okr_frontend:193
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        resources:
+          limits:
+            cpu: '1'
+            memory: 1536Mi
+          requests:
+            cpu: 100m
+            memory: 1Gi
+        volumeMounts:
+        - name: time-zone
+          mountPath: /etc/localtime
+        - name: okr-config-volume
+          mountPath: /etc/nginx/conf.d/
+        livenessProbe:
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 360
+          timeoutSeconds: 3
+          periodSeconds: 60
+          successThreshold: 1
+          failureThreshold: 6
+        readinessProbe:
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 5
+          timeoutSeconds: 3
+          periodSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/hostname: <CLEANUP_HOST_5>
+      securityContext: {}
+      imagePullSecrets:
+      - name: registrypullsecret
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

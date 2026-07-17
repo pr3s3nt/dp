@@ -1,0 +1,19 @@
+metadata:
+  name: mysql
+  namespace: passbolt
+  labels:
+    app: mysql
+    app.kubernetes.io/instance: mysql-passbolt-prd
+  annotations: {}
+spec:
+  ports:
+  - protocol: TCP
+    port: 3306
+    targetPort: 3306
+  selector:
+    app: mysql
+  clusterIP: <IP_98>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

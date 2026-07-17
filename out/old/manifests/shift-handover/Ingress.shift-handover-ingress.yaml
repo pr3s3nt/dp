@@ -1,0 +1,41 @@
+metadata:
+  name: shift-handover-ingress
+  namespace: shift-handover
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"shift-handover:frontend","ingressName":"shift-handover:shift-handover-ingress","hostname":"shift-handover.<COMPANY_DOMAIN>","path":"/","allNodes":false},{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"shift-handover:backend","ingressName":"shift-handover:shift-handover-ingress","hostname":"<DOMAIN_557>.<COMPANY_DOMAIN>","path":"/","allNodes":false}]'
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/configuration-snippet: 'proxy_set_header Upgrade $http_upgrade;
+
+      proxy_set_header Connection "upgrade";
+
+      proxy_cache_bypass $http_upgrade;
+
+      '
+    nginx.ingress.kubernetes.io/proxy-http-version: '1.1'
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: shift-handover.<COMPANY_DOMAIN>
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend
+            port:
+              number: 80
+  - host: <DOMAIN_557>.<COMPANY_DOMAIN>
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: backend
+            port:
+              number: 5000
+apiVersion: <DOMAIN_775>/v1
+kind: Ingress

@@ -1,0 +1,16 @@
+metadata:
+  name: be-env-vars
+  namespace: otm
+data:
+  AUTH_URL: <REDACTED:env>
+  DEBUG: 'True'
+  ENV: PRD
+  MAIL_PREFIX: PRD
+  MAIL_SERVICE_ENDPOINT: <CLEANUP_IP_4>:9906
+  SERVER: http://<CLEANUP_IP_5>:31088/
+  samba_host: <CLEANUP_IP_6>
+  samba_password: <REDACTED:env>
+  samba_share: Public
+  samba_user: ' '
+apiVersion: v1
+kind: ConfigMap

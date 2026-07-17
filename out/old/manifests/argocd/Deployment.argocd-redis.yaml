@@ -1,0 +1,69 @@
+metadata:
+  name: argocd-redis
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: redis
+    app.kubernetes.io/instance: argocd
+    app.kubernetes.io/name: argocd-redis
+    app.kubernetes.io/part-of: argocd
+  annotations: {}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argocd-redis
+    spec:
+      containers:
+      - name: redis
+        image: <COMPANY>-<DOMAIN_607>/argocd/redis:6.2.6-alpine
+        args:
+        - --save
+        - ''
+        - --appendonly
+        - 'no'
+        ports:
+        - containerPort: 6379
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      serviceAccountName: argocd-redis
+      serviceAccount: argocd-redis
+      securityContext:
+        runAsUser: 999
+        runAsNonRoot: true
+      imagePullSecrets:
+      - name: registrypullsecret
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: argocd-redis
+              topologyKey: <DOMAIN_138>/hostname
+          - weight: 5
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/part-of: argocd
+              topologyKey: <DOMAIN_138>/hostname
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

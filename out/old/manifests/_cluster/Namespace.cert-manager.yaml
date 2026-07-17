@@ -1,0 +1,13 @@
+metadata:
+  name: cert-manager
+  labels:
+    certmanager.k8s.io/disable-validation: 'true'
+    field.cattle.io/projectId: p-wnc8s
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2020-10-09T02:58:06Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2020-10-09T02:58:11Z"}]}'
+    field.cattle.io/projectId: local:p-wnc8s
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+    management.cattle.io/no-default-sa-token: <REDACTED:env>
+spec: {}
+apiVersion: v1
+kind: Namespace

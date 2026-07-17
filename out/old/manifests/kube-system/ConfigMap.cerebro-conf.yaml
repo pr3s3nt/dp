@@ -1,0 +1,85 @@
+metadata:
+  name: cerebro-conf
+  namespace: kube-system
+  annotations: {}
+data:
+  application.conf: "# Secret will be used to sign session cookies, CSRF tokens and\
+    \ for other encryption utilities.\n# It is highly recommended to change this value\
+    \ before running cerebro in production.\nsecret = \"ki:s:[[@=Ag?QI`W2jMwkY:eqvrJ]JqoJyi2axj3ZvOv^/KavOT4ViJSv?6YY4[N\"\
+    \n\n# Application base path\nbasePath = \"/\"\n\n# Defaults to RUNNING_PID at\
+    \ the root directory of the app.\n# To avoid creating a PID file set this value\
+    \ to /dev/null\n#<DOMAIN_476> = \"/var/run/<DOMAIN_477>\"\n<DOMAIN_476>=/dev/null\n\
+    \n# Rest request history max size per user\n<DOMAIN_478> = 50 // defaults to 50\
+    \ if not specified\n\n# Path of local database file\n#<DOMAIN_479>: \"/var/lib/cerebro/<DOMAIN_480>\"\
+    \n<DOMAIN_479> = \"./<DOMAIN_480>\"\n\nplay {\n  # Cerebro port, by default it's\
+    \ 9000 (play's default)\n  <DOMAIN_481> = ${?CEREBRO_PORT}\n}\n\nes = {\n  gzip\
+    \ = true\n}\n\n# Authentication\nauth = {\n  # either basic or ldap\n  type: ${?AUTH_TYPE}\n\
+    \  settings {\n    # LDAP\n    url = ${?LDAP_URL}\n    # OpenLDAP might be something\
+    \ like \"ou=People,dc=domain,dc=com\"\n    base-dn = ${?LDAP_BASE_DN}\n    # Usually\
+    \ method should  be \"simple\" otherwise, set it to the SASL mechanisms to try\n\
+    \    method = ${?LDAP_METHOD}\n    # user-template executes a <DOMAIN_482>() operation\
+    \ where\n    # username is passed in first, followed by base-dn. Some examples\n\
+    \    #  - %s => leave user untouched\n    #  - <EMAIL_1> => append \"@<DOMAIN_483>\"\
+    \ to username\n    #  - uid=%s,%s => usual case of OpenLDAP\n    user-template\
+    \ = ${?LDAP_USER_TEMPLATE}\n    // User identifier that can perform searches\n\
+    \    bind-dn = ${?LDAP_BIND_DN}\n    bind-pw = ${?LDAP_BIND_PWD}\n    group-search\
+    \ {\n      // If left unset parent's base-dn will be used\n      base-dn = ${?LDAP_GROUP_BASE_DN}\n\
+    \      // Attribute that represent the user, for example uid or mail\n      user-attr\
+    \ = ${?LDAP_USER_ATTR}\n      // Define a separate template for user-attr\n  \
+    \    // If left unset parent's user-template will be used\n      user-attr-template\
+    \ = ${?LDAP_USER_ATTR_TEMPLATE}\n      // Filter that tests membership of the\
+    \ group. If this property is empty then there is no group membership check\n \
+    \     // AD example => memberOf=CN=mygroup,ou=ouofthegroup,DC=domain,DC=com\n\
+    \      // OpenLDAP example => CN=mygroup\n      group = ${?LDAP_GROUP}\n    }\n\
+    \n    # Basic auth\n    username = ${?BASIC_AUTH_USER}\n    password = ${?BASIC_AUTH_PWD}\n\
+    \  }\n}\n\n<DOMAIN_484> {\n  trustManager = {\n    stores = [\n      { type =\
+    \ \"PEM\", path = \"/opt/config/<DOMAIN_485>\" }\n    ]\n  }\n}\n\n# A list of\
+    \ known hosts\nhosts = [\n  #{\n  #  host = \"http://localhost:9200\"\n  #  name\
+    \ = \"Localhost cluster\"\n  #  headers-whitelist = [ \"x-proxy-user\", \"x-proxy-roles\"\
+    , \"X-Forwarded-For\" ]\n  #}\n  # Example of host with authentication\n  #{\n\
+    \  #  host = \"http://some-authenticated-host:9200\"\n  #  name = \"Secured Cluster\"\
+    \n  #  auth = {\n  #    username = \"username\"\n  #    password = \"secret-password\"\
+    \n  #  }\n  #}\n]\n"
+  ca.crt: '-----BEGIN CERTIFICATE-----
+
+    MIIDSTCCAjGgAwIBAgIUNpR1j/62QvpaJ/6V5rRE9iyeVjUwDQYJKoZIhvcNAQEL
+
+    BQAwNDEyMDAGA1UEAxMpRWxhc3RpYyBDZXJ0aWZpY2F0ZSBUb29sIEF1dG9nZW5l
+
+    cmF0ZWQgQ0EwHhcNMjAxMTIyMTExNjU5WhcNMjMxMTIyMTExNjU5WjA0MTIwMAYD
+
+    VQQDEylFbGFzdGljIENlcnRpZmljYXRlIFRvb2wgQXV0b2dlbmVyYXRlZCBDQTCC
+
+    ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALENjE6ZByBuOluKz2oMgfWV
+
+    FA+pcwgOC6PWEqENdelbkRWRq0Br/QX6IyZ5DtWxUM96vwZ1m+tk6rwOTq4SBLh6
+
+    LpMAJKdHI9AZZ5f52aAGwQIlWMjbCwl/ftGNk8iMB0tenzRz2JteXwueRMzjtmOS
+
+    zFh/ZWKmh2N1JAGbE1/vwLyY3pEu7Vn/yW/G6u0ByYJukzhLmHHWe51xurt4YSb6
+
+    Sq2mLV53Sgx7khNIw81YF+XAmSPDco4OsSUyoPRoA2KaTWaDHnjjvIu5L5oW+9Pg
+
+    J/Izu5OJYv3BfGyJbo8rCwQqT8sQPd8xXhPifUP1QqdqJOd27HFlc0fqvUR91esC
+
+    AwEAAaNTMFEwHQYDVR0OBBYEFOTGmkamMbXsnGmdSe+Z6Ffwr5gQMB8GA1UdIwQY
+
+    MBaAFOTGmkamMbXsnGmdSe+Z6Ffwr5gQMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZI
+
+    hvcNAQELBQADggEBAFkh8Ds4E6UQSadhrLs8yskYWu6R7196zkPZhkZKRNQ4Ymcp
+
+    BUI/pr5804UYkjdzxp8dkfPxscersYCkYtdPbgMSATodCYlqlkxyeRLcJykrSJzF
+
+    QQOsWmibiat5Tc6yp/V6ddP5UMteI5JTubWTy8iBb151yh6qZUsvqmyHGPgxd9uF
+
+    +5q4jpmnpmCLR3fVbcy6Qqh2aCUtFWwwhIKWPbKwKM6Yrl2HdnV6vcOgEVuLqE7s
+
+    rmZLfQdJEg+JqnF+8ZlVJocsoL3p0ooT6Pb8ZOIDfGFxD6D//QCIM6gFIgKhLuVf
+
+    IlgdM2YnsB2XLn8oPXu5snBCwjd3uF93G9PF9bw=
+
+    -----END CERTIFICATE-----
+
+    '
+apiVersion: v1
+kind: ConfigMap

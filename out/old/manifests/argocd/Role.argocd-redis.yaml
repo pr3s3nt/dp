@@ -1,0 +1,19 @@
+metadata:
+  name: argocd-redis
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: redis
+    app.kubernetes.io/name: argocd-redis
+    app.kubernetes.io/part-of: argocd
+  annotations: {}
+rules:
+- verbs:
+  - use
+  apiGroups:
+  - <DOMAIN_779>
+  resources:
+  - securitycontextconstraints
+  resourceNames:
+  - nonroot
+apiVersion: <DOMAIN_776>/v1
+kind: Role

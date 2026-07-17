@@ -1,0 +1,17 @@
+metadata:
+  name: rolebinding-d7drc
+  generateName: rolebinding-
+  namespace: local
+  labels:
+    cattle.io/creator: norman
+    p-67wv8_u-muss3v2lek-member: membership-binding-owner
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-muss3v2lek
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: p-67wv8-projectmember
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

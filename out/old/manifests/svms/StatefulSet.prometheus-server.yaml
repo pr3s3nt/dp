@@ -1,0 +1,91 @@
+metadata:
+  name: prometheus-server
+  namespace: svms
+  labels:
+    app: prometheus-server
+  annotations: {}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus-server
+  template:
+    metadata:
+      labels:
+        app: prometheus-server
+    spec:
+      volumes:
+      - name: prometheus-config-volume
+        configMap:
+          name: prometheus-server-conf
+          defaultMode: 420
+      initContainers:
+      - name: init-chown-data
+        image: <COMPANY>-<DOMAIN_607>/svms/ubuntu:dev_v1
+        command:
+        - chown
+        - -R
+        - 65534:65534
+        - /data
+        resources: {}
+        volumeMounts:
+        - name: prometheus-storage-volume
+          mountPath: /data
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      containers:
+      - name: prometheus-server
+        image: <COMPANY>-<DOMAIN_607>/svms/prometheus:2.13.1
+        args:
+        - --<DOMAIN_722>=/etc/prometheus/<DOMAIN_765>
+        - --<DOMAIN_724>=/data/
+        ports:
+        - containerPort: 9090
+          protocol: TCP
+        resources:
+          limits:
+            cpu: '2'
+            memory: 8Gi
+          requests:
+            cpu: '1'
+            memory: 4Gi
+        volumeMounts:
+        - name: prometheus-config-volume
+          mountPath: /etc/prometheus/
+        - name: prometheus-storage-volume
+          mountPath: /data/
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        svms: 'yes'
+      serviceAccountName: prometheus-user
+      serviceAccount: prometheus-user
+      securityContext: {}
+      imagePullSecrets:
+      - name: registrypullsecret
+      schedulerName: default-scheduler
+  volumeClaimTemplates:
+  - kind: PersistentVolumeClaim
+    apiVersion: v1
+    metadata:
+      name: prometheus-storage-volume
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 300Gi
+      storageClassName: ceph-block-replica-2
+      volumeMode: Filesystem
+  serviceName: prometheus-server
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
+  revisionHistoryLimit: 10
+apiVersion: apps/v1
+kind: StatefulSet

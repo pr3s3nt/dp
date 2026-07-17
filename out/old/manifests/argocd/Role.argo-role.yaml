@@ -1,0 +1,127 @@
+metadata:
+  name: argo-role
+  namespace: argocd
+  labels:
+    app.kubernetes.io/instance: argocd-workflow
+  annotations: {}
+rules:
+- verbs:
+  - create
+  - get
+  - update
+  apiGroups:
+  - <DOMAIN_778>
+  resources:
+  - leases
+- verbs:
+  - create
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+  apiGroups:
+  - ''
+  resources:
+  - pods
+  - pods/exec
+- verbs:
+  - get
+  - watch
+  - list
+  apiGroups:
+  - ''
+  resources:
+  - configmaps
+- verbs:
+  - create
+  - update
+  - delete
+  - get
+  apiGroups:
+  - ''
+  resources:
+  - persistentvolumeclaims
+  - persistentvolumeclaims/finalizers
+- verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+  - create
+  apiGroups:
+  - <DOMAIN_777>
+  resources:
+  - workflows
+  - workflows/finalizers
+  - workflowtasksets
+  - workflowtasksets/finalizers
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - <DOMAIN_777>
+  resources:
+  - workflowtemplates
+  - workflowtemplates/finalizers
+- verbs:
+  - get
+  - list
+  apiGroups:
+  - ''
+  resources:
+  - serviceaccounts
+- verbs:
+  - list
+  - watch
+  - deletecollection
+  apiGroups:
+  - <DOMAIN_777>
+  resources:
+  - workflowtaskresults
+- verbs:
+  - get
+  - list
+  apiGroups:
+  - ''
+  resources:
+  - serviceaccounts
+- verbs:
+  - get
+  apiGroups:
+  - ''
+  resources:
+  - secrets
+- verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+  apiGroups:
+  - <DOMAIN_777>
+  resources:
+  - cronworkflows
+  - cronworkflows/finalizers
+- verbs:
+  - create
+  - patch
+  apiGroups:
+  - ''
+  resources:
+  - events
+- verbs:
+  - create
+  - get
+  - delete
+  apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+apiVersion: <DOMAIN_776>/v1
+kind: Role

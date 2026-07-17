@@ -1,0 +1,21 @@
+metadata:
+  name: alertmanager-svc
+  namespace: svms
+  labels:
+    app: alertmanager-svc
+  annotations: {}
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    port: 19093
+    targetPort: 9093
+  selector:
+    app: alertmanager
+  clusterIP: <IP_120>
+  type: ClusterIP
+  externalIPs:
+  - <CLEANUP_IP_5>
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

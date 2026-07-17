@@ -1,0 +1,7 @@
+metadata:
+  name: migrateencryptionkeyrotationleadertostatus
+  namespace: cattle-system
+data:
+  encryptionKeyRotationStatusMigrated: <REDACTED:env>
+apiVersion: v1
+kind: ConfigMap

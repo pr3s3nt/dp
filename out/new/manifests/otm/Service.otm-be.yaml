@@ -1,0 +1,21 @@
+metadata:
+  name: otm-be
+  namespace: otm
+spec:
+  ports:
+  - protocol: TCP
+    port: 1080
+    targetPort: 1080
+  selector:
+    app: otm-be
+  clusterIP: <IP_30>
+  clusterIPs:
+  - <IP_30>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  internalTrafficPolicy: Cluster
+apiVersion: v1
+kind: Service

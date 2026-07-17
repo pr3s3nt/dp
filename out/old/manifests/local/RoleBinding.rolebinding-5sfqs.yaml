@@ -1,0 +1,18 @@
+metadata:
+  name: rolebinding-5sfqs
+  generateName: rolebinding-
+  namespace: local
+  labels:
+    c58c89c8-243e-41cf-946e-3464d4883822: memberhsip-binding-owner
+    cattle.io/creator: norman
+    p-t2pmj_u-hybao3vlgk-member: membership-binding-owner
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-hybao3vlgk
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: p-t2pmj-projectmember
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

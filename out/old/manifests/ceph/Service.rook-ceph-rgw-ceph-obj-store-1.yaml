@@ -1,0 +1,28 @@
+metadata:
+  name: rook-ceph-rgw-ceph-obj-store-1
+  namespace: ceph
+  labels:
+    app: rook-ceph-rgw
+    ceph_daemon_id: ceph-obj-store-1
+    ceph_daemon_type: rgw
+    rgw: ceph-obj-store-1
+    rook_cluster: ceph
+    rook_object_store: ceph-obj-store-1
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 8080
+  selector:
+    app: rook-ceph-rgw
+    ceph_daemon_id: ceph-obj-store-1
+    ceph_daemon_type: rgw
+    rgw: ceph-obj-store-1
+    rook_cluster: ceph
+    rook_object_store: ceph-obj-store-1
+  clusterIP: <IP_56>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

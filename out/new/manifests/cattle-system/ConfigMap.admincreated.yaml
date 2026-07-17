@@ -1,0 +1,8 @@
+metadata:
+  name: admincreated
+  namespace: cattle-system
+data:
+  CleanupOrphanBindingsDone: 'yes'
+  DedupeBindingsDone: 'yes'
+apiVersion: v1
+kind: ConfigMap

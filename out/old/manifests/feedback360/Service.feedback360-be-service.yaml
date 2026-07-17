@@ -1,0 +1,15 @@
+metadata:
+  name: feedback360-be-service
+  namespace: feedback360
+spec:
+  ports:
+  - protocol: TCP
+    port: 8000
+    targetPort: 8000
+  selector:
+    app: feedback360-backend
+  clusterIP: <IP_68>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

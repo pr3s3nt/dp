@@ -1,0 +1,59 @@
+metadata:
+  name: otm-fe
+  namespace: otm
+  labels:
+    app: otm-fe
+  annotations:
+    field.cattle.io/publicEndpoints: 'null'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otm-fe
+  template:
+    metadata:
+      labels:
+        app: otm-fe
+    spec:
+      containers:
+      - name: otm-fe
+        image: <DOMAIN_30>.<COMPANY_DOMAIN>/otm/stg/fe:60
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources:
+          limits:
+            cpu: '2'
+            memory: 2Gi
+          requests:
+            cpu: '1'
+            memory: 2Gi
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+      - name: harbor-registry-secret
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

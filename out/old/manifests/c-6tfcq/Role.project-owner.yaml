@@ -1,0 +1,36 @@
+metadata:
+  name: project-owner
+  namespace: c-6tfcq
+  labels:
+    cattle.io/creator: norman
+rules:
+- verbs:
+  - list
+  - watch
+  - get
+  apiGroups:
+  - '*'
+  resources:
+  - notifiers
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - '*'
+  resources:
+  - clustercatalogs
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - catalogtemplates
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - catalogtemplateversions
+apiVersion: <DOMAIN_776>/v1
+kind: Role

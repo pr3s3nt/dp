@@ -1,0 +1,16 @@
+metadata:
+  name: p-wnc8s-projectmember
+  namespace: local
+  labels:
+    cattle.io/creator: norman
+rules:
+- verbs:
+  - get
+  apiGroups:
+  - <DOMAIN_528>
+  resources:
+  - projects
+  resourceNames:
+  - p-wnc8s
+apiVersion: <DOMAIN_776>/v1
+kind: Role

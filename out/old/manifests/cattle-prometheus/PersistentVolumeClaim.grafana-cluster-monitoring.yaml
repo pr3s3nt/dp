@@ -1,0 +1,24 @@
+metadata:
+  name: grafana-cluster-monitoring
+  namespace: cattle-prometheus
+  labels:
+    app: grafana
+    chart: grafana-0.0.1
+    heritage: Tiller
+    io.cattle.field/appId: cluster-monitoring
+    release: cluster-monitoring
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_529>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: pvc-12b326a3-bad0-4557-8be5-8a6fc65ed62d
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

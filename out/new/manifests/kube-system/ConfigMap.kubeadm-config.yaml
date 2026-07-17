@@ -1,0 +1,17 @@
+metadata:
+  name: kubeadm-config
+  namespace: kube-system
+data:
+  ClusterConfiguration: "apiServer: {}\napiVersion: <DOMAIN_45>/v1beta4\ncaCertificateValidityPeriod:\
+    \ 87600h0m0s\ncertificateValidityPeriod: 8760h0m0s\ncertificatesDir: /etc/kubernetes/pki\n\
+    clusterName: kubernetes\ncontrolPlaneEndpoint: <CLEANUP_IP_7>:6443\ncontrollerManager:\
+    \ {}\ndns: {}\nencryptionAlgorithm: RSA-2048\netcd:\n  external:\n    caFile:\
+    \ /etc/etcd/ssl/<DOMAIN_46>\n    certFile: /etc/etcd/ssl/<DOMAIN_47>\n    endpoints:\n\
+    \    - https://<CLEANUP_IP_3>:2379\n    - https://<CLEANUP_IP_1>:2379\n    - https://<CLEANUP_IP_2>:2379\n\
+    \    httpEndpoints:\n    - https://<CLEANUP_IP_3>:2379\n    - https://<CLEANUP_IP_1>:2379\n\
+    \    - https://<CLEANUP_IP_2>:2379\n    keyFile: /etc/etcd/ssl/<DOMAIN_48>\nimageRepository:\
+    \ registry.k8s.io\nkind: ClusterConfiguration\nkubernetesVersion: v1.35.1\nnetworking:\n\
+    \  dnsDomain: cluster.local\n  podSubnet: <IP_1>/16\n  serviceSubnet: <IP_2>/12\n\
+    proxy: {}\nscheduler: {}\n"
+apiVersion: v1
+kind: ConfigMap

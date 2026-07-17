@@ -1,0 +1,21 @@
+metadata:
+  name: cerebro
+  namespace: kube-system
+  labels:
+    app: cerebro-svc
+  annotations: {}
+spec:
+  ports:
+  - name: els
+    protocol: TCP
+    port: 19000
+    targetPort: 9000
+  selector:
+    app: cerebro
+  clusterIP: <IP_79>
+  type: ClusterIP
+  externalIPs:
+  - <CLEANUP_IP_5>
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

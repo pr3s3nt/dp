@@ -1,0 +1,102 @@
+metadata:
+  name: postgresql
+  namespace: feedback360
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql
+  template:
+    metadata:
+      labels:
+        app: postgresql
+    spec:
+      containers:
+      - name: postgresql
+        image: artifactory.<COMPANY><DOMAIN_14>:30807/docker-local/postgres:16
+        ports:
+        - name: postgres
+          containerPort: 5432
+          protocol: TCP
+        env:
+        - name: POSTGRES_DB
+          value: feedback360
+        - name: POSTGRES_USER
+          value: user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: default-password
+        - name: PGDATA
+          value: /var/lib/postgresql/data/feedback360-db
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        volumeMounts:
+        - name: feedback360-db
+          mountPath: /var/lib/postgresql/data
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - user
+            - -d
+            - feedback360
+          initialDelaySeconds: 30
+          timeoutSeconds: 1
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - user
+            - -d
+            - feedback360
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+          periodSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/hostname: <CLEANUP_HOST_4>
+      securityContext: {}
+      imagePullSecrets:
+      - name: jfrog-registry-secret
+      schedulerName: default-scheduler
+  volumeClaimTemplates:
+  - kind: PersistentVolumeClaim
+    apiVersion: v1
+    metadata:
+      name: feedback360-db
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 5Gi
+      storageClassName: ceph-block-replica-2
+      volumeMode: Filesystem
+  serviceName: postgresql
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0
+  revisionHistoryLimit: 10
+apiVersion: apps/v1
+kind: StatefulSet

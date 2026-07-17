@@ -1,0 +1,35 @@
+metadata:
+  name: pvc-3d267669-d743-4c01-a418-cc8625206681
+  annotations:
+    pv.kubernetes.io/provisioned-by: <DOMAIN_529>
+spec:
+  capacity:
+    storage: 10Gi
+  csi:
+    driver: <DOMAIN_529>
+    volumeHandle: 0001-0004-ceph-0000000000000002-c8452286-5d85-11ec-9815-f6bd7bd2dd5a
+    fsType: ext4
+    volumeAttributes:
+      clusterID: ceph
+      imageFeatures: layering
+      imageFormat: '2'
+      imageName: csi-vol-c8452286-5d85-11ec-9815-f6bd7bd2dd5a
+      journalPool: ceph-replica-pool
+      pool: ceph-replica-pool
+      radosNamespace: ''
+      storage.kubernetes.io/csiProvisionerIdentity: <DOMAIN_539>
+    nodeStageSecretRef:
+      name: rook-csi-rbd-node
+      namespace: ceph
+  accessModes:
+  - ReadWriteOnce
+  claimRef:
+    kind: PersistentVolumeClaim
+    namespace: acs
+    name: acs-arangodb-data-acs-arangodb-0
+    apiVersion: v1
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolume

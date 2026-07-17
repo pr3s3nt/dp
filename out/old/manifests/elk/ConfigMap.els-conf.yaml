@@ -1,0 +1,17 @@
+metadata:
+  name: els-conf
+  namespace: elk
+  annotations: {}
+data:
+  elasticsearch.yml: "<DOMAIN_458>: true\n<DOMAIN_459>:\n  <DOMAIN_460>:\n    order:\
+    \ 2\n    rp.client_id: \"elk-<COMPANY>-prd\"\n    rp.response_type: code\n   \
+    \ rp.redirect_uri: \"https://<CLEANUP_IP_5>:5601/api/security/v1/oidc\"\n    <DOMAIN_461>:\
+    \ \"https://<CLEANUP_IP_5>:18443/auth/realms/sysops-<COMPANY>-services\"\n    op.authorization_endpoint:\
+    \ \"https://<CLEANUP_IP_5>:18443/auth/realms/sysops-<COMPANY>-services/protocol/openid-connect/auth\"\
+    \n    op.token_endpoint: \"https://<CLEANUP_IP_5>:18443/auth/realms/sysops-<COMPANY>-services/protocol/openid-connect/token\"\
+    \n    op.jwkset_path: <DOMAIN_462>\n    op.userinfo_endpoint: \"https://<CLEANUP_IP_5>:18443/auth/realms/sysops-<COMPANY>-services/protocol/openid-connect/userinfo\"\
+    \n    op.endsession_endpoint: \"https://<CLEANUP_IP_5>:18443/auth/realms/sysops-<COMPANY>-services/protocol/openid-connect/logout\"\
+    \n    rp.post_logout_redirect_uri: \"https://<CLEANUP_IP_5>:5601/logged_out\"\n\
+    \    <DOMAIN_463>: preferred_username\n"
+apiVersion: v1
+kind: ConfigMap

@@ -1,0 +1,19 @@
+metadata:
+  name: okr-mysql-service
+  namespace: okr
+  labels:
+    app: okr-mysql
+  annotations: {}
+spec:
+  ports:
+  - name: okr-mysql
+    protocol: TCP
+    port: 3306
+    targetPort: 3306
+  selector:
+    app: okr-mysql
+  clusterIP: <IP_90>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

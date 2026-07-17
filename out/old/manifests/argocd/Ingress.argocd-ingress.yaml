@@ -1,0 +1,20 @@
+metadata:
+  name: argocd-ingress
+  namespace: argocd
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"argocd:argocd-server","ingressName":"argocd:argocd-ingress","hostname":"argocd.<COMPANY><DOMAIN_14>","path":"/","allNodes":false}]'
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: argocd.<COMPANY><DOMAIN_14>
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server
+            port:
+              number: 16443
+apiVersion: <DOMAIN_775>/v1
+kind: Ingress

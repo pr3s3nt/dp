@@ -1,0 +1,10 @@
+metadata:
+  name: traefik
+  labels:
+    kubernetes.io/metadata.name: traefik
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2026-07-13T07:31:47Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2026-07-13T07:31:47Z"}]}'
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+spec: {}
+apiVersion: v1
+kind: Namespace

@@ -1,0 +1,28 @@
+metadata:
+  name: ingress-nginx-controller-expose
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+    app.kubernetes.io/version: 1.2.1
+  annotations: {}
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    appProtocol: http
+    port: 80
+    targetPort: http
+  selector:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+  clusterIP: <IP_74>
+  type: ClusterIP
+  externalIPs:
+  - <CLEANUP_IP_5>
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

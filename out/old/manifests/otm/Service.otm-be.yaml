@@ -1,0 +1,22 @@
+metadata:
+  name: otm-be
+  namespace: otm
+  labels:
+    app.kubernetes.io/instance: otm-be
+    run: otm-be
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<CLEANUP_IP_10>"],"port":31080,"protocol":"TCP","serviceName":"otm:otm-be","allNodes":true}]'
+spec:
+  ports:
+  - protocol: TCP
+    port: 1080
+    targetPort: 1080
+    nodePort: 31080
+  selector:
+    app: otm-be
+  clusterIP: <IP_94>
+  type: NodePort
+  sessionAffinity: <REDACTED:env>
+  externalTrafficPolicy: Cluster
+apiVersion: v1
+kind: Service

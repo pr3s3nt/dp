@@ -1,0 +1,41 @@
+metadata:
+  name: rbd-csi-nodeplugin
+  namespace: rook-ceph
+  labels:
+    app.kubernetes.io/name: rook-ceph
+    app.kubernetes.io/part-of: rook-ceph-operator
+    operator: rook
+    storage-backend: ceph
+rules:
+- verbs:
+  - get
+  - watch
+  - list
+  - create
+  - update
+  - delete
+  apiGroups:
+  - <DOMAIN_132>
+  resources:
+  - csiaddonsnodes
+- verbs:
+  - get
+  apiGroups:
+  - ''
+  resources:
+  - pods
+- verbs:
+  - get
+  apiGroups:
+  - apps
+  resources:
+  - replicasets
+- verbs:
+  - update
+  apiGroups:
+  - apps
+  resources:
+  - deployments/finalizers
+  - daemonsets/finalizers
+apiVersion: <DOMAIN_1>/v1
+kind: Role

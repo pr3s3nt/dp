@@ -1,0 +1,20 @@
+metadata:
+  name: passbolt-pv-passbolt-0
+  namespace: passbolt-v4
+  labels:
+    app: passbolt
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_529>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  volumeName: pvc-94a6b688-d201-43ca-93cb-3d860d533f6b
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

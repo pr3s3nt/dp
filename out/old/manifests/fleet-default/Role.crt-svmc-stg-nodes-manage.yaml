@@ -1,0 +1,14 @@
+metadata:
+  name: crt-<COMPANY>-stg-nodes-manage
+  namespace: fleet-default
+  labels:
+    objectset.rio.cattle.io/hash: efb09b6076f1a736c22a028d7715ac1cd909c081
+  annotations:
+    objectset.rio.cattle.io/applied: H4sIAAAAAAAA/4yRPY/UMBCG/wqaOl6cXC4flqgo6U4nGkQxsSdZc/6I7EkoVvnvyMdpFSEB19mS5/Uzz3sDT4wGGUHdAEOIjGxjyOUapx+kORNfko0XjcyOLjZ+tAYU4MZXsaa4i70RKTpi8qtDJpF3r0XmBaq/JsSfgZJY9hdQ4DHgQp4Cnx7sD9WHLzaYT0/R0fNb8n8DA3oCBSEayuJ37rtm8oq6DMJRgU70auDZesqMfgUVNucqcDiR+6eXK+YrKKB5kuPUyb6ba+wfOt00KJvB9H39iLrWZpSjlkNdfnsj1onv2sQf+GfA2RGxMDTj5risVlZ4opkSBU0Z1Lcb4Gq/Uso2BlBQCrLlbMNy1ltDBS82lCI/uy0zJbjDnPrbXquuJzliN9TCDOMgWuonMfaTFvg4t1J3rdSyheP7UUHaXKEowo5fAQAA///xqS4tWwIAAA
+    objectset.rio.cattle.io/id: auth-prov-v2-roletemplate-<COMPANY>-stg
+    objectset.rio.cattle.io/owner-gvk: <DOMAIN_528>/v3, Kind=RoleTemplate
+    objectset.rio.cattle.io/owner-name: nodes-manage
+    objectset.rio.cattle.io/owner-namespace: ''
+rules: null
+apiVersion: <DOMAIN_776>/v1
+kind: Role

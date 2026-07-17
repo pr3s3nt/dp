@@ -1,0 +1,22 @@
+metadata:
+  name: spin-gate
+  namespace: spinnaker
+  labels:
+    app: spin
+    cluster: spin-gate
+  annotations: {}
+spec:
+  ports:
+  - protocol: TCP
+    port: 8084
+    targetPort: 8084
+  selector:
+    app: spin
+    cluster: spin-gate
+  clusterIP: <IP_114>
+  type: ClusterIP
+  externalIPs:
+  - <CLEANUP_IP_5>
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

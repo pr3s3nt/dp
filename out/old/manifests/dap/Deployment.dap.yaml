@@ -1,0 +1,66 @@
+metadata:
+  name: dap
+  namespace: dap
+  labels:
+    app.kubernetes.io/instance: dap
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: dap
+    app.kubernetes.io/version: 1.16.0
+    helm.sh/chart: dap-0.1.0
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"dap:dap","ingressName":"dap:dap-ingress","hostname":"<DOMAIN_554>.<COMPANY><DOMAIN_14>","path":"/","allNodes":false}]'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: dap
+      app.kubernetes.io/name: dap
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: dap
+        app.kubernetes.io/name: dap
+    spec:
+      volumes:
+      - name: dap-data
+        persistentVolumeClaim:
+          claimName: dap-prd-pvc
+      containers:
+      - name: dap
+        image: artifactory.<COMPANY><DOMAIN_14>:30807/docker-local/dap/prd/dap:c14adb2
+        ports:
+        - name: fe
+          containerPort: 4200
+          protocol: TCP
+        - name: be
+          containerPort: 3000
+          protocol: TCP
+        envFrom:
+        - secretRef:
+            name: dap
+        resources: {}
+        volumeMounts:
+        - name: dap-data
+          mountPath: /data/
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext: {}
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      serviceAccountName: default
+      serviceAccount: default
+      securityContext: {}
+      imagePullSecrets:
+      - name: registrypullsecret
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

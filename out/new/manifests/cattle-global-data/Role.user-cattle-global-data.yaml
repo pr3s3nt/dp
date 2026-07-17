@@ -1,0 +1,14 @@
+metadata:
+  name: user-cattle-global-data
+  namespace: cattle-global-data
+  labels:
+    authz.management.cattle.io/gr-owner: <REDACTED:env>
+rules:
+- verbs:
+  - create
+  apiGroups:
+  - ''
+  resources:
+  - secrets
+apiVersion: <DOMAIN_1>/v1
+kind: Role

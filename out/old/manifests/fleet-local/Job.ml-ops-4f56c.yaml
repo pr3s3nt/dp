@@ -1,0 +1,178 @@
+metadata:
+  name: ml-ops-4f56c
+  namespace: fleet-local
+  labels:
+    objectset.rio.cattle.io/hash: df053a5318ed69c0176baf349614d0b5442a10ab
+  annotations:
+    commit: gh-page
+    objectset.rio.cattle.io/applied: H4sIAAAAAAAA/9RXX2/bOBL/KsU8i5YU20kswA9Fmzv07pIG12yB3cIoKHoks6ZILUm59Qb+7ouhZFvO2k6C7csCQSCLw/n/+83oESr0fM49h+wRuNbGcy+NdvRTmKqSHjIoF6zmJUIEJWq0QQIySCECk39D4R36gZVmILj3CgfSxHIOGbi1Fsxibc4Imu8aLStXS7Ij/TeT9w5XafTmv1LPp/+W/j8mf1aN5hVCBpVipnYvknY1F3SlUIieKSO4gk0EwmKI8kFW6Dyvash0o1QEiueoQnZO6V5wt4AM5kUyHvLxML3G+eVEJOnVZc6L4WhymY7mST4ejS54mvCcrB24zUbF+FJA+/aYexEE9/+PBVrUAh1kXx6B1/IzWtdW5kgiIYJcGbH8SHffo8K2iAVXDiMQRntrlEILmbcNRrCUmkq4S/zT1DahwteXo5GYF1csn6QXbHTFx2xSJJdsOL64HglM0/R6ApvZJgJXo6C05VwsTVH8T4bWuojAY1Ur7pEO+814pASQTq4SlqQsSR+SJAt/v0FPOYXBpUbb5cSW9AAs504KVko/bf2fLryvXRbHpfSLJh84FAPHK9focqDRQwSsNs5/LaSiro89Lr3RsTdGuTihY4+2kjo4+LXmftGX2h+RJGpv17WRmtTGjbNxLjUZZlLLYIrRv8ZSZc/7FbtVJZizGLdhDMpWgcWVdK25PVTZ1q3vxi5DH8XONFYgzKIAbU4F/vIkuJ63swhkRboysFyLBdpOlDVeKpetkkE6GO9bw3msKcesMxOBxfaR8LKhSu8Sc4vO8RLvycXsROaOiBslxRoy+Fdbl5VRTYW3ptG+LXhFj1ulu7j3Lnb+S+3Raq7YXmQTPbndz8ppBe3xqcsLU50xHk5PXRUW53+12749e4c5FBa9i3dI7VRQZUgCtZdEcrMIKHypy/fSHuaLDOyw853Lc0A4jZP0OZwEqSMCh5BRphw4eh04ECLgda3WATee2xK9Y2R+GttGx8LoQpZxdzBY80oFyUDb06Chx4o0msIUmO6SxXpTIXpCu4w5tCspkHEhKP8QQfua5tx+NE5DYljNG4fzaWDYnrsHBiDaM+rgFcBEvQoN39X23cfb2w8PhAiuGuxNbKpkJ3Pz+ebu4evDr/c3ofZPod2GykvUnpA9HEygE7pvlNoh70NxZ/y9RYch/E73tjRPAH8en/t67RV1v38uGn8KEfwNLFt0jfJn/N4KnMHklrtD6bT0705MOlocquVc2jesfvMc9bvFq0m+c4/NpQ3zS3Il/0D72tr/g0pCKno5E3V/jB8O9581SWvFBbJts78qsa8Cyoy6SZs5fkKFwhtLO9SyydFq9OjCpuwgAyV184P2LEubmPU7NrjDVai9Q9FY6dfUlfjDkxrb6LfuF0cLZZokCS1pLXm+bbnzbj+VdgzojeootI0MiwIFfYDcmU9igfMmTJklkuneMh82/ZpuUgRw83sT6HrLhZ33s23qWt0t09zympw9XMDbI1YML/lwfJ1eD/l1b0vvURRWtV8HpD5uDhCy79ujIudb/UVXdt39Iuk9Mb5IfNf8z1zYryPHd4zQGBZDP7RPdwdfEZvNbLOhzvDcN6G9N38GAAD//1XHGVqRDgAA
+    objectset.rio.cattle.io/id: sync-repo
+    objectset.rio.cattle.io/owner-gvk: <DOMAIN_770>/v1, Kind=GitJob
+    objectset.rio.cattle.io/owner-name: ml-ops
+    objectset.rio.cattle.io/owner-namespace: fleet-local
+spec:
+  parallelism: 1
+  completions: 1
+  backoffLimit: 2
+  selector:
+    matchLabels:
+      controller-uid: 7545ccbd-c3e9-4668-90b4-3bcc90a14d33
+  template:
+    metadata:
+      labels:
+        controller-uid: 7545ccbd-c3e9-4668-90b4-3bcc90a14d33
+        job-name: ml-ops-4f56c
+    spec:
+      volumes:
+      - name: config
+        configMap:
+          name: ml-ops-config-f36a358183a8
+          defaultMode: 420
+      - name: workspace
+        emptyDir: {}
+      - name: tekton-internal-workspace
+        emptyDir: {}
+      - name: tekton-internal-home
+        emptyDir: {}
+      - name: tekton-internal-tools
+        emptyDir: {}
+      - name: tekton-internal-results
+        emptyDir: {}
+      - name: tekton-creds
+        emptyDir: {}
+      - name: git-credential
+        secret:
+          secretName: <REDACTED:env>
+          defaultMode: 420
+      initContainers:
+      - name: working-dir-initializer
+        image: rancher/tekton-utils:v0.1.5
+        command:
+        - sh
+        args:
+        - -c
+        - mkdir -p /workspace/source
+        resources: {}
+        volumeMounts:
+        - name: tekton-internal-workspace
+          mountPath: /workspace
+        - name: tekton-internal-home
+          mountPath: /tekton/home
+        - name: tekton-internal-results
+          mountPath: /tekton/results
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      - name: place-tools
+        image: rancher/tekton-utils:v0.1.5
+        command:
+        - cp
+        - /usr/bin/entrypoint
+        - /tekton/tools/entrypoint
+        resources: {}
+        volumeMounts:
+        - name: tekton-internal-tools
+          mountPath: /tekton/tools
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      containers:
+      - name: step-git-source
+        image: rancher/tekton-utils:v0.1.5
+        command:
+        - /tekton/tools/entrypoint
+        args:
+        - -basic-git=ml-ops=https://<DOMAIN_9>
+        - -post_file
+        - /tekton/tools/0
+        - -termination_path
+        - /tekton/termination
+        - -entrypoint
+        - /usr/bin/git-init
+        - --
+        - -url
+        - https://<DOMAIN_9>/<COMPANY>-sre/<DOMAIN_771>
+        - -revision
+        - gh-page
+        - -path
+        - /workspace/source
+        workingDir: /workspace
+        resources: {}
+        volumeMounts:
+        - name: tekton-internal-workspace
+          mountPath: /workspace
+        - name: tekton-internal-tools
+          mountPath: /tekton/tools
+        - name: tekton-internal-home
+          mountPath: /tekton/home
+        - name: tekton-creds
+          mountPath: /tekton/creds
+        - name: git-credential
+          mountPath: /tekton/creds-secrets/ml-ops
+        terminationMessagePath: /tekton/termination
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      - name: fleet
+        image: rancher/fleet-agent:v0.3.9
+        command:
+        - /tekton/tools/entrypoint
+        args:
+        - -wait_file
+        - /tekton/tools/0
+        - -post_file
+        - /tekton/tools/1
+        - -termination_path
+        - /tekton/tools/termination_path
+        - -entrypoint
+        - <DOMAIN_772>
+        - fleet
+        - apply
+        - --targets-file=/run/config/<DOMAIN_773>
+        - --label=<DOMAIN_474>/repo-name=ml-ops
+        - --namespace
+        - fleet-local
+        - --service-account
+        - ''
+        - --sync-generation=0
+        - --paused=false
+        - --target-namespace
+        - ''
+        - ml-ops
+        - .
+        workingDir: /workspace/source
+        env:
+        - name: COMMIT
+          value: gh-page
+        - name: EVENT_TYPE
+        resources: {}
+        volumeMounts:
+        - name: config
+          mountPath: /run/config
+        - name: tekton-internal-tools
+          mountPath: /tekton/tools
+        - name: tekton-internal-workspace
+          mountPath: /workspace
+        - name: tekton-internal-home
+          mountPath: /tekton/home
+        - name: tekton-internal-results
+          mountPath: /tekton/results
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Never
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/os: linux
+      serviceAccountName: git-ml-ops
+      serviceAccount: git-ml-ops
+      securityContext:
+        runAsUser: 1000
+      schedulerName: default-scheduler
+      tolerations:
+      - key: <DOMAIN_658>/os
+        operator: Equal
+        value: linux
+        effect: NoSchedule
+apiVersion: batch/v1
+kind: Job

@@ -1,0 +1,14 @@
+metadata:
+  name: svms-view
+  namespace: svms
+  annotations: {}
+subjects:
+- kind: ServiceAccount
+  name: svms
+  namespace: svms
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: svms-full-access
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

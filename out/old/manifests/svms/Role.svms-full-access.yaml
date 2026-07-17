@@ -1,0 +1,22 @@
+metadata:
+  name: svms-full-access
+  namespace: svms
+  annotations: {}
+rules:
+- verbs:
+  - '*'
+  apiGroups:
+  - ''
+  - extensions
+  - apps
+  resources:
+  - '*'
+- verbs:
+  - '*'
+  apiGroups:
+  - batch
+  resources:
+  - jobs
+  - cronjobs
+apiVersion: <DOMAIN_776>/v1
+kind: Role

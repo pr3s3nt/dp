@@ -1,0 +1,137 @@
+metadata:
+  name: exporter-node-cluster-monitoring
+  namespace: cattle-prometheus
+  labels:
+    app: exporter-node
+    chart: exporter-node-0.0.1
+    heritage: Tiller
+    io.cattle.field/appId: cluster-monitoring
+    release: cluster-monitoring
+  annotations:
+    deprecated.daemonset.template.generation: '1'
+    field.cattle.io/publicEndpoints: '[{"nodeName":"local:machine-db6mz","addresses":["<CLEANUP_IP_8>"],"port":9796,"protocol":"TCP","podName":"cattle-prometheus:exporter-node-cluster-monitoring-jptgs","allNodes":false},{"nodeName":"local:machine-v8w8l","addresses":["<CLEANUP_IP_9>"],"port":9796,"protocol":"TCP","podName":"cattle-prometheus:exporter-node-cluster-monitoring-275kl","allNodes":false},{"nodeName":"local:machine-4gwxp","addresses":["<CLEANUP_IP_10>"],"port":9796,"protocol":"TCP","podName":"cattle-prometheus:exporter-node-cluster-monitoring-xl7mx","allNodes":false},{"nodeName":"local:machine-7t9tn","addresses":["<CLEANUP_IP_11>"],"port":9796,"protocol":"TCP","podName":"cattle-prometheus:exporter-node-cluster-monitoring-7v48r","allNodes":false}]'
+spec:
+  selector:
+    matchLabels:
+      app: exporter-node
+      chart: exporter-node-0.0.1
+      release: cluster-monitoring
+  template:
+    metadata:
+      labels:
+        app: exporter-node
+        chart: exporter-node-0.0.1
+        release: cluster-monitoring
+    spec:
+      volumes:
+      - name: proc
+        hostPath:
+          path: /proc
+          type: ''
+      - name: sys
+        hostPath:
+          path: /sys
+          type: ''
+      - name: host
+        hostPath:
+          path: /
+          type: ''
+      containers:
+      - name: exporter-node
+        image: rancher/prom-node-exporter:v1.0.1
+        args:
+        - --<DOMAIN_560>-address=0.0.0.0:9796
+        - --<DOMAIN_561>=/host/proc
+        - --<DOMAIN_562>=/host/sys
+        - --<DOMAIN_563>=/host
+        - --<DOMAIN_564>
+        - --<DOMAIN_565>
+        - --<DOMAIN_566>
+        - --<DOMAIN_567>
+        - --<DOMAIN_568>
+        - --<DOMAIN_569>
+        - --<DOMAIN_570>
+        - --<DOMAIN_571>
+        - --<DOMAIN_572>
+        - --<DOMAIN_573>
+        - --<DOMAIN_574>
+        - --<DOMAIN_575>
+        - --<DOMAIN_576>
+        - --<DOMAIN_577>
+        - --<DOMAIN_578>
+        - --<DOMAIN_579>
+        - --<DOMAIN_580>
+        - --<DOMAIN_581>
+        - --<DOMAIN_582>
+        - --<DOMAIN_583>
+        - --<DOMAIN_584>
+        - --no-collector.meminfo_numa
+        - --<DOMAIN_585>
+        - --<DOMAIN_586>
+        - --<DOMAIN_587>
+        - --<DOMAIN_588>
+        - --<DOMAIN_589>
+        - --<DOMAIN_590>
+        - --<DOMAIN_591>
+        - --<DOMAIN_592>
+        - --<DOMAIN_593>
+        - --<DOMAIN_594>
+        - --<DOMAIN_595>
+        - --<DOMAIN_596>
+        - --<DOMAIN_597>
+        - --<DOMAIN_598>
+        - --<DOMAIN_599>
+        - --<DOMAIN_600>
+        - --<DOMAIN_601>
+        - --<DOMAIN_602>
+        - --<DOMAIN_603>
+        - --<DOMAIN_604>
+        - --<DOMAIN_605>
+        - --<DOMAIN_606>
+        ports:
+        - name: http
+          hostPort: 9796
+          containerPort: 9796
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 30Mi
+        volumeMounts:
+        - name: proc
+          readOnly: true
+          mountPath: /host/proc
+        - name: sys
+          readOnly: true
+          mountPath: /host/sys
+        - name: host
+          readOnly: true
+          mountPath: /host
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/os: linux
+      serviceAccountName: exporter-node-cluster-monitoring
+      serviceAccount: exporter-node-cluster-monitoring
+      hostNetwork: true
+      hostPID: true
+      securityContext:
+        runAsUser: 65534
+        runAsNonRoot: true
+      schedulerName: default-scheduler
+      tolerations:
+      - operator: Exists
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  revisionHistoryLimit: 10
+apiVersion: apps/v1
+kind: DaemonSet

@@ -1,0 +1,21 @@
+metadata:
+  name: face-reco-ai-cm
+  namespace: face-reco
+  labels:
+    appname: face-reco
+  annotations: {}
+data:
+  BATCH_SIZE: '32'
+  DIR_DATA: 2.train_data/AllPool
+  EPOCHS: '180'
+  MAX_TRAINING: '500'
+  NUM_1: '450'
+  NUM_2: '700'
+  ROOT_DIR: $(pwd)
+  SERVER: http://face-reco-be-svc.face-reco.svc.cluster.local:39061/FaceRecognition-0.0.1/api/
+  TEST_TRAINING: '0'
+  TIMER: '20'
+  TIMER_ALL: '72'
+  VERBOSE: '2'
+apiVersion: v1
+kind: ConfigMap

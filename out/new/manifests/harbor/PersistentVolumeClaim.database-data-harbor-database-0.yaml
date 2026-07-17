@@ -1,0 +1,25 @@
+metadata:
+  name: database-data-harbor-database-0
+  namespace: harbor
+  labels:
+    app: harbor
+    chart: harbor
+    component: database
+    heritage: Helm
+    release: harbor
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_52>
+    volume.kubernetes.io/storage-provisioner: <DOMAIN_52>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  volumeName: pvc-afa682bf-9b0e-47ee-ab5b-e05379580d29
+  storageClassName: rook-ceph-block
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

@@ -1,0 +1,13 @@
+metadata:
+  name: local-device-<CLEANUP_HOST_5>
+  namespace: rook-ceph
+  labels:
+    app: rook-discover
+    rook.io/node: <CLEANUP_HOST_5>
+data:
+  devices: '[{"name":"dm-0","parent":"","hasChildren":false,"devLinks":"/dev/disk/by-id/dm-name-ceph--d0bbd96e--b8de--43e1--91cc--c1b876bbbc12-osd--data--627098d5--43f8--414d--8367--d699d30ae42b
+    /dev/disk/by-id/dm-uuid-LVM-vnGoEo0O5V5bflzNVrrtDgSnCeC9BGSwx2IbMxJ5fxwCc2Y7q0Kn0AES9SSd1M19
+    /dev/mapper/ceph--d0bbd96e--b8de--43e1--91cc--c1b876bbbc12-osd--data--627098d5--43f8--414d--8367--d699d30ae42b
+    /dev/ceph-d0bbd96e-b8de-43e1-91cc-c1b876bbbc12/osd-data-627098d5-43f8-414d-8367-d699d30ae42b","size":2771277316096,"uuid":"53cb69b1-f7b5-41e1-82e4-b01adf791904","serial":"","type":"lvm","rotational":true,"readOnly":false,"Partitions":[{"Name":"ceph--d0bbd96e--b8de--43e1--91cc--c1b876bbbc12-osd--data--627098d5--43f8--414d--8367--d699d30ae42b","Size":0,"Label":"","Filesystem":""}],"filesystem":"","vendor":"","model":"","wwn":"","wwnVendorExtension":"","empty":false,"real-path":"/dev/mapper/ceph--d0bbd96e--b8de--43e1--91cc--c1b876bbbc12-osd--data--627098d5--43f8--414d--8367--d699d30ae42b","kernel-name":"dm-0"}]'
+apiVersion: v1
+kind: ConfigMap

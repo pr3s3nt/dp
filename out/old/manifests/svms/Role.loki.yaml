@@ -1,0 +1,17 @@
+metadata:
+  name: loki
+  namespace: svms
+  labels:
+    app: loki
+  annotations: {}
+rules:
+- verbs:
+  - use
+  apiGroups:
+  - extensions
+  resources:
+  - podsecuritypolicies
+  resourceNames:
+  - loki
+apiVersion: <DOMAIN_776>/v1
+kind: Role

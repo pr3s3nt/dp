@@ -1,0 +1,213 @@
+metadata:
+  name: csi-rbdplugin-provisioner
+  namespace: rook-ceph
+  annotations: {}
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: csi-rbdplugin-provisioner
+  template:
+    metadata:
+      labels:
+        app: csi-rbdplugin-provisioner
+        contains: csi-rbdplugin-metrics
+    spec:
+      volumes:
+      - name: host-dev
+        hostPath:
+          path: /dev
+          type: ''
+      - name: host-sys
+        hostPath:
+          path: /sys
+          type: ''
+      - name: lib-modules
+        hostPath:
+          path: /lib/modules
+          type: ''
+      - name: socket-dir
+        emptyDir:
+          medium: Memory
+      - name: ceph-csi-config
+        configMap:
+          name: rook-ceph-csi-config
+          items:
+          - key: csi-cluster-config-json
+            path: <DOMAIN_612>
+          defaultMode: 420
+      - name: keys-tmp-dir
+        emptyDir:
+          medium: Memory
+      containers:
+      - name: csi-provisioner
+        image: quay.io/k8scsi/csi-provisioner:v1.6.0
+        args:
+        - --csi-address=$(ADDRESS)
+        - --v=0
+        - --timeout=150s
+        - --retry-interval-start=500ms
+        - --enable-leader-election=true
+        - --leader-election-type=leases
+        - --leader-election-namespace=rook-ceph
+        env:
+        - name: ADDRESS
+          value: unix:///csi/<DOMAIN_701>
+        resources: {}
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /csi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      - name: csi-resizer
+        image: quay.io/k8scsi/csi-resizer:v0.4.0
+        args:
+        - --csi-address=$(ADDRESS)
+        - --v=0
+        - --csiTimeout=150s
+        - --leader-election
+        - --leader-election-namespace=rook-ceph
+        env:
+        - name: ADDRESS
+          value: unix:///csi/<DOMAIN_701>
+        resources: {}
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /csi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      - name: csi-attacher
+        image: quay.io/k8scsi/csi-attacher:v2.1.0
+        args:
+        - --v=0
+        - --timeout=150s
+        - --csi-address=$(ADDRESS)
+        - --leader-election=true
+        - --leader-election-namespace=rook-ceph
+        env:
+        - name: ADDRESS
+          value: /csi/<DOMAIN_701>
+        resources: {}
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /csi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      - name: csi-snapshotter
+        image: quay.io/k8scsi/csi-snapshotter:v2.1.1
+        args:
+        - --csi-address=$(ADDRESS)
+        - --v=0
+        - --timeout=150s
+        - --leader-election=true
+        - --leader-election-namespace=rook-ceph
+        env:
+        - name: ADDRESS
+          value: unix:///csi/<DOMAIN_701>
+        resources: {}
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /csi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      - name: csi-rbdplugin
+        image: quay.io/cephcsi/cephcsi:v3.1.0
+        args:
+        - --nodeid=$(NODE_ID)
+        - --endpoint=$(CSI_ENDPOINT)
+        - --v=0
+        - --type=rbd
+        - --controllerserver=true
+        - --drivername=<DOMAIN_529>
+        - --pidlimit=-1
+        - --metricsport=9090
+        - --metricspath=/metrics
+        - --enablegrpcmetrics=true
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_165>
+        - name: NODE_ID
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_162>
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_20>
+        - name: CSI_ENDPOINT
+          value: unix:///csi/<DOMAIN_701>
+        resources: {}
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /csi
+        - name: host-dev
+          mountPath: /dev
+        - name: host-sys
+          mountPath: /sys
+        - name: lib-modules
+          readOnly: true
+          mountPath: /lib/modules
+        - name: ceph-csi-config
+          mountPath: /etc/ceph-csi-config/
+        - name: keys-tmp-dir
+          mountPath: /tmp/csi/keys
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      - name: liveness-prometheus
+        image: quay.io/cephcsi/cephcsi:v3.1.0
+        args:
+        - --type=liveness
+        - --endpoint=$(CSI_ENDPOINT)
+        - --metricsport=9080
+        - --metricspath=/metrics
+        - --polltime=60s
+        - --timeout=3s
+        env:
+        - name: CSI_ENDPOINT
+          value: unix:///csi/<DOMAIN_701>
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_165>
+        resources: {}
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /csi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      serviceAccountName: rook-csi-rbd-provisioner-sa
+      serviceAccount: rook-csi-rbd-provisioner-sa
+      securityContext: {}
+      affinity:
+        nodeAffinity: {}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - csi-rbdplugin-provisioner
+            topologyKey: <DOMAIN_138>/hostname
+      schedulerName: default-scheduler
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

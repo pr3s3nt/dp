@@ -1,0 +1,22 @@
+# APP MẪU MIGRATION — shift-handover/frontend (nginx, port 80)
+apiVersion: score.dev/v1b1
+
+metadata:
+  name: shift-handover-frontend
+
+containers:
+  main:
+    image: "."
+
+service:
+  ports:
+    http:
+      port: 80
+      targetPort: 80
+
+resources:
+  site:
+    type: route
+    params:
+      host: shift-handover.example.com    # TODO: đổi domain thật
+      port: 80

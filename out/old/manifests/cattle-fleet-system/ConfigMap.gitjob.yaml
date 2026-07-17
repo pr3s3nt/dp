@@ -1,0 +1,7 @@
+metadata:
+  name: gitjob
+  namespace: cattle-fleet-system
+  annotations:
+    control-plane.alpha.kubernetes.io/leader: '{"holderIdentity":"gitjob-cc9948fd7-kq5q7","leaseDurationSeconds":45,"acquireTime":"2026-07-15T07:42:26Z","renewTime":"2026-07-17T02:41:33Z","leaderTransitions":8}'
+apiVersion: v1
+kind: ConfigMap

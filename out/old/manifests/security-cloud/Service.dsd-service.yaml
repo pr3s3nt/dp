@@ -1,0 +1,16 @@
+metadata:
+  name: dsd-service
+  namespace: security-cloud
+spec:
+  ports:
+  - name: dsd-port
+    protocol: TCP
+    port: 8080
+    targetPort: 3000
+  selector:
+    app: <COMPANY>-sre-dsd
+  clusterIP: <IP_103>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

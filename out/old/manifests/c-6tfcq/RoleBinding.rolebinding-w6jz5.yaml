@@ -1,0 +1,17 @@
+metadata:
+  name: rolebinding-w6jz5
+  generateName: rolebinding-
+  namespace: c-6tfcq
+  labels:
+    cattle.io/creator: norman
+    p-mjh6x_creator-project-owner: membership-binding-owner
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-72uggsypy6
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: p-mjh6x-projectowner
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

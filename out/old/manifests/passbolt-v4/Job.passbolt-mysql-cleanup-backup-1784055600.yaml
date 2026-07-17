@@ -1,0 +1,79 @@
+metadata:
+  name: passbolt-mysql-cleanup-backup-1784055600
+  namespace: passbolt-v4
+  labels:
+    controller-uid: fafea26b-35b7-48f7-bc75-1a2032565c31
+    job-name: passbolt-mysql-cleanup-backup-1784055600
+spec:
+  parallelism: 1
+  completions: 1
+  backoffLimit: 6
+  selector:
+    matchLabels:
+      controller-uid: fafea26b-35b7-48f7-bc75-1a2032565c31
+  template:
+    metadata:
+      labels:
+        controller-uid: fafea26b-35b7-48f7-bc75-1a2032565c31
+        job-name: passbolt-mysql-cleanup-backup-1784055600
+    spec:
+      volumes:
+      - name: backup-storage
+        persistentVolumeClaim:
+          claimName: passbolt-mysql-backup-pvc
+      containers:
+      - name: cleanup
+        image: <COMPANY>-<DOMAIN_607>/passbolt/mysql:5.6
+        command:
+        - /bin/sh
+        - -c
+        - 'echo "Starting backup cleanup at $(date)"
+
+          echo "Removing backups older than 7 days..."
+
+
+          # Đếm số backup trước khi cleanup
+
+          echo "Backups before cleanup:"
+
+          ls -la /backup/ | grep passbolt-backup | wc -l
+
+
+          # Xóa các backup cũ hơn 7 ngày
+
+          find /backup -name "passbolt-backup-*.sql" -type f -mtime +7 -exec rm -f
+          {} \; 2>/dev/null || true
+
+
+          echo "Cleanup completed"
+
+          echo "Backups remaining:"
+
+          ls -la /backup/ | grep passbolt-backup
+
+          '
+        resources: {}
+        volumeMounts:
+        - name: backup-storage
+          mountPath: /backup
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: OnFailure
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+      - name: registrypullsecret
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: <DOMAIN_138>/hostname
+                operator: In
+                values:
+                - <CLEANUP_HOST_4>
+      schedulerName: default-scheduler
+apiVersion: batch/v1
+kind: Job

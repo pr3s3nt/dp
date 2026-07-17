@@ -2,11 +2,25 @@
 # CATALOG PROVISIONER — ONPREM
 # Team hạ tầng sở hữu. Dev chỉ khai `type` trong score.yaml, KHÔNG đọc file này.
 #
-# type: postgres -> StatefulSet Postgres + Secret (password tự sinh, app đọc qua secretKeyRef)
-# type: route    -> Traefik IngressRoute
-# type: service  -> chỉ xuất DNS nội bộ (không sinh manifest)
+# type: postgres   -> StatefulSet Postgres + Secret (password tự sinh, app đọc qua secretKeyRef)
+# type: mysql      -> StatefulSet MySQL/MariaDB + Secret (cùng khuôn postgres; đổi image qua params)
+# type: mongodb    -> StatefulSet MongoDB + Secret (cùng khuôn)
+# type: redis      -> Deployment Redis (mặc định KHÔNG PVC — xem ghi chú block)
+# type: app-config -> Secret gom nhiều key cấu hình; dev khai TÊN key, ops điền GIÁ TRỊ trên cụm
+# type: route      -> Traefik IngressRoute (hỗ trợ nhiều host/path trên cùng workload)
+# type: service    -> chỉ xuất DNS nội bộ (không sinh manifest)
 #
-# Thêm loại hạ tầng mới (redis, s3, queue...) = thêm một block ở đây.
+# QUY ƯỚC CHUNG cho mọi datastore (hợp đồng ổn định — xem docs/them-provisioner-moi.md):
+#   - Biến xuất ra:  host / port / name / username / password (password luôn là secretKeyRef)
+#   - Secret:        <workload>-db-credentials  (create-if-missing, KHÔNG commit vào git)
+#   - Mỗi workload chỉ khai MỘT datastore chính (postgres|mysql|mongodb) — tên Secret
+#     dùng chung convention nên khai 2 loại cùng lúc sẽ đụng tên. Redis là cache, dùng
+#     secret riêng (<workload>-redis-credentials) nên đi kèm datastore chính thoải mái.
+#   - Workload/PVC do provisioner sinh ra có label `app.kubernetes.io/component: datastore`
+#     -> patch env (staging/prod.tpl) tự BỎ QUA replicas/resources của chúng.
+#
+# Thêm loại hạ tầng mới (s3, queue, ...) = thêm MỘT block ở đây + MỘT block bên
+# cloud.provisioners.yaml. Checklist: platform-repo/docs/them-provisioner-moi.md
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -17,21 +31,36 @@
 # - App nhận password qua secretKeyRef (encodeSecretRef) — không bao giờ plaintext trong env.
 # - Convention tên Secret: <workload>-db-credentials — là hợp đồng ổn định,
 #   sau này đổi sang Sealed Secrets / ESO thì app không đổi gì.
+#
+# Dev khai (tất cả params TÙY CHỌN — mặc định giữ đúng hành vi catalog/v1):
+#   db:
+#     type: postgres
+#     params:
+#       database: feedback360          # tên DB tạo sẵn (mặc định: appdb)
+#       image: postgres:16-alpine
+#       storage: 5Gi
+#       backup: { enabled: true, schedule: "0 18 * * *", cleanupSchedule: "0 19 * * *", retentionDays: 7, storage: 10Gi }
+#
+# Biến xuất ra : host / port(5432) / name / username(postgres) / password(secretKeyRef)
 # ---------------------------------------------------------------------------
 - uri: template://onprem/postgres
   type: postgres
   init: |
     name: {{ .SourceWorkload }}-db
     secretName: {{ .SourceWorkload }}-db-credentials
+    database: {{ .Params.database | default "appdb" }}
+    image: {{ .Params.image | default "postgres:16-alpine" }}
+    storage: {{ .Params.storage | default "5Gi" }}
   state: |
     {{ if not .State.password }}password: {{ randAlphaNum 20 | quote }}{{ else }}password: {{ .State.password | quote }}{{ end }}
   outputs: |
     host: {{ .Init.name }}
     port: 5432
-    name: appdb
+    name: {{ .Init.database }}
     username: postgres
     password: {{ encodeSecretRef .Init.secretName "password" }}
   manifests: |
+    {{ $backup := .Params.backup | default dict }}
     # Secret này sẽ bị CI TÁCH RA khỏi manifest trước khi commit sang config repo
     # (xem bước "split secrets" trong ci.yaml). Nó không bao giờ nằm trong git.
     - apiVersion: v1
@@ -45,6 +74,8 @@
       kind: StatefulSet
       metadata:
         name: {{ .Init.name }}
+        labels:
+          app.kubernetes.io/component: datastore
       spec:
         serviceName: {{ .Init.name }}
         replicas: 1
@@ -58,10 +89,10 @@
               - name: postgres
                 # Nếu cụm không ra được Docker Hub: dùng Harbor proxy-cache,
                 # vd harbor.example.com/dockerhub/library/postgres:16-alpine
-                image: postgres:16-alpine
+                image: {{ .Init.image }}
                 env:
                   - name: POSTGRES_DB
-                    value: appdb
+                    value: {{ .Init.database | quote }}
                   - name: POSTGRES_PASSWORD
                     valueFrom:
                       secretKeyRef:
@@ -74,6 +105,9 @@
                 volumeMounts:
                   - name: data
                     mountPath: /var/lib/postgresql/data
+                resources:
+                  requests: { cpu: 100m, memory: 256Mi }
+                  limits: { memory: 512Mi }
         volumeClaimTemplates:
           - metadata:
               name: data
@@ -83,7 +117,7 @@
               storageClassName: rook-ceph-block
               resources:
                 requests:
-                  storage: 5Gi
+                  storage: {{ .Init.storage }}
     - apiVersion: v1
       kind: Service
       metadata:
@@ -93,11 +127,625 @@
         ports:
           - port: 5432
             targetPort: 5432
+    {{ if $backup.enabled }}
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: {{ .Init.name }}-backup
+        labels:
+          app.kubernetes.io/component: datastore
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: rook-ceph-block
+        resources:
+          requests:
+            storage: {{ $backup.storage | default "10Gi" }}
+    - apiVersion: batch/v1
+      kind: CronJob
+      metadata:
+        name: {{ .Init.name }}-auto-backup
+        labels:
+          app.kubernetes.io/component: datastore
+      spec:
+        schedule: {{ $backup.schedule | default "0 18 * * *" | quote }}
+        concurrencyPolicy: Forbid
+        successfulJobsHistoryLimit: 3
+        failedJobsHistoryLimit: 1
+        jobTemplate:
+          spec:
+            template:
+              spec:
+                restartPolicy: OnFailure
+                volumes:
+                  - name: backup-storage
+                    persistentVolumeClaim:
+                      claimName: {{ .Init.name }}-backup
+                containers:
+                  - name: backup
+                    image: {{ .Init.image }}   # dùng lại image DB -> có sẵn pg_dumpall
+                    env:
+                      - name: PGPASSWORD       # pg_dumpall tự đọc biến này
+                        valueFrom:
+                          secretKeyRef:
+                            name: {{ .Init.secretName }}
+                            key: password
+                    command: ["/bin/sh", "-c"]
+                    args:
+                      - |
+                        set -e
+                        TS=$(date +%Y%m%d-%H%M%S)
+                        echo "Postgres backup bat dau: $TS"
+                        pg_dumpall -h {{ .Init.name }} -p 5432 -U postgres \
+                          > /backup/backup-$TS.sql
+                        echo "Xong: /backup/backup-$TS.sql"
+                        ls -lh /backup | tail -5
+                    volumeMounts:
+                      - name: backup-storage
+                        mountPath: /backup
+    - apiVersion: batch/v1
+      kind: CronJob
+      metadata:
+        name: {{ .Init.name }}-cleanup-backup
+        labels:
+          app.kubernetes.io/component: datastore
+      spec:
+        schedule: {{ $backup.cleanupSchedule | default "0 19 * * *" | quote }}
+        concurrencyPolicy: Forbid
+        successfulJobsHistoryLimit: 3
+        failedJobsHistoryLimit: 1
+        jobTemplate:
+          spec:
+            template:
+              spec:
+                restartPolicy: OnFailure
+                volumes:
+                  - name: backup-storage
+                    persistentVolumeClaim:
+                      claimName: {{ .Init.name }}-backup
+                containers:
+                  - name: cleanup
+                    image: {{ .Init.image }}
+                    command: ["/bin/sh", "-c"]
+                    args:
+                      - |
+                        echo "Don backup cu hon {{ $backup.retentionDays | default 7 }} ngay"
+                        find /backup -name 'backup-*.sql' -type f -mtime +{{ $backup.retentionDays | default 7 }} -print -delete
+                        echo "Con lai:"; ls -lh /backup | tail -10
+                    volumeMounts:
+                      - name: backup-storage
+                        mountPath: /backup
+    {{ end }}
+
+# ---------------------------------------------------------------------------
+# mysql: bao trùm cả MariaDB (đổi image qua params). Khuôn giống hệt postgres.
+#
+# Dev khai:
+#   db:
+#     type: mysql
+#     params:                                # tất cả đều TÙY CHỌN
+#       database: okr                        # tên DB tạo sẵn (mặc định: appdb)
+#       image: mysql:8.0                     # mariadb:10.6 cũng dùng được (nhận MYSQL_* env)
+#       storage: 5Gi                         # dung lượng PVC
+#       backup:                              # CronJob backup TÙY CHỌN (xem §backup dưới)
+#         enabled: true
+#         schedule: "0 18 * * *"             # giờ chạy mysqldump
+#         cleanupSchedule: "0 19 * * *"      # giờ dọn backup cũ
+#         retentionDays: 7                   # giữ backup bao nhiêu ngày
+#         storage: 10Gi                      # PVC chứa backup
+#
+# Biến xuất ra : host / port(3306) / name / username(root) / password(secretKeyRef)
+# Secret       : <workload>-db-credentials (key: password) — create-if-missing
+# Giả định     : storageClass rook-ceph-block; image kéo được từ Harbor proxy-cache
+#
+# §backup: backup nằm NGAY TRONG provisioner datastore (không tách resource riêng) vì:
+#   (1) lệnh dump gắn chặt loại DB (mysqldump/mongodump), (2) bật/tắt chỉ 1 block trong
+#   score.yaml, (3) không phải lặp lại host/secret giữa 2 resource. Sinh ra:
+#   CronJob <name>-auto-backup + <name>-cleanup-backup + PVC <name>-backup.
+# ---------------------------------------------------------------------------
+- uri: template://onprem/mysql
+  type: mysql
+  init: |
+    name: {{ .SourceWorkload }}-mysql
+    secretName: {{ .SourceWorkload }}-db-credentials
+    database: {{ .Params.database | default "appdb" }}
+    image: {{ .Params.image | default "mysql:8.0" }}
+    storage: {{ .Params.storage | default "5Gi" }}
+  state: |
+    {{ if not .State.password }}password: {{ randAlphaNum 20 | quote }}{{ else }}password: {{ .State.password | quote }}{{ end }}
+  outputs: |
+    host: {{ .Init.name }}
+    port: 3306
+    name: {{ .Init.database }}
+    username: root
+    password: {{ encodeSecretRef .Init.secretName "password" }}
+  manifests: |
+    {{ $backup := .Params.backup | default dict }}
+    # Secret bị CI tách ra, apply create-if-missing — không vào git.
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: {{ .Init.secretName }}
+      type: Opaque
+      stringData:
+        password: {{ .State.password | quote }}
+    - apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: {{ .Init.name }}
+        labels:
+          app.kubernetes.io/component: datastore
+      spec:
+        serviceName: {{ .Init.name }}
+        replicas: 1
+        selector:
+          matchLabels: { app: {{ .Init.name }} }
+        template:
+          metadata:
+            labels: { app: {{ .Init.name }} }
+          spec:
+            containers:
+              - name: mysql
+                # Air-gap: trỏ Harbor proxy-cache, vd harbor.example.com/dockerhub/library/mysql:8.0
+                image: {{ .Init.image }}
+                env:
+                  - name: MYSQL_DATABASE
+                    value: {{ .Init.database | quote }}
+                  - name: MYSQL_ROOT_PASSWORD    # mariadb cũng nhận biến MYSQL_* này
+                    valueFrom:
+                      secretKeyRef:
+                        name: {{ .Init.secretName }}
+                        key: password
+                ports:
+                  - containerPort: 3306
+                volumeMounts:
+                  - name: data
+                    mountPath: /var/lib/mysql
+                # Resource đặt TẠI provisioner (datastore tự biết nhu cầu của mình);
+                # patch env chỉ set resource cho container CHƯA có -> không bị ghi đè.
+                resources:
+                  requests: { cpu: 100m, memory: 512Mi }
+                  limits: { memory: 1536Mi }
+        volumeClaimTemplates:
+          - metadata:
+              name: data
+            spec:
+              accessModes: [ReadWriteOnce]
+              storageClassName: rook-ceph-block
+              resources:
+                requests:
+                  storage: {{ .Init.storage }}
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: {{ .Init.name }}
+      spec:
+        selector: { app: {{ .Init.name }} }
+        ports:
+          - port: 3306
+            targetPort: 3306
+    {{ if $backup.enabled }}
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: {{ .Init.name }}-backup
+        labels:
+          app.kubernetes.io/component: datastore
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: rook-ceph-block
+        resources:
+          requests:
+            storage: {{ $backup.storage | default "10Gi" }}
+    - apiVersion: batch/v1
+      kind: CronJob
+      metadata:
+        name: {{ .Init.name }}-auto-backup
+        labels:
+          app.kubernetes.io/component: datastore
+      spec:
+        schedule: {{ $backup.schedule | default "0 18 * * *" | quote }}
+        concurrencyPolicy: Forbid
+        successfulJobsHistoryLimit: 3
+        failedJobsHistoryLimit: 1
+        jobTemplate:
+          spec:
+            template:
+              spec:
+                restartPolicy: OnFailure
+                volumes:
+                  - name: backup-storage
+                    persistentVolumeClaim:
+                      claimName: {{ .Init.name }}-backup
+                containers:
+                  - name: backup
+                    image: {{ .Init.image }}   # dùng lại image DB -> có sẵn mysqldump
+                    env:
+                      - name: MYSQL_PWD        # mysql client tự đọc biến này, không lộ qua args
+                        valueFrom:
+                          secretKeyRef:
+                            name: {{ .Init.secretName }}
+                            key: password
+                    command: ["/bin/sh", "-c"]
+                    args:
+                      - |
+                        set -e
+                        TS=$(date +%Y%m%d-%H%M%S)
+                        echo "MySQL backup bat dau: $TS"
+                        mysqldump -h {{ .Init.name }} -P 3306 -u root \
+                          --single-transaction --routines --triggers --all-databases \
+                          > /backup/backup-$TS.sql
+                        echo "Xong: /backup/backup-$TS.sql"
+                        ls -lh /backup | tail -5
+                    volumeMounts:
+                      - name: backup-storage
+                        mountPath: /backup
+    - apiVersion: batch/v1
+      kind: CronJob
+      metadata:
+        name: {{ .Init.name }}-cleanup-backup
+        labels:
+          app.kubernetes.io/component: datastore
+      spec:
+        schedule: {{ $backup.cleanupSchedule | default "0 19 * * *" | quote }}
+        concurrencyPolicy: Forbid
+        successfulJobsHistoryLimit: 3
+        failedJobsHistoryLimit: 1
+        jobTemplate:
+          spec:
+            template:
+              spec:
+                restartPolicy: OnFailure
+                volumes:
+                  - name: backup-storage
+                    persistentVolumeClaim:
+                      claimName: {{ .Init.name }}-backup
+                containers:
+                  - name: cleanup
+                    image: {{ .Init.image }}
+                    command: ["/bin/sh", "-c"]
+                    args:
+                      - |
+                        echo "Don backup cu hon {{ $backup.retentionDays | default 7 }} ngay"
+                        find /backup -name 'backup-*.sql' -type f -mtime +{{ $backup.retentionDays | default 7 }} -print -delete
+                        echo "Con lai:"; ls -lh /backup | tail -10
+                    volumeMounts:
+                      - name: backup-storage
+                        mountPath: /backup
+    {{ end }}
+
+# ---------------------------------------------------------------------------
+# mongodb: khuôn giống mysql. Auth root/<password sinh sẵn>, authSource=admin.
+#
+# Dev khai:
+#   db:
+#     type: mongodb
+#     params:                                # tất cả TÙY CHỌN
+#       database: shift_handover             # tên DB logic app dùng (mặc định: appdb)
+#       image: mongo:6.0
+#       storage: 5Gi
+#       backup: { enabled: true, schedule: "...", cleanupSchedule: "...", retentionDays: 7, storage: 10Gi }
+#
+# Biến xuất ra : host / port(27017) / name / username(root) / password(secretKeyRef) / authSource(admin)
+# Secret       : <workload>-db-credentials (key: password)
+# Lưu ý        : app cần MONGODB_URI đầy đủ (có password bên trong) thì khai key đó qua
+#                type: app-config — score-k8s KHÔNG cho nối chuỗi một biến secretKeyRef.
+# ---------------------------------------------------------------------------
+- uri: template://onprem/mongodb
+  type: mongodb
+  init: |
+    name: {{ .SourceWorkload }}-mongo
+    secretName: {{ .SourceWorkload }}-db-credentials
+    database: {{ .Params.database | default "appdb" }}
+    image: {{ .Params.image | default "mongo:6.0" }}
+    storage: {{ .Params.storage | default "5Gi" }}
+  state: |
+    {{ if not .State.password }}password: {{ randAlphaNum 20 | quote }}{{ else }}password: {{ .State.password | quote }}{{ end }}
+  outputs: |
+    host: {{ .Init.name }}
+    port: 27017
+    name: {{ .Init.database }}
+    username: root
+    password: {{ encodeSecretRef .Init.secretName "password" }}
+    authSource: admin
+  manifests: |
+    {{ $backup := .Params.backup | default dict }}
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: {{ .Init.secretName }}
+      type: Opaque
+      stringData:
+        password: {{ .State.password | quote }}
+    - apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: {{ .Init.name }}
+        labels:
+          app.kubernetes.io/component: datastore
+      spec:
+        serviceName: {{ .Init.name }}
+        replicas: 1
+        selector:
+          matchLabels: { app: {{ .Init.name }} }
+        template:
+          metadata:
+            labels: { app: {{ .Init.name }} }
+          spec:
+            containers:
+              - name: mongodb
+                # Air-gap: harbor.example.com/dockerhub/library/mongo:6.0
+                image: {{ .Init.image }}
+                env:
+                  - name: MONGO_INITDB_ROOT_USERNAME
+                    value: root
+                  - name: MONGO_INITDB_ROOT_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: {{ .Init.secretName }}
+                        key: password
+                ports:
+                  - containerPort: 27017
+                volumeMounts:
+                  - name: data
+                    mountPath: /data/db
+                resources:
+                  requests: { cpu: 100m, memory: 1Gi }
+                  limits: { memory: 1536Mi }
+        volumeClaimTemplates:
+          - metadata:
+              name: data
+            spec:
+              accessModes: [ReadWriteOnce]
+              storageClassName: rook-ceph-block
+              resources:
+                requests:
+                  storage: {{ .Init.storage }}
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: {{ .Init.name }}
+      spec:
+        selector: { app: {{ .Init.name }} }
+        ports:
+          - port: 27017
+            targetPort: 27017
+    {{ if $backup.enabled }}
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: {{ .Init.name }}-backup
+        labels:
+          app.kubernetes.io/component: datastore
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: rook-ceph-block
+        resources:
+          requests:
+            storage: {{ $backup.storage | default "10Gi" }}
+    - apiVersion: batch/v1
+      kind: CronJob
+      metadata:
+        name: {{ .Init.name }}-auto-backup
+        labels:
+          app.kubernetes.io/component: datastore
+      spec:
+        schedule: {{ $backup.schedule | default "0 18 * * *" | quote }}
+        concurrencyPolicy: Forbid
+        successfulJobsHistoryLimit: 3
+        failedJobsHistoryLimit: 1
+        jobTemplate:
+          spec:
+            template:
+              spec:
+                restartPolicy: OnFailure
+                volumes:
+                  - name: backup-storage
+                    persistentVolumeClaim:
+                      claimName: {{ .Init.name }}-backup
+                containers:
+                  - name: backup
+                    image: {{ .Init.image }}   # dùng lại image DB -> có sẵn mongodump
+                    env:
+                      - name: MONGO_ROOT_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            name: {{ .Init.secretName }}
+                            key: password
+                    command: ["/bin/sh", "-c"]
+                    args:
+                      - |
+                        set -e
+                        TS=$(date +%Y%m%d-%H%M%S)
+                        echo "MongoDB backup bat dau: $TS"
+                        mongodump --host {{ .Init.name }} --port 27017 \
+                          --username root --password "$MONGO_ROOT_PASSWORD" \
+                          --authenticationDatabase admin \
+                          --out /backup/backup-$TS
+                        echo "Xong: /backup/backup-$TS"
+                        ls -ld /backup/backup-* | tail -5
+                    volumeMounts:
+                      - name: backup-storage
+                        mountPath: /backup
+    - apiVersion: batch/v1
+      kind: CronJob
+      metadata:
+        name: {{ .Init.name }}-cleanup-backup
+        labels:
+          app.kubernetes.io/component: datastore
+      spec:
+        schedule: {{ $backup.cleanupSchedule | default "0 19 * * *" | quote }}
+        concurrencyPolicy: Forbid
+        successfulJobsHistoryLimit: 3
+        failedJobsHistoryLimit: 1
+        jobTemplate:
+          spec:
+            template:
+              spec:
+                restartPolicy: OnFailure
+                volumes:
+                  - name: backup-storage
+                    persistentVolumeClaim:
+                      claimName: {{ .Init.name }}-backup
+                containers:
+                  - name: cleanup
+                    image: {{ .Init.image }}
+                    command: ["/bin/sh", "-c"]
+                    args:
+                      - |
+                        echo "Don backup cu hon {{ $backup.retentionDays | default 7 }} ngay"
+                        find /backup -maxdepth 1 -name 'backup-*' -type d -mtime +{{ $backup.retentionDays | default 7 }} -print -exec rm -rf {} +
+                        echo "Con lai:"; ls -ld /backup/backup-* 2>/dev/null | tail -10
+                    volumeMounts:
+                      - name: backup-storage
+                        mountPath: /backup
+    {{ end }}
+
+# ---------------------------------------------------------------------------
+# redis: cache — mặc định Deployment + emptyDir, KHÔNG PVC.
+#
+# LỰA CHỌN THIẾT KẾ (chủ đích, xem §4 tài liệu yêu cầu): cả 3 app dùng redis trên cụm cũ
+# (acs, okr, okr-dep) đều dùng như cache/session — mất dữ liệu khi restart là chấp nhận
+# được, đổi lại không tốn PVC Ceph và không phải quản trị persistence. Nếu về sau có app
+# cần redis bền vững -> thêm params.persistent cho block này (không phá app cũ).
+#
+# Dev khai:
+#   cache:
+#     type: redis
+#     params:                 # TÙY CHỌN
+#       image: redis:6.2-alpine
+#       auth: true            # bật requirepass (mặc định false — giống app cũ nối không password)
+#
+# Biến xuất ra : host / port(6379) / password ("" khi auth=false, secretKeyRef khi auth=true)
+# Secret       : <workload>-redis-credentials (chỉ tạo khi auth=true) — cố ý KHÁC
+#                <workload>-db-credentials để một workload dùng được cả DB + redis.
+# ---------------------------------------------------------------------------
+- uri: template://onprem/redis
+  type: redis
+  init: |
+    name: {{ .SourceWorkload }}-redis
+    secretName: {{ .SourceWorkload }}-redis-credentials
+    image: {{ .Params.image | default "redis:6.2-alpine" }}
+  state: |
+    {{ if .Params.auth }}{{ if not .State.password }}password: {{ randAlphaNum 20 | quote }}{{ else }}password: {{ .State.password | quote }}{{ end }}{{ end }}
+  outputs: |
+    host: {{ .Init.name }}
+    port: 6379
+    {{ if .Params.auth }}password: {{ encodeSecretRef .Init.secretName "password" }}{{ else }}password: ""{{ end }}
+  manifests: |
+    {{ if .Params.auth }}
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: {{ .Init.secretName }}
+      type: Opaque
+      stringData:
+        password: {{ .State.password | quote }}
+    {{ end }}
+    - apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: {{ .Init.name }}
+        labels:
+          app.kubernetes.io/component: datastore
+      spec:
+        replicas: 1
+        selector:
+          matchLabels: { app: {{ .Init.name }} }
+        template:
+          metadata:
+            labels: { app: {{ .Init.name }} }
+          spec:
+            containers:
+              - name: redis
+                # Air-gap: harbor.example.com/dockerhub/library/redis:6.2-alpine
+                image: {{ .Init.image }}
+                {{ if .Params.auth }}
+                env:
+                  - name: REDIS_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: {{ .Init.secretName }}
+                        key: password
+                args: ["--requirepass", "$(REDIS_PASSWORD)"]
+                {{ end }}
+                ports:
+                  - containerPort: 6379
+                volumeMounts:
+                  - name: data
+                    mountPath: /data
+                resources:
+                  requests: { cpu: 50m, memory: 256Mi }
+                  limits: { memory: 1Gi }
+            volumes:
+              - name: data
+                emptyDir: {}
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: {{ .Init.name }}
+      spec:
+        selector: { app: {{ .Init.name }} }
+        ports:
+          - port: 6379
+            targetPort: 6379
+
+# ---------------------------------------------------------------------------
+# app-config: Secret gom nhiều key cấu hình app (pattern `be-secret` trên cụm cũ).
+#
+# VẤN ĐỀ: nhiều app đọc cấu hình (JWT_SECRET, KEYCLOAK_*, DATABASE_URL...) qua
+# secretKeyRef từ một Secret nhiều key. Giá trị KHÔNG ĐƯỢC nằm trong git.
+#
+# LỰA CHỌN THIẾT KẾ: resource type riêng (thay vì mở rộng cú pháp env) vì:
+#   (1) dev khai TÊN key ngay trong score.yaml — nhìn score.yaml biết app cần gì;
+#   (2) đi qua đúng đường Secret sẵn có của platform (CI tách + create-if-missing),
+#       không cần cơ chế mới; (3) đổi backend sau này (ESO/Vault) chỉ sửa block này.
+# Trade-off: giá trị phải được ops điền TAY 1 lần/namespace (kubectl patch) — chấp nhận
+# vì đằng nào giá trị cũng không được vào git, và create-if-missing giữ nguyên giá trị đã điền.
+#
+# Dev khai:
+#   config:
+#     type: app-config
+#     params:
+#       keys: [NODE_ENV, PORT, JWT_SECRET, KEYCLOAK_URL]   # BẮT BUỘC
+# rồi dùng:  variables: { JWT_SECRET: ${resources.config.JWT_SECRET} }
+#
+# Secret: <workload>-app-config — sinh với giá trị placeholder "CHANGE_ME";
+# CI apply create-if-missing; ops điền thật:
+#   kubectl -n <ns> patch secret <workload>-app-config -p '{"stringData":{"JWT_SECRET":"..."}}'
+# ---------------------------------------------------------------------------
+- uri: template://onprem/app-config
+  type: app-config
+  init: |
+    {{ if not .Params.keys }}{{ fail "app-config: thiếu params.keys (danh sách tên biến app cần)" }}{{ end }}
+    secretName: {{ .SourceWorkload }}-app-config
+  outputs: |
+    secretName: {{ .Init.secretName }}
+    {{- range .Params.keys }}
+    {{ . }}: {{ encodeSecretRef $.Init.secretName . }}
+    {{- end }}
+  manifests: |
+    # Secret bị CI tách ra, apply create-if-missing. Giá trị thật KHÔNG BAO GIỜ vào git —
+    # placeholder CHANGE_ME chỉ xuất hiện ở lần tạo đầu, ops điền thật rồi thì giữ nguyên.
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: {{ .Init.secretName }}
+        labels:
+          app.kubernetes.io/component: app-config
+      type: Opaque
+      stringData:
+        {{- range .Params.keys }}
+        {{ . }}: "CHANGE_ME"
+        {{- end }}
 
 # ---------------------------------------------------------------------------
 # route: lộ service ra ngoài qua Traefik.
 # Dev khai: api: {type: route, params: {host: shop.example.com, path: /api, port: 8080}}
 # Trỏ vào Service do score-k8s sinh cho workload (mặc định trùng tên workload).
+#
+# ĐA HOST/ĐA PATH (kiểu feedback360/otm — be/fe mỗi cái một host): mỗi host/path là
+# MỘT resource route riêng trong score.yaml; tên IngressRoute chứa host+path đã
+# chuẩn hóa nên không đụng nhau:  <workload>-route-<host>[-<path>]
 # ---------------------------------------------------------------------------
 - uri: template://onprem/route
   type: route
@@ -112,7 +760,7 @@
     - apiVersion: traefik.io/v1alpha1
       kind: IngressRoute
       metadata:
-        name: {{ .SourceWorkload }}-route{{ if ne .Init.path "/" }}-{{ .Init.path | trimPrefix "/" | replace "/" "-" }}{{ end }}
+        name: {{ .SourceWorkload }}-route-{{ .Init.host | lower | replace "." "-" }}{{ if ne .Init.path "/" }}-{{ .Init.path | trimPrefix "/" | replace "/" "-" | lower }}{{ end }}
       spec:
         entryPoints: [web]   # TODO: đổi thành websecure + TLS khi có cert
         routes:

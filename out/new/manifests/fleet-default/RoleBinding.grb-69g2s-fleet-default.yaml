@@ -1,0 +1,15 @@
+metadata:
+  name: grb-69g2s-fleet-default
+  namespace: fleet-default
+  labels:
+    authz.management.cattle.io/grb-owner: <REDACTED:env>
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_1>
+  name: u-b4qkhsnliz
+roleRef:
+  apiGroup: <DOMAIN_1>
+  kind: Role
+  name: user-fleet-default
+apiVersion: <DOMAIN_1>/v1
+kind: RoleBinding

@@ -1,0 +1,22 @@
+metadata:
+  name: passbolt-svc
+  namespace: passbolt-v4
+  labels:
+    app: passbolt
+    app.kubernetes.io/instance: passbolt-v4
+  annotations: {}
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    port: 6831
+    targetPort: 80
+  selector:
+    app: passbolt
+  clusterIP: <IP_97>
+  type: ClusterIP
+  externalIPs:
+  - <CLEANUP_IP_5>
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

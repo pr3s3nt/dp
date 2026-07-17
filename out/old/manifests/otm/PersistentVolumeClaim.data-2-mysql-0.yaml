@@ -1,0 +1,20 @@
+metadata:
+  name: data-2-mysql-0
+  namespace: otm
+  labels:
+    app: mysql
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_529>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi
+  volumeName: pvc-1bb129e4-6d11-4ae6-9f08-80535352c637
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

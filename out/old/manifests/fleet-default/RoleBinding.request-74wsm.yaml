@@ -1,0 +1,23 @@
+metadata:
+  name: request-74wsm
+  namespace: fleet-default
+  labels:
+    fleet.cattle.io/managed: 'true'
+    objectset.rio.cattle.io/hash: d1a96b634375dc9d15e2bba6d28c4cd051d7d023
+  annotations:
+    objectset.rio.cattle.io/applied: '{"metadata":{"name":"request-74wsm","namespace":"fleet-default","creationTimestamp":null,"labels":{"<DOMAIN_474>/managed":"true","<DOMAIN_553>/hash":"d1a96b634375dc9d15e2bba6d28c4cd051d7d023"},"annotations":{"<DOMAIN_553>/id":"cluster-registration","<DOMAIN_553>/owner-gvk":"<DOMAIN_474>/v1alpha1,
+      Kind=ClusterRegistration","<DOMAIN_553>/owner-name":"request-74wsm","<DOMAIN_553>/owner-namespace":"fleet-default"},"ownerReferences":[{"apiVersion":"<DOMAIN_474>/v1alpha1","kind":"ClusterRegistration","name":"request-74wsm","uid":"d5003623-bc50-4861-a466-209fe8cd326f","controller":false,"blockOwnerDeletion":false}]},"subjects":[{"kind":"ServiceAccount","name":"request-74wsm-d5003623-bc50-4861-a466-209fe8cd326f","namespace":"cluster-fleet-default-c-4rhl6-d404a33eb429"}],"roleRef":{"apiGroup":"<DOMAIN_776>","kind":"Role","name":"request-74wsm"}}'
+    objectset.rio.cattle.io/id: cluster-registration
+    objectset.rio.cattle.io/owner-gvk: <DOMAIN_474>/v1alpha1, Kind=ClusterRegistration
+    objectset.rio.cattle.io/owner-name: request-74wsm
+    objectset.rio.cattle.io/owner-namespace: fleet-default
+subjects:
+- kind: ServiceAccount
+  name: request-74wsm-d5003623-bc50-4861-a466-209fe8cd326f
+  namespace: cluster-fleet-default-c-4rhl6-d404a33eb429
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: request-74wsm
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

@@ -1,0 +1,17 @@
+metadata:
+  name: clusterrolebinding-gf46r
+  generateName: clusterrolebinding-
+  namespace: face-reco
+  labels:
+    authz.cluster.cattle.io/rtb-owner-updated: <REDACTED:env>
+    cattle.io/creator: norman
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-ef76duapmo
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: ClusterRole
+  name: view
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

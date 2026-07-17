@@ -1,0 +1,196 @@
+metadata:
+  name: <DOMAIN_69>-ctrlplugin
+  namespace: rook-ceph
+  annotations: {}
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: <DOMAIN_69>-ctrlplugin
+  template:
+    metadata:
+      labels:
+        app: <DOMAIN_69>-ctrlplugin
+    spec:
+      volumes:
+      - name: host-dev
+        hostPath:
+          path: /dev
+          type: ''
+      - name: host-sys
+        hostPath:
+          path: /sys
+          type: ''
+      - name: lib-modules
+        hostPath:
+          path: /lib/modules
+          type: ''
+      - name: socket-dir
+        emptyDir:
+          medium: Memory
+      - name: keys-tmp-dir
+        emptyDir:
+          medium: Memory
+      - name: oidc-token
+        projected:
+          sources:
+          - serviceAccountToken:
+              audience: ceph-csi-kms
+              expirationSeconds: 3600
+              path: oidc-token
+          defaultMode: 420
+      - name: ceph-csi-config
+        configMap:
+          name: ceph-csi-config
+          defaultMode: 420
+      containers:
+      - name: csi-cephfsplugin
+        image: quay.io/cephcsi/cephcsi:v3.16.1
+        args:
+        - --type=cephfs
+        - --v=0
+        - --endpoint=unix:///csi/<DOMAIN_70>
+        - --nodeid=$(NODE_ID)
+        - --controllerserver=true
+        - --drivername=<DOMAIN_69>
+        - --pidlimit=-1
+        - --setmetadata=true
+        - --clustername=rook-ceph
+        - --forcecephkernelclient=true
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_71>
+        - name: NODE_ID
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_66>
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_72>
+        resources: {}
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /csi
+        - name: host-dev
+          mountPath: /dev
+        - name: host-sys
+          mountPath: /sys
+        - name: lib-modules
+          readOnly: true
+          mountPath: /lib/modules
+        - name: keys-tmp-dir
+          mountPath: /tmp/csi/keys
+        - name: ceph-csi-config
+          mountPath: /etc/ceph-csi-config
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      - name: csi-provisioner
+        image: registry.k8s.io/sig-storage/csi-provisioner:v6.0.0
+        args:
+        - --leader-election-namespace=rook-ceph
+        - --leader-election-lease-duration=137s
+        - --leader-election-renew-deadline=107s
+        - --leader-election-retry-period=26s
+        - --leader-election=true
+        - --v=0
+        - --csi-address=unix:///csi/<DOMAIN_70>
+        - --timeout=150s
+        - --retry-interval-start=500ms
+        - --default-fstype=ext4
+        - --prevent-volume-mode-conversion=true
+        - --feature-gates=HonorPVReclaimPolicy=true
+        - --feature-gates=Topology=false
+        - --extra-create-metadata=true
+        resources: {}
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /csi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      - name: csi-resizer
+        image: registry.k8s.io/sig-storage/csi-resizer:v2.0.0
+        args:
+        - --leader-election-namespace=rook-ceph
+        - --leader-election-lease-duration=137s
+        - --leader-election-renew-deadline=107s
+        - --leader-election-retry-period=26s
+        - --leader-election=true
+        - --v=0
+        - --csi-address=unix:///csi/<DOMAIN_70>
+        - --timeout=150s
+        - --handle-volume-inuse-error=false
+        - --feature-gates=RecoverVolumeExpansionFailure=true
+        resources: {}
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /csi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      - name: csi-attacher
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.10.0
+        args:
+        - --leader-election-namespace=rook-ceph
+        - --leader-election-lease-duration=137s
+        - --leader-election-renew-deadline=107s
+        - --leader-election-retry-period=26s
+        - --leader-election=true
+        - --v=0
+        - --csi-address=unix:///csi/<DOMAIN_70>
+        - --timeout=150s
+        resources: {}
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /csi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      - name: csi-snapshotter
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v8.4.0
+        args:
+        - --leader-election-namespace=rook-ceph
+        - --leader-election-lease-duration=137s
+        - --leader-election-renew-deadline=107s
+        - --leader-election-retry-period=26s
+        - --leader-election=true
+        - --v=0
+        - --csi-address=unix:///csi/<DOMAIN_70>
+        - --timeout=150s
+        - --extra-create-metadata=true
+        resources: {}
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /csi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      serviceAccountName: ceph-csi-cephfs-ctrlplugin-sa
+      serviceAccount: ceph-csi-cephfs-ctrlplugin-sa
+      securityContext: {}
+      affinity:
+        nodeAffinity: {}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: <DOMAIN_69>-ctrlplugin
+            topologyKey: <DOMAIN_43>/hostname
+      schedulerName: default-scheduler
+      priorityClassName: system-node-critical
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

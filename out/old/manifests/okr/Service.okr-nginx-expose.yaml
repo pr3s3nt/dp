@@ -1,0 +1,15 @@
+metadata:
+  name: okr-nginx-expose
+  namespace: okr
+spec:
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  selector:
+    app: okr-nginx
+  clusterIP: <IP_91>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

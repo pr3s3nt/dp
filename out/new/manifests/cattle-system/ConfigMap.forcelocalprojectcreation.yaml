@@ -1,0 +1,7 @@
+metadata:
+  name: forcelocalprojectcreation
+  namespace: cattle-system
+data:
+  projectsCreated: 'true'
+apiVersion: v1
+kind: ConfigMap

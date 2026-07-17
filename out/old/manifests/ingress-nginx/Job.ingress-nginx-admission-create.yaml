@@ -1,0 +1,63 @@
+metadata:
+  name: ingress-nginx-admission-create
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/component: admission-webhook
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+    app.kubernetes.io/version: 1.2.1
+  annotations: {}
+spec:
+  parallelism: 1
+  completions: 1
+  backoffLimit: 6
+  selector:
+    matchLabels:
+      controller-uid: cc127a8a-f4c3-4c99-a2a1-96dedec57814
+  template:
+    metadata:
+      name: ingress-nginx-admission-create
+      labels:
+        app.kubernetes.io/component: admission-webhook
+        app.kubernetes.io/instance: ingress-nginx
+        app.kubernetes.io/name: ingress-nginx
+        app.kubernetes.io/part-of: ingress-nginx
+        app.kubernetes.io/version: 1.2.1
+        controller-uid: cc127a8a-f4c3-4c99-a2a1-96dedec57814
+        job-name: ingress-nginx-admission-create
+    spec:
+      containers:
+      - name: create
+        image: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.1.1@sha256:64d8c73dca984af206adf9d6d7e46aa550362b1d7a01f3a0a91b20cc67868660
+        args:
+        - create
+        - --host=ingress-nginx-controller-admission,ingress-nginx-controller-admission.$(POD_NAMESPACE).svc
+        - --namespace=$(POD_NAMESPACE)
+        - --secret-name=ingress-nginx-admission
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_20>
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+      restartPolicy: OnFailure
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/os: linux
+      serviceAccountName: ingress-nginx-admission
+      serviceAccount: ingress-nginx-admission
+      securityContext:
+        runAsUser: 2000
+        runAsNonRoot: true
+        fsGroup: 2000
+      schedulerName: default-scheduler
+apiVersion: batch/v1
+kind: Job

@@ -1,0 +1,22 @@
+metadata:
+  name: artifactory-volume-jfrog-container-registry-artifactory-0
+  namespace: artifactory
+  labels:
+    app: artifactory
+    release: jfrog-container-registry
+    role: artifactory
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_529>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Ti
+  volumeName: pvc-2c56962d-9d9c-4c79-b2ba-9ae7b85aeede
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

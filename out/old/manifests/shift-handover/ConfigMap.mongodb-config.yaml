@@ -1,0 +1,7 @@
+metadata:
+  name: mongodb-config
+  namespace: shift-handover
+data:
+  mongod.conf: "security:\n  authorization: enabled\n"
+apiVersion: v1
+kind: ConfigMap

@@ -1,0 +1,47 @@
+metadata:
+  name: rancher-turtles-leader-election-role
+  namespace: cattle-turtles-system
+  labels:
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: rancher-turtles
+    app.kubernetes.io/instance: leader-election-role
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: role
+    app.kubernetes.io/part-of: rancher-turtles
+  annotations:
+    meta.helm.sh/release-name: rancher-turtles
+    meta.helm.sh/release-namespace: cattle-turtles-system
+rules:
+- verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+  apiGroups:
+  - ''
+  resources:
+  - configmaps
+- verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+  apiGroups:
+  - <DOMAIN_129>
+  resources:
+  - leases
+- verbs:
+  - create
+  - patch
+  apiGroups:
+  - ''
+  resources:
+  - events
+apiVersion: <DOMAIN_1>/v1
+kind: Role

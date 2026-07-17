@@ -1,0 +1,22 @@
+metadata:
+  name: mysql-passbolt-network-policy
+  namespace: passbolt
+  labels:
+    app.kubernetes.io/instance: mysql-passbolt-prd
+  annotations: {}
+spec:
+  podSelector:
+    matchLabels:
+      app: mysql
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 3306
+    from:
+    - podSelector:
+        matchLabels:
+          app: passbolt
+  policyTypes:
+  - Ingress
+apiVersion: <DOMAIN_775>/v1
+kind: NetworkPolicy

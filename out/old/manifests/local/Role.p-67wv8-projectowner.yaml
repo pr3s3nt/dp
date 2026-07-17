@@ -1,0 +1,16 @@
+metadata:
+  name: p-67wv8-projectowner
+  namespace: local
+  labels:
+    cattle.io/creator: norman
+rules:
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_528>
+  resources:
+  - projects
+  resourceNames:
+  - p-67wv8
+apiVersion: <DOMAIN_776>/v1
+kind: Role

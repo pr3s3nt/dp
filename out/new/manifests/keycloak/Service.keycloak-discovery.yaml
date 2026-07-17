@@ -1,0 +1,20 @@
+metadata:
+  name: keycloak-discovery
+  namespace: keycloak
+  labels:
+    app: keycloak
+  annotations: {}
+spec:
+  selector:
+    app: keycloak
+  clusterIP: None
+  clusterIPs:
+  - None
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  internalTrafficPolicy: Cluster
+apiVersion: v1
+kind: Service

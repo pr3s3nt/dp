@@ -10,16 +10,26 @@ platform-repo/
 │   └── catalog-ci.yaml                # PR sửa score/** -> render-diff bộ mẫu để review
 ├── score/
 │   ├── provisioners/
-│   │   ├── onprem.provisioners.yaml   # postgres->StatefulSet(rook-ceph-block), route->Traefik, service->DNS
-│   │   └── cloud.provisioners.yaml    # postgres->RDS(Secret của Terraform), route->Ingress ALB
+│   │   ├── onprem.provisioners.yaml   # postgres/mysql/mongodb->StatefulSet(rook-ceph-block), redis->Deployment,
+│   │   │                              #   app-config->Secret khai key, route->Traefik, service->DNS
+│   │   └── cloud.provisioners.yaml    # datastore->RDS/DocumentDB/ElastiCache (Secret của Terraform), route->Ingress ALB
 │   ├── patches/
-│   │   ├── staging.tpl                # khác biệt env: replicas, resources + tiêm imagePullSecrets (Harbor)
+│   │   ├── staging.tpl                # khác biệt env: replicas, resources (bỏ qua datastore) + pull secret ($pullSecret)
 │   │   └── prod.tpl
 │   └── examples/                      # bộ score mẫu làm input chuẩn cho catalog-ci
+│       └── migration/                 #   3 app đại diện migrate 1.19->1.35 (feedback360, okr, shift-handover)
+├── scripts/
+│   └── test-local.sh                  # render + dry-run server-side vào ns sandbox (xem HUONG-DAN-THUC-THI.md)
+├── docs/
+│   ├── them-provisioner-moi.md        # checklist thêm datastore mới (<1h)
+│   └── mapping-k8s-cu-sang-score.md   # mapping manifest cũ -> Score + đánh giá keycloak/svms/arangodb
 ├── argocd/
 │   ├── project.yaml
-│   ├── appset-onprem.yaml             # tự quét repo *-config trong org
+│   ├── appset-onprem.yaml             # đa cụm: đọc clusters/placement/*.yaml -> destination theo từng app
 │   └── appset-cloud.yaml
+├── clusters/
+│   ├── README.md                      # mô hình mỗi app một cụm: onboard cụm, đặt tên, secret
+│   └── placement/<app>.yaml           # NGUỒN SỰ THẬT: app nào chạy cụm nào (staging/prod)
 └── bootstrap/
     └── onprem.md                      # dựng tay Traefik + ArgoCD (Giai đoạn 1)
 ```
@@ -44,7 +54,8 @@ Lợi ích: credential (kubeconfig, token config repo, robot Harbor) chỉ nằm
 |---|---|---|
 | **platform-repo** | `APP_REPOS_TOKEN` | đọc app repo trong org |
 | | `CONFIG_REPO_TOKEN` | push vào các repo `<app>-config` |
-| | `KUBECONFIG_ONPREM_STAGING` / `..._PROD` | apply Secret DB + harbor-pull |
+| | `KUBECONFIG_ONPREM_STAGING` / `..._PROD` | apply Secret DB + harbor-pull (cụm quản lý / app đặt `in-cluster`) |
+| | `KUBECONFIG_<TÊN_CỤM>` | đa cụm: kubeconfig từng cụm app riêng (vd `KUBECONFIG_OKR_STAGING`) — xem `clusters/README.md` |
 | | `HARBOR_HOST`, `HARBOR_ROBOT_USER`, `HARBOR_ROBOT_PASS` | tạo pull secret trong namespace |
 | **mỗi app repo** | `HARBOR_USERNAME` / `HARBOR_PASSWORD` | push image |
 | | `PLATFORM_DISPATCH_TOKEN` | bắn repository_dispatch sang repo này |
@@ -59,8 +70,15 @@ Lợi ích: credential (kubeconfig, token config repo, robot Harbor) chỉ nằm
 
 Mỗi app repo có file `platform.lock` ghim ref (tag `catalog/vX`) của repo này — orchestrator render app bằng đúng catalog đó. Sửa provisioner/patch trên `main` **không ảnh hưởng app nào** cho tới khi app tự nâng lock. Quy trình: PR (catalog-ci hiện render-diff) → merge + tag → canary 1 app → rollout wave. Chi tiết: `CHIEN-LUOC-MIGRATION-VA-CAP-NHAT.md` ở repo tổng.
 
+## Mô hình đa cụm (mỗi app một cụm k8s riêng)
+
+ArgoCD chạy trên **cụm quản lý**, deploy chéo sang **cụm app** theo
+`clusters/placement/<app>.yaml`. Thêm app = tạo repo `<app>-config` + 1 file placement.
+Orchestrator cũng đọc placement để apply Secret đúng cụm (secret `KUBECONFIG_<TÊN_CỤM>`).
+Chi tiết + checklist onboard cụm mới: `clusters/README.md`.
+
 ## Mở rộng platform
 
-- Thêm loại hạ tầng (redis, s3...): thêm 1 block provisioner vào cả 2 file onprem/cloud. Dev dùng ngay bằng `type: redis`.
+- Thêm loại hạ tầng (s3, queue...): thêm 1 block provisioner vào cả 2 file onprem/cloud theo checklist `docs/them-provisioner-moi.md`. Dev dùng ngay bằng `type: <tên>`.
 - Đổi cách làm secret (Sealed Secrets, ESO+Vault): giữ convention tên Secret `<workload>-db-credentials` thì app không đổi.
 - Tự động hóa hạ tầng cloud: viết vào stage "infra" của orchestrator (terraform module rds theo app), CI app không đổi.

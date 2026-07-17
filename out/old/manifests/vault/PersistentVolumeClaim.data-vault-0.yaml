@@ -1,0 +1,22 @@
+metadata:
+  name: data-vault-0
+  namespace: vault
+  labels:
+    app.kubernetes.io/instance: vault
+    app.kubernetes.io/name: vault
+    component: server
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_529>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  volumeName: pvc-a6036294-0b06-410b-b53d-260b01e4e631
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

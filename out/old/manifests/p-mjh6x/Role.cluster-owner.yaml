@@ -1,0 +1,98 @@
+metadata:
+  name: cluster-owner
+  namespace: p-mjh6x
+  labels:
+    cattle.io/creator: norman
+rules:
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - apps
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - pipelinesettings
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectalertgroups
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectroletemplatebindings
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - pipelines
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - catalogtemplates
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - apprevisions
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectmonitorgraphs
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - secrets
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectloggings
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectalertrules
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - pipelineexecutions
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectcatalogs
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - catalogtemplateversions
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - sourcecodeproviderconfigs
+apiVersion: <DOMAIN_776>/v1
+kind: Role

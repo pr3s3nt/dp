@@ -1,0 +1,45 @@
+metadata:
+  name: rook-ceph-mon-a
+  namespace: rook-ceph
+  labels:
+    app: rook-ceph-mon
+    app.kubernetes.io/component: <DOMAIN_64>
+    app.kubernetes.io/created-by: rook-ceph-operator
+    app.kubernetes.io/instance: a
+    app.kubernetes.io/managed-by: rook-ceph-operator
+    app.kubernetes.io/name: ceph-mon
+    app.kubernetes.io/part-of: rook-ceph
+    ceph_daemon_id: a
+    ceph_daemon_type: mon
+    mon: a
+    mon_cluster: rook-ceph
+    mon_daemon: 'true'
+    rook.io/operator-namespace: rook-ceph
+    rook_cluster: rook-ceph
+spec:
+  ports:
+  - name: tcp-msgr1
+    protocol: TCP
+    port: 6789
+    targetPort: 6789
+  - name: tcp-msgr2
+    protocol: TCP
+    port: 3300
+    targetPort: 3300
+  selector:
+    app: rook-ceph-mon
+    ceph_daemon_id: a
+    mon: a
+    mon_cluster: rook-ceph
+    rook_cluster: rook-ceph
+  clusterIP: <IP_6>
+  clusterIPs:
+  - <IP_6>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  internalTrafficPolicy: Cluster
+apiVersion: v1
+kind: Service

@@ -1,0 +1,7 @@
+metadata:
+  name: rancher-controller-lock
+  namespace: kube-system
+  annotations:
+    control-plane.alpha.kubernetes.io/leader: '{"holderIdentity":"rancher-operator-6659bbb889-s26l9","leaseDurationSeconds":45,"acquireTime":"2022-07-28T08:25:51Z","renewTime":"2022-07-28T08:32:14Z","leaderTransitions":3}'
+apiVersion: v1
+kind: ConfigMap

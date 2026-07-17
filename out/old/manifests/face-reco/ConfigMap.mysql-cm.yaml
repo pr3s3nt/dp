@@ -1,0 +1,31 @@
+metadata:
+  name: mysql-cm
+  namespace: face-reco
+  labels:
+    appname: face-reco
+  annotations: {}
+data:
+  init_command.sql: 'CREATE USER ''admin''@''%'' IDENTIFIED BY ''abc13579'';
+
+    GRANT ALL PRIVILEGES ON *.* TO ''admin''@''%'';
+
+    FLUSH PRIVILEGES;
+
+
+    /*
+
+    Create DB in here
+
+    */
+
+    CREATE DATABASE face_reco_db_2;
+
+    '
+  mysqld.cnf: "[mysqld]\npid-file\t= /var/run/mysqld/<DOMAIN_472>\nsocket\t\t= /var/run/mysqld/<DOMAIN_473>\n\
+    datadir\t\t= /var/lib/mysql\n#sql_mode        = \"STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION\"\
+    \n#log-error\t= /var/log/mysql/<DOMAIN_3>\n# By default we only accept connections\
+    \ from localhost\n#bind-address\t= 127.0.0.1\n# Disabling symbolic-links is recommended\
+    \ to prevent assorted security risks\nsymbolic-links=0\nexplicit_defaults_for_timestamp\
+    \ = 1\n"
+apiVersion: v1
+kind: ConfigMap

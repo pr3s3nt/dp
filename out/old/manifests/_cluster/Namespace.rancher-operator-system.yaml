@@ -1,0 +1,8 @@
+metadata:
+  name: rancher-operator-system
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2022-07-29T10:47:31Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2022-07-29T10:47:31Z"}]}'
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+spec: {}
+apiVersion: v1
+kind: Namespace

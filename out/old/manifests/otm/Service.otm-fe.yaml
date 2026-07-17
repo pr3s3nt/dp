@@ -1,0 +1,22 @@
+metadata:
+  name: otm-fe
+  namespace: otm
+  labels:
+    app.kubernetes.io/instance: otm-fe
+    run: otm-fe
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<CLEANUP_IP_10>"],"port":31088,"protocol":"TCP","serviceName":"otm:otm-fe","allNodes":true}]'
+spec:
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+    nodePort: 31088
+  selector:
+    app: otm-fe
+  clusterIP: <IP_95>
+  type: NodePort
+  sessionAffinity: <REDACTED:env>
+  externalTrafficPolicy: Cluster
+apiVersion: v1
+kind: Service

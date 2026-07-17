@@ -1,0 +1,15 @@
+metadata:
+  name: catalogs-manage-global-catalog
+  namespace: cattle-global-data
+  labels:
+    cattle.io/creator: norman
+rules:
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_528>
+  resources:
+  - catalogtemplates
+  - catalogtemplateversions
+apiVersion: <DOMAIN_776>/v1
+kind: Role

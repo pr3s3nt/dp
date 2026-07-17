@@ -1,0 +1,82 @@
+metadata:
+  name: spin-fiat
+  namespace: spinnaker
+  labels:
+    app: spin
+    app.kubernetes.io/managed-by: halyard
+    app.kubernetes.io/name: fiat
+    app.kubernetes.io/part-of: spinnaker
+    app.kubernetes.io/version: local1.21.3
+    cluster: spin-fiat
+  annotations:
+    moniker.spinnaker.io/application: <REDACTED:env>
+    moniker.spinnaker.io/cluster: <REDACTED:env>
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spin
+      cluster: spin-fiat
+  template:
+    metadata:
+      labels:
+        app: spin
+        app.kubernetes.io/managed-by: halyard
+        app.kubernetes.io/name: fiat
+        app.kubernetes.io/part-of: spinnaker
+        app.kubernetes.io/version: local1.21.3
+        cluster: spin-fiat
+    spec:
+      volumes:
+      - name: spin-fiat-files-783243827
+        secret:
+          secretName: <REDACTED:env>
+          defaultMode: 420
+      containers:
+      - name: fiat
+        image: <COMPANY>-<DOMAIN_607>/spinnaker/fiat:1.12.0-20200625140019
+        ports:
+        - containerPort: 7003
+          protocol: TCP
+        env:
+        - name: JAVA_OPTS
+          value: -XX:MaxRAMPercentage=50.0
+        - name: SPRING_PROFILES_ACTIVE
+          value: local
+        resources: {}
+        volumeMounts:
+        - name: spin-fiat-files-783243827
+          mountPath: /opt/spinnaker/config
+        readinessProbe:
+          exec:
+            command:
+            - wget
+            - --no-check-certificate
+            - --spider
+            - -q
+            - http://localhost:7003/health
+          timeoutSeconds: 1
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        lifecycle: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 60
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+      - name: registrypullsecret
+      affinity: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

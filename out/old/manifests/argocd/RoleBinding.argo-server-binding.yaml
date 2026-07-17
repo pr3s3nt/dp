@@ -1,0 +1,15 @@
+metadata:
+  name: argo-server-binding
+  namespace: argocd
+  labels:
+    app.kubernetes.io/instance: argocd-workflow
+  annotations: {}
+subjects:
+- kind: ServiceAccount
+  name: argo-server
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: argo-server-role
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

@@ -1,0 +1,15 @@
+metadata:
+  name: cluster-fleet-local-local-1a3d67d0a899
+  labels:
+    field.cattle.io/projectId: p-wnc8s
+    fleet.cattle.io/managed: 'true'
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2020-10-07T07:39:11Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2020-10-07T07:39:11Z"}]}'
+    field.cattle.io/projectId: local:p-wnc8s
+    fleet.cattle.io/cluster: local
+    fleet.cattle.io/cluster-namespace: fleet-local
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+    management.cattle.io/no-default-sa-token: <REDACTED:env>
+spec: {}
+apiVersion: v1
+kind: Namespace

@@ -1,0 +1,155 @@
+metadata:
+  name: harbor-database
+  namespace: harbor
+  labels:
+    app: harbor
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: harbor
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: harbor
+    app.kubernetes.io/part-of: harbor
+    app.kubernetes.io/version: 2.15.1
+    chart: harbor
+    component: database
+    heritage: Helm
+    release: harbor
+  annotations:
+    meta.helm.sh/release-name: harbor
+    meta.helm.sh/release-namespace: harbor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: harbor
+      component: database
+      release: harbor
+  template:
+    metadata:
+      labels:
+        app: harbor
+        app.kubernetes.io/component: database
+        app.kubernetes.io/instance: harbor
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: harbor
+        app.kubernetes.io/part-of: harbor
+        app.kubernetes.io/version: 2.15.1
+        chart: harbor
+        component: database
+        heritage: Helm
+        release: harbor
+      annotations:
+        checksum/secret: <REDACTED:env>
+    spec:
+      volumes:
+      - name: shm-volume
+        emptyDir:
+          medium: Memory
+          sizeLimit: 512Mi
+      initContainers:
+      - name: data-permissions-ensurer
+        image: docker.io/goharbor/harbor-db:v2.15.1
+        command:
+        - /bin/sh
+        args:
+        - -c
+        - chmod -R 700 /var/lib/postgresql/data/pgdata || true
+        resources: {}
+        volumeMounts:
+        - name: database-data
+          mountPath: /var/lib/postgresql/data
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          seccompProfile:
+            type: RuntimeDefault
+      containers:
+      - name: database
+        image: docker.io/goharbor/harbor-db:v2.15.1
+        envFrom:
+        - secretRef:
+            name: harbor-database
+        env:
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        resources: {}
+        volumeMounts:
+        - name: database-data
+          mountPath: /var/lib/postgresql/data
+        - name: shm-volume
+          mountPath: /dev/shm
+        livenessProbe:
+          exec:
+            command:
+            - /<DOMAIN_119>
+          initialDelaySeconds: 300
+          timeoutSeconds: 1
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - /<DOMAIN_119>
+          initialDelaySeconds: 1
+          timeoutSeconds: 1
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          seccompProfile:
+            type: RuntimeDefault
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 120
+      dnsPolicy: ClusterFirst
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 999
+        fsGroup: 999
+      schedulerName: default-scheduler
+  volumeClaimTemplates:
+  - kind: PersistentVolumeClaim
+    apiVersion: v1
+    metadata:
+      name: database-data
+      labels:
+        app: harbor
+        chart: harbor
+        heritage: Helm
+        release: harbor
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: rook-ceph-block
+      volumeMode: Filesystem
+  serviceName: harbor-database
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0
+      maxUnavailable: 1
+  revisionHistoryLimit: 10
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+apiVersion: apps/v1
+kind: StatefulSet

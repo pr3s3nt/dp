@@ -1,0 +1,60 @@
+metadata:
+  name: cluster-owner
+  namespace: local
+  labels:
+    cattle.io/creator: norman
+rules:
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_51>
+  resources:
+  - clusterscans
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_51>
+  resources:
+  - clusterregistrationtokens
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_51>
+  resources:
+  - clusterroletemplatebindings
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_51>
+  resources:
+  - etcdbackups
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_51>
+  resources:
+  - nodes
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_51>
+  resources:
+  - nodepools
+- verbs:
+  - '*'
+  - updatepsa
+  apiGroups:
+  - <DOMAIN_51>
+  resources:
+  - projects
+- verbs:
+  - '*'
+  - get
+  - list
+  - watch
+  apiGroups:
+  - <DOMAIN_3>
+  resources:
+  - etcdsnapshots
+apiVersion: <DOMAIN_1>/v1
+kind: Role

@@ -1,0 +1,94 @@
+metadata:
+  name: argocd-dex-server
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: dex-server
+    app.kubernetes.io/instance: argocd
+    app.kubernetes.io/name: argocd-dex-server
+    app.kubernetes.io/part-of: argocd
+  annotations: {}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-dex-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argocd-dex-server
+    spec:
+      volumes:
+      - name: static-files
+        emptyDir: {}
+      - name: dexconfig
+        emptyDir: {}
+      initContainers:
+      - name: copyutil
+        image: <COMPANY>-<DOMAIN_607>/argocd/argocd:v2.3.1
+        command:
+        - cp
+        - -n
+        - /usr/local/bin/argocd
+        - /shared/argocd-dex
+        resources: {}
+        volumeMounts:
+        - name: static-files
+          mountPath: /shared
+        - name: dexconfig
+          mountPath: /tmp
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      containers:
+      - name: dex
+        image: <COMPANY>-<DOMAIN_607>/argocd/dex:v2.30.2
+        command:
+        - /shared/argocd-dex
+        - rundex
+        ports:
+        - containerPort: 5556
+          protocol: TCP
+        - containerPort: 5557
+          protocol: TCP
+        - containerPort: 5558
+          protocol: TCP
+        resources: {}
+        volumeMounts:
+        - name: static-files
+          mountPath: /shared
+        - name: dexconfig
+          mountPath: /tmp
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          runAsNonRoot: true
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      serviceAccountName: argocd-dex-server
+      serviceAccount: argocd-dex-server
+      securityContext: {}
+      imagePullSecrets:
+      - name: registrypullsecret
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 5
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/part-of: argocd
+              topologyKey: <DOMAIN_138>/hostname
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

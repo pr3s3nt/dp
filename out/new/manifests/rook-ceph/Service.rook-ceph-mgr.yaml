@@ -1,0 +1,27 @@
+metadata:
+  name: rook-ceph-mgr
+  namespace: rook-ceph
+  labels:
+    app: rook-ceph-mgr
+    rook_cluster: rook-ceph
+spec:
+  ports:
+  - name: http-metrics
+    protocol: TCP
+    port: 9283
+    targetPort: 9283
+  selector:
+    app: rook-ceph-mgr
+    mgr_role: active
+    rook_cluster: rook-ceph
+  clusterIP: <IP_33>
+  clusterIPs:
+  - <IP_33>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  internalTrafficPolicy: Cluster
+apiVersion: v1
+kind: Service

@@ -1,0 +1,21 @@
+metadata:
+  name: prometheus-server-svc
+  namespace: svms
+  labels:
+    app: prometheus-server
+  annotations: {}
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    port: 19090
+    targetPort: 9090
+  selector:
+    app: prometheus-server
+  clusterIP: <IP_124>
+  type: ClusterIP
+  externalIPs:
+  - <CLEANUP_IP_5>
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

@@ -1,0 +1,21 @@
+metadata:
+  name: git-ml-ops
+  namespace: fleet-local
+  labels:
+    objectset.rio.cattle.io/hash: 805b2edc7580aa95fb4d7b3ad0bc3eadb9018dc2
+  annotations:
+    objectset.rio.cattle.io/applied: H4sIAAAAAAAA/4SSz27bMAyHX2Xg2facpKn/ADsMGNDDDgOyYZehB4qiEzWyaEh0Bizwuw/2sm4omuZo6yfy40edoWdFi4rQngFDEEV1EtL8KeaJSRNrEZ0UhKqeCyfvnYUW9k6fxCTIrsbkZ+CY709HaKHzzPrf2WmFfjjgKnv32QX74cHpjge5WSxgz9BC73MZbree02lA4r8AuRdCD1MGFHmZ85vrOSn2A7Rh9D4Dj4b9m9MfMB2ghbrcmjVbqrZ1idhsO3NnK7NBWxraMFrTlKva0nrudsHeO82f0a/BZbDA77jjyIE4QfvjDDi47xyTk/CGTMjAeKHjl7nAJ/asS75DnzgDkqBRvOf4/OvowrzKf/Zf+h2XVdu1NYSrMsd73uZ3VJm8uacq57IuiZqm2XAF0+OUQRTPO+6WtzS4hyjjAC1Eg1TgqAeJ7teivTjWqXBzxwvCTjzDa6KmDNL4ZxOLiEv+K8eTI/5IJGPQV29eVzw9Tr8DAAD//6WMbKv4AgAA
+    objectset.rio.cattle.io/id: gitjobs
+    objectset.rio.cattle.io/owner-gvk: <DOMAIN_474>/v1alpha1, Kind=GitRepo
+    objectset.rio.cattle.io/owner-name: ml-ops
+    objectset.rio.cattle.io/owner-namespace: fleet-local
+subjects:
+- kind: ServiceAccount
+  name: git-ml-ops
+  namespace: fleet-local
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: git-ml-ops
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

@@ -1,0 +1,15 @@
+metadata:
+  name: u-wbn6k5x3oc-global-catalog-binding
+  namespace: cattle-global-data
+  labels:
+    cattle.io/creator: norman
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-wbn6k5x3oc
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: global-catalog
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

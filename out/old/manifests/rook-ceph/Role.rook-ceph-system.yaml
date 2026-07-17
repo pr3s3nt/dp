@@ -1,0 +1,44 @@
+metadata:
+  name: rook-ceph-system
+  namespace: rook-ceph
+  labels:
+    operator: rook
+    storage-backend: ceph
+  annotations: {}
+rules:
+- verbs:
+  - get
+  - list
+  - watch
+  - patch
+  - create
+  - update
+  - delete
+  apiGroups:
+  - ''
+  resources:
+  - pods
+  - configmaps
+  - services
+- verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+  apiGroups:
+  - apps
+  - extensions
+  resources:
+  - daemonsets
+  - statefulsets
+  - deployments
+- verbs:
+  - get
+  apiGroups:
+  - <DOMAIN_793>
+  resources:
+  - network-attachment-definitions
+apiVersion: <DOMAIN_776>/v1
+kind: Role

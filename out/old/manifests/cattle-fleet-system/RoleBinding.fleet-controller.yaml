@@ -1,0 +1,17 @@
+metadata:
+  name: fleet-controller
+  namespace: cattle-fleet-system
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: fleet
+    meta.helm.sh/release-namespace: cattle-fleet-system
+subjects:
+- kind: ServiceAccount
+  name: fleet-controller
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: fleet-controller
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

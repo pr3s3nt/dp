@@ -1,0 +1,17 @@
+metadata:
+  name: rolebinding-5lbpp
+  generateName: rolebinding-
+  namespace: local
+  labels:
+    cattle.io/creator: norman
+    p-c6t6q_u-3dfn7g5yxb-member: membership-binding-owner
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-3dfn7g5yxb
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: p-c6t6q-projectmember
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

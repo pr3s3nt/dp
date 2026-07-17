@@ -1,0 +1,30 @@
+metadata:
+  name: mongodb
+  namespace: shift-handover
+  labels:
+    app: shift-handover-mongo
+    app.kubernetes.io/managed-by: Helm
+    objectset.rio.cattle.io/hash: f6c18b7826d97af6598f63b54624be8cc919b4f4
+  annotations:
+    meta.helm.sh/release-name: shift-handover
+    meta.helm.sh/release-namespace: shift-handover
+    objectset.rio.cattle.io/id: default-shift-handover-cattle-fleet-local-system
+spec:
+  ports:
+  - name: mongodb
+    protocol: TCP
+    port: 27017
+    targetPort: 27017
+  selector:
+    app: shift-handover-mongo
+  clusterIP: None
+  clusterIPs:
+  - None
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  internalTrafficPolicy: Cluster
+apiVersion: v1
+kind: Service

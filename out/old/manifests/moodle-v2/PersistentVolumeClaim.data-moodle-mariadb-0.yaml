@@ -1,0 +1,22 @@
+metadata:
+  name: data-moodle-mariadb-0
+  namespace: moodle-v2
+  labels:
+    app.kubernetes.io/component: primary
+    app.kubernetes.io/instance: moodle
+    app.kubernetes.io/name: mariadb
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_529>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  volumeName: pvc-a5d5bd52-2d6a-4e2e-aeff-2447256ced71
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

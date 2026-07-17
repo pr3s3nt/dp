@@ -1,0 +1,93 @@
+metadata:
+  name: okr-nginx-conf
+  namespace: okr
+data:
+  default.conf: 'server {
+
+    listen 80;
+
+    listen [::]:80;
+
+    server_name localhost;
+
+
+    #charset koi8-r;
+
+    #access_log /var/log/nginx/<DOMAIN_1> main;
+
+
+    location /{
+
+    root /usr/share/nginx/html;
+
+    index <DOMAIN_497> <DOMAIN_498>;
+
+    }
+
+
+    #error_page 404 /<DOMAIN_6>;
+
+
+    # redirect server error pages to the static page /<DOMAIN_7>
+
+    #
+
+    error_page 500 502 503 504 /<DOMAIN_7>;
+
+    location = /<DOMAIN_7> {
+
+    root /usr/share/nginx/html;
+
+    }
+
+    location /api/{
+
+    proxy_pass http://okr-be-expose:49206/api/;
+
+    }
+
+    # proxy the PHP scripts to Apache listening on 127.0.0.1:80
+
+    #
+
+    #location ~ \.php$ {
+
+    # proxy_pass http://127.0.0.1;
+
+    #}
+
+
+    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+
+    #
+
+    #location ~ \.php$ {
+
+    # root html;
+
+    # fastcgi_pass 127.0.0.1:9000;
+
+    # fastcgi_index <DOMAIN_8>;
+
+    # fastcgi_param SCRIPT_FILENAME /scripts$fastcgi_script_name;
+
+    # include fastcgi_params;
+
+    #}
+
+
+    # deny access to .htaccess files, if Apache''s document root
+
+    # concurs with nginx''s one
+
+    #
+
+    #location ~ /\.ht {
+
+    # deny all;
+
+    #}
+
+    }'
+apiVersion: v1
+kind: ConfigMap

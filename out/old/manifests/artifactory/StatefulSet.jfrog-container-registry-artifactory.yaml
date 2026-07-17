@@ -1,0 +1,331 @@
+metadata:
+  name: jfrog-container-registry-artifactory
+  namespace: artifactory
+  labels:
+    app: artifactory
+    chart: artifactory-107.41.4
+    component: artifactory
+    heritage: Helm
+    release: jfrog-container-registry
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<CLEANUP_IP_10>"],"port":30807,"protocol":"TCP","serviceName":"artifactory:jfrog-container-registry-expose","allNodes":true},{"addresses":["<CLEANUP_IP_10>"],"port":31812,"protocol":"TCP","serviceName":"artifactory:jfrog-container-registry-expose","allNodes":true}]'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: artifactory
+      release: jfrog-container-registry
+      role: artifactory
+  template:
+    metadata:
+      labels:
+        app: artifactory
+        chart: artifactory-107.41.4
+        component: artifactory
+        heritage: Helm
+        release: jfrog-container-registry
+        role: artifactory
+      annotations:
+        checksum/access-config: 60140105302e14d89d63e74e988eea5a0c9f0edc8c7bacd3e85cdaa19d4b96ba
+        checksum/admin-creds: <REDACTED:env>
+        checksum/binarystore: a4a1829bc30f51c7c2e34bdd29ff0daabf2fca5fb700c5622652d78cff46c7b5
+        checksum/database-secrets: <REDACTED:env>
+        checksum/systemyaml: e867b3e33f8b2ca7a499d25c6cdae07d14066a5bed5ca17a5bd0e29f67201ad3
+    spec:
+      volumes:
+      - name: migration-scripts
+        configMap:
+          name: jfrog-container-registry-artifactory-migration-scripts
+          defaultMode: 420
+      - name: installer-info
+        configMap:
+          name: jfrog-container-registry-artifactory-installer-info
+          defaultMode: 420
+      - name: systemyaml
+        secret:
+          secretName: <REDACTED:env>
+          defaultMode: 420
+      - name: access-config
+        secret:
+          secretName: <REDACTED:env>
+          defaultMode: 420
+      - name: binarystore-xml
+        secret:
+          secretName: <REDACTED:env>
+          defaultMode: 420
+      initContainers:
+      - name: delete-db-properties
+        image: <COMPANY>-<DOMAIN_607>/jfrog/ubi-minimal:8.5-204
+        command:
+        - bash
+        - -c
+        - rm -fv /var/opt/jfrog/artifactory/etc/<DOMAIN_129>
+        resources:
+          limits:
+            cpu: '1'
+            memory: 1Gi
+          requests:
+            cpu: 10m
+            memory: 50Mi
+        volumeMounts:
+        - name: artifactory-volume
+          mountPath: /var/opt/jfrog/artifactory
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+      - name: remove-lost-found
+        image: <COMPANY>-<DOMAIN_607>/jfrog/ubi-minimal:8.5-204
+        command:
+        - bash
+        - -c
+        - rm -rfv /var/opt/jfrog/artifactory/lost+found /var/opt/jfrog/artifactory/data/.lock
+        resources:
+          limits:
+            cpu: '1'
+            memory: 1Gi
+          requests:
+            cpu: 10m
+            memory: 50Mi
+        volumeMounts:
+        - name: artifactory-volume
+          mountPath: /var/opt/jfrog/artifactory
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+      - name: copy-system-yaml
+        image: <COMPANY>-<DOMAIN_607>/jfrog/ubi-minimal:8.5-204
+        command:
+        - /bin/bash
+        - -c
+        - 'if [[ -e "/var/opt/jfrog/artifactory/etc/<DOMAIN_714>" ]]; then chmod 644
+          /var/opt/jfrog/artifactory/etc/<DOMAIN_714>; fi; echo "Copy <DOMAIN_41>
+          to /var/opt/jfrog/artifactory/etc"; mkdir -p /var/opt/jfrog/artifactory/etc;
+          mkdir -p /var/opt/jfrog/artifactory/etc/access/keys/trusted; cp -fv /tmp/etc/<DOMAIN_41>
+          /var/opt/jfrog/artifactory/etc/<DOMAIN_41>; echo "Remove /var/opt/jfrog/artifactory/lost+found
+          folder if exists"; rm -rfv /var/opt/jfrog/artifactory/lost+found; echo "Copy
+          <DOMAIN_715> to /var/opt/jfrog/artifactory/etc/access"; mkdir -p /var/opt/jfrog/artifactory/etc/access;
+          cp -fv /tmp/etc/<DOMAIN_715> /var/opt/jfrog/artifactory/etc/access/<DOMAIN_715>;
+
+          '
+        resources:
+          limits:
+            cpu: '1'
+            memory: 1Gi
+          requests:
+            cpu: 10m
+            memory: 50Mi
+        volumeMounts:
+        - name: artifactory-volume
+          mountPath: /var/opt/jfrog/artifactory
+        - name: systemyaml
+          mountPath: /tmp/etc/<DOMAIN_41>
+          subPath: <DOMAIN_41>
+        - name: access-config
+          mountPath: /tmp/etc/<DOMAIN_715>
+          subPath: <DOMAIN_715>
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+      - name: wait-for-db
+        image: <COMPANY>-<DOMAIN_607>/jfrog/ubi-minimal:8.5-204
+        command:
+        - /bin/bash
+        - -c
+        - "echo \"Waiting for postgresql to come up\"\nready=false;\nwhile ! $ready;\
+          \ do echo waiting;\n  timeout 2s bash -c \"</dev/tcp/jfrog-container-registry-postgresql/5432\"\
+          ; exit_status=$?;\n  if [[ $exit_status -eq 0 ]]; then ready=true; echo\
+          \ \"database ok\"; fi; sleep 1;\ndone\n"
+        resources:
+          limits:
+            cpu: '1'
+            memory: 1Gi
+          requests:
+            cpu: 10m
+            memory: 50Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+      - name: migration-artifactory
+        image: <COMPANY>-<DOMAIN_607>/jfrog/artifactory-jcr:7.41.4
+        command:
+        - /bin/bash
+        - -c
+        - 'scriptsPath="/opt/jfrog/artifactory/app/bin"; mkdir -p $scriptsPath; echo
+          "Copy migration scripts and Run migration"; cp -fv /tmp/<DOMAIN_134> $scriptsPath/<DOMAIN_134>;
+          cp -fv /tmp/<DOMAIN_63> $scriptsPath/<DOMAIN_63>; cp -fv /tmp/<DOMAIN_716>
+          $scriptsPath/<DOMAIN_716>; mkdir -p /var/opt/jfrog/artifactory/log; bash
+          $scriptsPath/<DOMAIN_716> 7.41.4 3600 > >(tee /var/opt/jfrog/artifactory/log/<DOMAIN_717>)
+          2>&1;
+
+          '
+        env:
+        - name: JF_SHARED_DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: jfrog-container-registry-postgresql
+              key: postgresql-password
+        resources:
+          limits:
+            cpu: '2'
+            memory: 8Gi
+          requests:
+            cpu: 500m
+            memory: 8Gi
+        volumeMounts:
+        - name: migration-scripts
+          mountPath: /tmp/<DOMAIN_134>
+          subPath: <DOMAIN_134>
+        - name: migration-scripts
+          mountPath: /tmp/<DOMAIN_63>
+          subPath: <DOMAIN_63>
+        - name: migration-scripts
+          mountPath: /tmp/<DOMAIN_716>
+          subPath: <DOMAIN_716>
+        - name: artifactory-volume
+          mountPath: /var/opt/jfrog/artifactory
+        - name: binarystore-xml
+          mountPath: /artifactory_bootstrap/<DOMAIN_718>
+          subPath: <DOMAIN_718>
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+      containers:
+      - name: artifactory
+        image: <COMPANY>-<DOMAIN_607>/jfrog/artifactory-jcr:7.41.4
+        command:
+        - /bin/bash
+        - -c
+        - "set -e; if [ -d /artifactory_extra_conf ] && [ -d /artifactory_bootstrap\
+          \ ]; then\n  echo \"Copying bootstrap config from /artifactory_extra_conf\
+          \ to /artifactory_bootstrap\";\n  cp -Lrfv /artifactory_extra_conf/ /artifactory_bootstrap/;\n\
+          fi; exec /<DOMAIN_135>\n"
+        ports:
+        - name: http
+          containerPort: 8082
+          protocol: TCP
+        - name: http-internal
+          containerPort: 8081
+          protocol: TCP
+        env:
+        - name: JF_SHARED_DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: jfrog-container-registry-postgresql
+              key: postgresql-password
+        resources:
+          limits:
+            cpu: '2'
+            memory: 8Gi
+          requests:
+            cpu: 500m
+            memory: 8Gi
+        volumeMounts:
+        - name: artifactory-volume
+          mountPath: /var/opt/jfrog/artifactory
+        - name: binarystore-xml
+          mountPath: /artifactory_bootstrap/<DOMAIN_718>
+          subPath: <DOMAIN_718>
+        - name: installer-info
+          mountPath: /artifactory_bootstrap/info/<DOMAIN_719>
+          subPath: <DOMAIN_719>
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - curl -s -k --fail --max-time 5 http://localhost:8091/artifactory/api/v1/system/liveness
+          timeoutSeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 5
+        startupProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - curl -s -k --fail --max-time 5 http://localhost:8091/artifactory/api/v1/system/readiness
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          failureThreshold: 90
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      serviceAccountName: default
+      serviceAccount: default
+      securityContext:
+        runAsUser: 1030
+        fsGroup: 1030
+      imagePullSecrets:
+      - name: registrypullsecret
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: artifactory
+                  release: jfrog-container-registry
+              topologyKey: <DOMAIN_138>/hostname
+      schedulerName: default-scheduler
+  volumeClaimTemplates:
+  - kind: PersistentVolumeClaim
+    apiVersion: v1
+    metadata:
+      name: artifactory-volume
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Ti
+      storageClassName: ceph-block-replica-2
+      volumeMode: Filesystem
+  serviceName: artifactory
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
+  revisionHistoryLimit: 10
+apiVersion: apps/v1
+kind: StatefulSet

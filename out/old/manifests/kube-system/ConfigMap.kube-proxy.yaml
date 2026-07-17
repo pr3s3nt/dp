@@ -1,0 +1,28 @@
+metadata:
+  name: kube-proxy
+  namespace: kube-system
+  labels:
+    app: kube-proxy
+  annotations:
+    kubeadm.kubernetes.io/component-config.hash: sha256:18bf7a86c9be82003ec23dcb794becad089d746ea1a9ae7a77e4cbf5ce4f3314
+data:
+  config.conf: "apiVersion: <DOMAIN_489>/v1alpha1\nbindAddress: 0.0.0.0\nbindAddressHardFail:\
+    \ false\nclientConnection:\n  acceptContentTypes: \"\"\n  burst: 0\n  contentType:\
+    \ \"\"\n  kubeconfig: /var/lib/kube-proxy/<DOMAIN_490>\n  qps: 0\nclusterCIDR:\
+    \ <IP_8>/16\nconfigSyncPeriod: 0s\nconntrack:\n  maxPerCore: null\n  min: null\n\
+    \  tcpCloseWaitTimeout: null\n  tcpEstablishedTimeout: null\ndetectLocalMode:\
+    \ \"\"\nenableProfiling: false\nhealthzBindAddress: \"\"\nhostnameOverride: \"\
+    \"\niptables:\n  masqueradeAll: false\n  masqueradeBit: null\n  minSyncPeriod:\
+    \ 0s\n  syncPeriod: 0s\nipvs:\n  excludeCIDRs: null\n  minSyncPeriod: 0s\n  scheduler:\
+    \ \"\"\n  strictARP: false\n  syncPeriod: 0s\n  tcpFinTimeout: 0s\n  tcpTimeout:\
+    \ 0s\n  udpTimeout: 0s\nkind: KubeProxyConfiguration\nmetricsBindAddress: \"\"\
+    \nmode: \"\"\nnodePortAddresses: null\noomScoreAdj: null\nportRange: \"\"\nshowHiddenMetricsForVersion:\
+    \ \"\"\nudpIdleTimeout: 0s\nwinkernel:\n  enableDSR: false\n  networkName: \"\"\
+    \n  sourceVip: \"\""
+  kubeconfig.conf: "apiVersion: v1\nkind: Config\nclusters:\n- cluster:\n    certificate-authority:\
+    \ /var/run/secrets/<DOMAIN_138>/serviceaccount/<DOMAIN_485>\n    server: https://<CLEANUP_IP_5>:6443\n\
+    \  name: default\ncontexts:\n- context:\n    cluster: default\n    namespace:\
+    \ default\n    user: default\n  name: default\ncurrent-context: default\nusers:\n\
+    - name: default\n  user:\n    tokenFile: /var/run/secrets/<DOMAIN_138>/serviceaccount/token"
+apiVersion: v1
+kind: ConfigMap

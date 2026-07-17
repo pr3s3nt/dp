@@ -2,6 +2,8 @@
 .score-k8s/
 secrets.yaml
 work-*/
+# workdir của scripts/test-local.sh (render + state + secret tách ra — không commit)
+.sandbox/
 
 # terraform
 .terraform/

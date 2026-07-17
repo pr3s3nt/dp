@@ -1,0 +1,7 @@
+metadata:
+  name: forceupgradelogout
+  namespace: cattle-system
+data:
+  rancherVersion: v2.14.2
+apiVersion: v1
+kind: ConfigMap

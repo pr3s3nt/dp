@@ -1,0 +1,80 @@
+metadata:
+  name: logstash
+  namespace: elk
+  annotations: {}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logstash
+  template:
+    metadata:
+      labels:
+        app: logstash
+    spec:
+      volumes:
+      - name: config-volume
+        configMap:
+          name: logstash-configmap
+          items:
+          - key: <DOMAIN_688>
+            path: <DOMAIN_688>
+          defaultMode: 420
+      - name: logstash-pipeline-volume
+        configMap:
+          name: logstash-configmap
+          items:
+          - key: <DOMAIN_689>
+            path: <DOMAIN_689>
+          defaultMode: 420
+      containers:
+      - name: logstash
+        image: <COMPANY>-<DOMAIN_607>/elk/logstash:7.16.2
+        ports:
+        - containerPort: 25826
+          protocol: TCP
+        - containerPort: 5044
+          protocol: TCP
+        - containerPort: 9600
+          protocol: TCP
+        env:
+        - name: ES_HOSTS
+          value: https://<CLEANUP_IP_5>:9200
+        - name: ES_USER
+          value: push-logs
+        - name: ES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: els-password
+              key: password
+        resources:
+          limits:
+            cpu: '1'
+            memory: 1000Mi
+          requests:
+            cpu: 200m
+            memory: 200Mi
+        volumeMounts:
+        - name: config-volume
+          mountPath: /usr/share/logstash/config
+        - name: logstash-pipeline-volume
+          mountPath: /usr/share/logstash/pipeline
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+      - name: registrypullsecret
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

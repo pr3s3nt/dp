@@ -1,0 +1,8 @@
+metadata:
+  name: otm
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2021-01-07T03:27:10Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2021-01-07T03:27:10Z"}]}'
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+spec: {}
+apiVersion: v1
+kind: Namespace

@@ -1,0 +1,10 @@
+metadata:
+  name: p-v75v8
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2021-06-03T04:10:18Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2021-06-03T04:10:18Z"}]}'
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+    management.cattle.io/no-default-sa-token: <REDACTED:env>
+    management.cattle.io/system-namespace: 'true'
+spec: {}
+apiVersion: v1
+kind: Namespace

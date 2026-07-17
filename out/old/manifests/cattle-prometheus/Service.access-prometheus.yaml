@@ -1,0 +1,28 @@
+metadata:
+  name: access-prometheus
+  namespace: cattle-prometheus
+  labels:
+    app: prometheus
+    chart: prometheus-0.0.1
+    heritage: Tiller
+    io.cattle.field/appId: cluster-monitoring
+    kubernetes.io/cluster-service: 'true'
+    release: cluster-monitoring
+spec:
+  ports:
+  - name: nginx-http
+    protocol: TCP
+    port: 80
+    targetPort: nginx-http
+  selector:
+    app: prometheus
+    chart: prometheus-0.0.1
+    release: cluster-monitoring
+  clusterIP: <IP_51>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+apiVersion: v1
+kind: Service

@@ -1,0 +1,21 @@
+metadata:
+  name: shift-handover-storage-shift-handover-mongo-0
+  namespace: shift-handover
+  labels:
+    app: shift-handover-mongo
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_52>
+    volume.kubernetes.io/storage-provisioner: <DOMAIN_52>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi
+  volumeName: pvc-96848c70-3df6-45da-a231-1ec753916cdd
+  storageClassName: rook-ceph-block
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

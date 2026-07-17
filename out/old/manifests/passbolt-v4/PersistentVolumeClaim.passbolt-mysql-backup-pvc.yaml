@@ -1,0 +1,16 @@
+metadata:
+  name: passbolt-mysql-backup-pvc
+  namespace: passbolt-v4
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: passbolt-mysql-backup-pv
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

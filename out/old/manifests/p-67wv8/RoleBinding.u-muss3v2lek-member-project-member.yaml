@@ -1,0 +1,15 @@
+metadata:
+  name: u-muss3v2lek-member-project-member
+  namespace: p-67wv8
+  labels:
+    cattle.io/creator: norman
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-muss3v2lek
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: project-member
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

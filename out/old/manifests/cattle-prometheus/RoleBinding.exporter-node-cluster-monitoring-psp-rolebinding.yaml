@@ -1,0 +1,15 @@
+metadata:
+  name: exporter-node-cluster-monitoring-psp-rolebinding
+  namespace: cattle-prometheus
+  labels:
+    io.cattle.field/appId: cluster-monitoring
+subjects:
+- kind: ServiceAccount
+  name: exporter-node-cluster-monitoring
+  namespace: cattle-prometheus
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: exporter-node-cluster-monitoring-psp-role
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

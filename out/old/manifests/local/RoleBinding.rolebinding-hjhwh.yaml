@@ -1,0 +1,18 @@
+metadata:
+  name: rolebinding-hjhwh
+  generateName: rolebinding-
+  namespace: local
+  labels:
+    80e4934c-23e6-4432-87b5-44aa1597089f: memberhsip-binding-owner
+    cattle.io/creator: norman
+    p-wnc8s_creator-project-owner: membership-binding-owner
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: user-9h9cp
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: p-wnc8s-projectowner
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

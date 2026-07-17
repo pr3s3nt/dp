@@ -1,0 +1,35 @@
+metadata:
+  name: event-manage-fe
+  namespace: event-management
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"event-management:event-manage-fe","ingressName":"event-management:event-manage-ingress","hostname":"event-management.<COMPANY><DOMAIN_14>","path":"/","allNodes":false}]'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: event-manage-fe
+  template:
+    metadata:
+      labels:
+        app: event-manage-fe
+    spec:
+      containers:
+      - name: event-manage-fe
+        image: artifactory.<COMPANY><DOMAIN_14>:30807/docker-local/event-management/frontend:13
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+      - name: secret-registry-image
+      schedulerName: default-scheduler
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

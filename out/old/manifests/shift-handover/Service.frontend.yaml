@@ -1,0 +1,16 @@
+metadata:
+  name: frontend
+  namespace: shift-handover
+spec:
+  ports:
+  - name: frontend-port
+    protocol: TCP
+    port: 80
+    targetPort: 80
+  selector:
+    app: shift-handover-frontend
+  clusterIP: <IP_107>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

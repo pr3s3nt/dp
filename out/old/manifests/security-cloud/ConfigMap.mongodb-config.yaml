@@ -1,0 +1,7 @@
+metadata:
+  name: mongodb-config
+  namespace: security-cloud
+data:
+  mongod.conf: "security:\n  authorization: disable\n"
+apiVersion: v1
+kind: ConfigMap

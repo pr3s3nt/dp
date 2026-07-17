@@ -1,0 +1,37 @@
+# APP MẪU MIGRATION — okr/backend (từ cụm 1.19, ns okr / okr-dep)
+# Chứng minh: mysql (params.database) + redis trên CÙNG một workload
+# (2 secret khác tên: okr-backend-db-credentials vs okr-backend-redis-credentials).
+# Nguồn đối chiếu: out/old/manifests/okr/StatefulSet.okr-mysql.yaml (mysql:8.0.25, DB `okr`)
+#                  out/old/manifests/okr/StatefulSet.okr-redis.yaml (redis:6.2.4, không auth)
+apiVersion: score.dev/v1b1
+
+metadata:
+  name: okr-backend
+
+containers:
+  main:
+    image: "."
+    variables:
+      PORT: "8080"
+      DB_HOST: ${resources.db.host}
+      DB_PORT: ${resources.db.port}
+      DB_NAME: ${resources.db.name}
+      DB_USER: ${resources.db.username}
+      DB_PASSWORD: ${resources.db.password}
+      REDIS_HOST: ${resources.cache.host}
+      REDIS_PORT: ${resources.cache.port}
+
+service:
+  ports:
+    http:
+      port: 8080
+      targetPort: 8080
+
+resources:
+  db:
+    type: mysql
+    params:
+      database: okr           # giữ đúng tên DB cụm cũ để restore dump không phải đổi app
+      image: mysql:8.0        # cụm cũ chạy 8.0.25
+  cache:
+    type: redis               # mặc định: không PVC, không auth — đúng cách okr dùng cũ

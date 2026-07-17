@@ -1,0 +1,168 @@
+metadata:
+  name: vault
+  namespace: vault
+  labels:
+    app.kubernetes.io/instance: vault
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: vault
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"vault:vault-ui","ingressName":"vault:vault-ingress","hostname":"vault.<COMPANY><DOMAIN_14>","path":"/","allNodes":false}]'
+    meta.helm.sh/release-name: vault
+    meta.helm.sh/release-namespace: vault
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: vault
+      app.kubernetes.io/name: vault
+      component: server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: vault
+        app.kubernetes.io/name: vault
+        component: server
+        helm.sh/chart: vault-0.8.0
+    spec:
+      volumes:
+      - name: config
+        configMap:
+          name: vault-config
+          defaultMode: 420
+      - name: home
+        emptyDir: {}
+      containers:
+      - name: vault
+        image: <COMPANY>-<DOMAIN_690>/vault:1.7.0
+        command:
+        - /bin/sh
+        - -ec
+        args:
+        - "cp /vault/config/<DOMAIN_766> /tmp/<DOMAIN_767>;\n[ -n \"${HOST_IP}\" ]\
+          \ && sed -Ei \"s|HOST_IP|${HOST_IP?}|g\" /tmp/<DOMAIN_767>;\n[ -n \"${POD_IP}\"\
+          \ ] && sed -Ei \"s|POD_IP|${POD_IP?}|g\" /tmp/<DOMAIN_767>;\n[ -n \"${HOSTNAME}\"\
+          \ ] && sed -Ei \"s|HOSTNAME|${HOSTNAME?}|g\" /tmp/<DOMAIN_767>;\n[ -n \"\
+          ${API_ADDR}\" ] && sed -Ei \"s|API_ADDR|${API_ADDR?}|g\" /tmp/<DOMAIN_767>;\n\
+          [ -n \"${TRANSIT_ADDR}\" ] && sed -Ei \"s|TRANSIT_ADDR|${TRANSIT_ADDR?}|g\"\
+          \ /tmp/<DOMAIN_767>;\n[ -n \"${RAFT_ADDR}\" ] && sed -Ei \"s|RAFT_ADDR|${RAFT_ADDR?}|g\"\
+          \ /tmp/<DOMAIN_767>;\n/usr/local/bin/<DOMAIN_768> vault server -config=/tmp/<DOMAIN_767>\
+          \ \n"
+        ports:
+        - name: http
+          containerPort: 8200
+          protocol: TCP
+        - name: https-internal
+          containerPort: 8201
+          protocol: TCP
+        - name: http-rep
+          containerPort: 8202
+          protocol: TCP
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_164>
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_165>
+        - name: VAULT_K8S_POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_21>
+        - name: VAULT_K8S_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_20>
+        - name: VAULT_ADDR
+          value: http://127.0.0.1:8200
+        - name: VAULT_API_ADDR
+          value: http://$(POD_IP):8200
+        - name: SKIP_CHOWN
+          value: 'true'
+        - name: SKIP_SETCAP
+          value: 'true'
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_21>
+        - name: VAULT_CLUSTER_ADDR
+          value: https://$(HOSTNAME).vault-internal:8201
+        - name: HOME
+          value: /home/vault
+        resources: {}
+        volumeMounts:
+        - name: data
+          mountPath: /vault/data
+        - name: config
+          mountPath: /vault/config
+        - name: home
+          mountPath: /home/vault
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -ec
+            - vault status -tls-skip-verify
+          initialDelaySeconds: 5
+          timeoutSeconds: 3
+          periodSeconds: 5
+          successThreshold: 1
+          failureThreshold: 2
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - sleep 5 && kill -SIGTERM $(pidof vault)
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 10
+      dnsPolicy: ClusterFirst
+      serviceAccountName: vault
+      serviceAccount: vault
+      securityContext:
+        runAsUser: 100
+        runAsGroup: 1000
+        runAsNonRoot: true
+        fsGroup: 1000
+      imagePullSecrets:
+      - name: registrypullsecret
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app.kubernetes.io/instance: vault
+                app.kubernetes.io/name: vault
+                component: server
+            topologyKey: <DOMAIN_138>/hostname
+      schedulerName: default-scheduler
+  volumeClaimTemplates:
+  - kind: PersistentVolumeClaim
+    apiVersion: v1
+    metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: ceph-block-replica-2
+      volumeMode: Filesystem
+  serviceName: vault-internal
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: OnDelete
+  revisionHistoryLimit: 10
+apiVersion: apps/v1
+kind: StatefulSet

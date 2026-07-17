@@ -1,0 +1,12 @@
+metadata:
+  name: fleet-agent
+  namespace: cattle-fleet-local-system
+  labels:
+    objectset.rio.cattle.io/hash: 362023f752e7f1989d8b652e029bd2c658ae7c44
+  annotations:
+    objectset.rio.cattle.io/applied: H4sIAAAAAAAA/3yOvXKDMBCE3+VqcGyZX7VO4yJtKppDnIywODHoxpOE8btngEmRxuXt3nz7LYCT+6Q5usCg4XGCBDoUBL2ACWzdDTQsDeCNWC49mbvjKwvNjL4B3cAxNpA0YLwjluv7lvVcZfwYxmFQxfDzJdYWNdc9PBO4O+5Aw2VDf+AECYwk+DeJzEFQXOC4nqEdyEgkOcwuHAyKeDq48OZWhvVEkm5iaRuCRJlxSvendC99MOjT+B2FxnXdY0v+JbnH2IOGc6GO6mzLXFFpT3VVd1Vb5IqOqm47ZYq8QipNlq1QxpH+68AexgnN2rxQev4GAAD//7Rh2tOAAQAA
+    objectset.rio.cattle.io/id: fleet-agent-bootstrap-cattle-fleet-local-system
+data:
+  config: '{"agentCheckinInternal":"0s","clientID":"hn84nvjmjj26jzxtff69n9h4b652n4sv85qpr6h9p2x8c64tw44q49","bootstrap":{}}'
+apiVersion: v1
+kind: ConfigMap

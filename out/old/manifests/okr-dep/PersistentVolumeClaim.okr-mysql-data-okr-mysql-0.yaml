@@ -1,0 +1,20 @@
+metadata:
+  name: okr-mysql-data-okr-mysql-0
+  namespace: okr-dep
+  labels:
+    app: okr-mysql
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_529>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  volumeName: pvc-e472abe8-099e-485e-bf48-92471d5a6746
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

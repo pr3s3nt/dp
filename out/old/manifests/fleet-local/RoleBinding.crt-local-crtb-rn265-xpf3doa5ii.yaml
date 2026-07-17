@@ -1,0 +1,21 @@
+metadata:
+  name: crt-local-crtb-rn265-xpf3doa5ii
+  namespace: fleet-local
+  labels:
+    objectset.rio.cattle.io/hash: e53d31664b5a2e49819e82b8dd661327567669ca
+  annotations:
+    objectset.rio.cattle.io/applied: H4sIAAAAAAAA/5SRMW/bMBSE/0rxZlGFJYuWCXRphw7dDHcKMjyRzxYjihRISolj+L8HlBI4QxI4I4E73vfuztBTRIURQZwBrXURo3Y2pKdrHkjGQDH32uUSYzSUa/dTKxCAY2zZ4N3EpoJJHxvmnaFGW6XtEbJPze7RkmfHqQMBPVo8Uk82vhNMZfbjn7bq1x8zhkh+5wztqR8MRvp94/cWewIBC5YteHWTIwwok804iQYuGUhPcxt73VOI2A8g7GhMBgYbMl921GJoQQBVpSpXnK+bCgtab+vVluqiqZXifFUWm4pvON9KTGlXaDYTsCs+exoOpXJYaQ2L8I31YIhe9emPtMGODvOYg/7r3TiAAN+gzNNgzuvn+aK8q0OuHWTQaZvmTC3DRwzLCGxuKSWEcbkYxN13M/4H8teMkW2qUxedOa1buNxfXgIAAP//z8iM04sCAAA
+    objectset.rio.cattle.io/id: auth-prov-v2-crtb-rolebinding
+    objectset.rio.cattle.io/owner-gvk: <DOMAIN_528>/v3, Kind=ClusterRoleTemplateBinding
+    objectset.rio.cattle.io/owner-name: crtb-rn265
+    objectset.rio.cattle.io/owner-namespace: local
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-75yktoly4h
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: crt-local-cluster-owner
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

@@ -48,7 +48,8 @@ jobs:
         run: |
           set -euo pipefail
           # Input mẫu lấy từ nhánh PR để 2 lần render chỉ khác nhau ở CATALOG
-          EXAMPLES=$(ls head/score/examples/*.score.yaml)
+          # (gồm cả bộ mẫu migration — phủ mysql/mongodb/redis/app-config/backup)
+          EXAMPLES=$(ls head/score/examples/*.score.yaml head/score/examples/migration/*/*/score.yaml 2>/dev/null)
 
           render() {
             local catalog=$1 label=$2
@@ -59,9 +60,12 @@ jobs:
                 --provisioners "../${catalog}/score/provisioners/onprem.provisioners.yaml" \
                 --patch-templates "../${catalog}/score/patches/${envname}.tpl"
               for f in $EXAMPLES; do
+                # Catalog cũ có thể CHƯA có type mà mẫu mới dùng (vd PR thêm mysql):
+                # bỏ qua file đó ở nhánh base -> diff sẽ hiện manifest mới như phần thêm.
                 score-k8s generate "../$f" \
                   --override-property 'containers.main.image="registry.example/app:TAG"' \
-                  --output manifests.yaml
+                  --output manifests.yaml \
+                  || echo "::warning::bỏ qua $f với catalog ${label} (type chưa tồn tại ở catalog này)"
               done
               popd >/dev/null
               # Secret chứa password random mỗi lần chạy -> loại khỏi diff cho đỡ nhiễu

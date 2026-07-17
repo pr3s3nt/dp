@@ -1,0 +1,23 @@
+metadata:
+  name: rook-ceph-cmd-reporter
+  namespace: rook-ceph
+  labels:
+    app.kubernetes.io/name: rook-ceph
+    app.kubernetes.io/part-of: rook-ceph-operator
+    operator: rook
+    storage-backend: ceph
+rules:
+- verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - delete
+  apiGroups:
+  - ''
+  resources:
+  - pods
+  - configmaps
+apiVersion: <DOMAIN_1>/v1
+kind: Role

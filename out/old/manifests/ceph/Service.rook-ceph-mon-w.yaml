@@ -1,0 +1,31 @@
+metadata:
+  name: rook-ceph-mon-w
+  namespace: ceph
+  labels:
+    app: rook-ceph-mon
+    ceph_daemon_id: w
+    ceph_daemon_type: mon
+    mon: w
+    mon_cluster: ceph
+    rook_cluster: ceph
+spec:
+  ports:
+  - name: tcp-msgr1
+    protocol: TCP
+    port: 6789
+    targetPort: 6789
+  - name: tcp-msgr2
+    protocol: TCP
+    port: 3300
+    targetPort: 3300
+  selector:
+    app: rook-ceph-mon
+    ceph_daemon_id: w
+    mon: w
+    mon_cluster: ceph
+    rook_cluster: ceph
+  clusterIP: <IP_2>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

@@ -1,0 +1,19 @@
+metadata:
+  name: fleet-controller
+  namespace: cattle-fleet-system
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: fleet
+    meta.helm.sh/release-namespace: cattle-fleet-system
+data:
+  config: "{\n  \"agentImage\": \"rancher/fleet-agent:v0.3.9\",\n  \"agentImagePullPolicy\"\
+    : \"IfNotPresent\",\n  \"apiServerURL\": \"https://<CLEANUP_IP_5>\",\n  \"apiServerCA\"\
+    : \"LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJpRENDQVM2Z0F3SUJBZ0lCQURBS0JnZ3Foa2pPUFFRREFqQTdNUnd3R2dZRFZRUUtFeE5rZVc1aGJXbGoKYkdsemRHVnVaWEl0YjNKbk1Sc3dHUVlEVlFRREV4SmtlVzVoYldsamJHbHpkR1Z1WlhJdFkyRXdIaGNOTWpBeApNREl4TURnME9UQTJXaGNOTXpBeE1ERTVNRGcwT1RBMldqQTdNUnd3R2dZRFZRUUtFeE5rZVc1aGJXbGpiR2x6CmRHVnVaWEl0YjNKbk1Sc3dHUVlEVlFRREV4SmtlVzVoYldsamJHbHpkR1Z1WlhJdFkyRXdXVEFUQmdjcWhrak8KUFFJQkJnZ3Foa2pPUFFNQkJ3TkNBQVNOcnFxb0F6QmdnSTdzd20yOUhYSFY1aHlPNXd3YnlKNVhLWnU4WGJ4SgpoVjB2Y0hBM0tsL0lXSDFLcFRUR09EMzluUk1tdEFOSTdnSmNJMnJHcE1zdm95TXdJVEFPQmdOVkhROEJBZjhFCkJBTUNBcVF3RHdZRFZSMFRBUUgvQkFVd0F3RUIvekFLQmdncWhrak9QUVFEQWdOSUFEQkZBaUFPdlJsampGNnQKUnp0Z0F5NkhOdTd5TWFWTGNReG5ldDBFUE9TbzZ1Uk9qQUloQUxZUWZ0RzkvYnFTQ25WVnhrbng2U0VEdEJQUAozNkxLcGhMektXdUh3c2J2Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=\"\
+    ,\n  \"agentCheckinInterval\": \"15m\",\n  \"ignoreClusterRegistrationLabels\"\
+    : false,\n  \"bootstrap\": {\n    \"paths\": \"\",\n    \"repo\": \"\",\n    \"\
+    secret\": \"\",\n    \"branch\":  \"master\",\n    \"namespace\": \"fleet-local\"\
+    ,\n    \"agentNamespace\": \"cattle-fleet-local-system\",\n  },\n  \"webhookReceiverURL\"\
+    : \"\",\n  \"githubURLPrefix\": \"\"\n}\n"
+apiVersion: v1
+kind: ConfigMap

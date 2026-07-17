@@ -1,0 +1,84 @@
+metadata:
+  name: rook-ceph-agent
+  namespace: rook-ceph
+  annotations:
+    deprecated.daemonset.template.generation: '1'
+spec:
+  selector:
+    matchLabels:
+      app: rook-ceph-agent
+  template:
+    metadata:
+      labels:
+        app: rook-ceph-agent
+    spec:
+      volumes:
+      - name: flexvolume
+        hostPath:
+          path: /usr/libexec/kubernetes/kubelet-plugins/volume/exec/
+          type: ''
+      - name: dev
+        hostPath:
+          path: /dev
+          type: ''
+      - name: sys
+        hostPath:
+          path: /sys
+          type: ''
+      - name: libmodules
+        hostPath:
+          path: /lib/modules
+          type: ''
+      containers:
+      - name: rook-ceph-agent
+        image: rook/ceph:v1.4.2
+        args:
+        - ceph
+        - agent
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_20>
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_162>
+        - name: AGENT_MOUNT_SECURITY_MODE
+          value: Any
+        - name: ROOK_ENABLE_SELINUX_RELABELING
+          value: 'true'
+        - name: ROOK_ENABLE_FSGROUP
+          value: 'true'
+        resources: {}
+        volumeMounts:
+        - name: flexvolume
+          mountPath: /flexmnt
+        - name: dev
+          mountPath: /dev
+        - name: sys
+          mountPath: /sys
+        - name: libmodules
+          mountPath: /lib/modules
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      serviceAccountName: rook-ceph-system
+      serviceAccount: rook-ceph-system
+      hostNetwork: true
+      securityContext: {}
+      schedulerName: default-scheduler
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  revisionHistoryLimit: 10
+apiVersion: apps/v1
+kind: DaemonSet

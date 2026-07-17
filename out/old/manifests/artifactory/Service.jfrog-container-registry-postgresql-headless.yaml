@@ -1,0 +1,25 @@
+metadata:
+  name: jfrog-container-registry-postgresql-headless
+  namespace: artifactory
+  labels:
+    app.kubernetes.io/instance: jfrog-container-registry
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: postgresql
+    helm.sh/chart: postgresql-10.3.18
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: 'true'
+  annotations: {}
+spec:
+  ports:
+  - name: tcp-postgresql
+    protocol: TCP
+    port: 5432
+    targetPort: tcp-postgresql
+  selector:
+    app.kubernetes.io/instance: jfrog-container-registry
+    app.kubernetes.io/name: postgresql
+  clusterIP: None
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+  publishNotReadyAddresses: true
+apiVersion: v1
+kind: Service

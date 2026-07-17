@@ -1,0 +1,13 @@
+metadata:
+  name: ingress-nginx
+  labels:
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+    field.cattle.io/projectId: p-wnc8s
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2022-08-05T02:24:51Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2022-08-05T02:24:56Z"}]}'
+    field.cattle.io/projectId: local:p-wnc8s
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+spec: {}
+apiVersion: v1
+kind: Namespace

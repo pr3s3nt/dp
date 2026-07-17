@@ -1,0 +1,5 @@
+# feedback360 — TODO: đổi tên cụm thật (xem clusters/README.md).
+app: feedback360
+clusters:
+  staging: feedback360-staging
+  prod: feedback360-prod

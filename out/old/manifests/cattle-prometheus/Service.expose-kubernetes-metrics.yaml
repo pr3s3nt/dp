@@ -1,0 +1,30 @@
+metadata:
+  name: expose-kubernetes-metrics
+  namespace: cattle-prometheus
+  labels:
+    app: exporter-kube-state
+    chart: exporter-kube-state-0.0.1
+    heritage: Tiller
+    io.cattle.field/appId: cluster-monitoring
+    k8s-app: kube-state
+    monitoring.coreos.com: 'true'
+    release: cluster-monitoring
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8080
+    targetPort: http
+  - name: http-metrics
+    protocol: TCP
+    port: 8081
+    targetPort: http-metrics
+  selector:
+    app: exporter-kube-state
+    chart: exporter-kube-state-0.0.1
+    release: cluster-monitoring
+  clusterIP: None
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

@@ -1,0 +1,40 @@
+metadata:
+  name: project-member
+  namespace: c-6tfcq
+  labels:
+    cattle.io/creator: norman
+rules:
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - '*'
+  resources:
+  - notifiers
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - '*'
+  resources:
+  - clustercatalogs
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - '*'
+  resources:
+  - catalogtemplates
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - '*'
+  resources:
+  - catalogtemplateversions
+apiVersion: <DOMAIN_776>/v1
+kind: Role

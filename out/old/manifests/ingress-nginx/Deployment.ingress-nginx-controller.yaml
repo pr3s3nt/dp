@@ -1,0 +1,129 @@
+metadata:
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+    app.kubernetes.io/version: 1.2.1
+  annotations: {}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: controller
+      app.kubernetes.io/instance: ingress-nginx
+      app.kubernetes.io/name: ingress-nginx
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: controller
+        app.kubernetes.io/instance: ingress-nginx
+        app.kubernetes.io/name: ingress-nginx
+      annotations:
+        kubectl.kubernetes.io/restartedAt: '2025-09-12T13:18:06+07:00'
+    spec:
+      volumes:
+      - name: webhook-cert
+        secret:
+          secretName: <REDACTED:env>
+          defaultMode: 420
+      containers:
+      - name: controller
+        image: registry.k8s.io/ingress-nginx/controller:v1.2.1@sha256:5516d103a9c2ecc4f026efbd4b40662ce22dc1f824fb129ed121460aaa5c47f8
+        args:
+        - /nginx-ingress-controller
+        - --publish-service=$(POD_NAMESPACE)/ingress-nginx-controller
+        - --election-id=ingress-controller-leader
+        - --controller-class=<DOMAIN_694>/ingress-nginx
+        - --ingress-class=nginx
+        - --configmap=$(POD_NAMESPACE)/ingress-nginx-controller
+        - --validating-webhook=:8443
+        - --validating-webhook-certificate=/usr/local/certificates/cert
+        - --validating-webhook-key=/usr/local/certificates/key
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        - name: https
+          containerPort: 443
+          protocol: TCP
+        - name: webhook
+          containerPort: 8443
+          protocol: TCP
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_21>
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_20>
+        - name: LD_PRELOAD
+          value: /usr/local/lib/<DOMAIN_695>
+        resources:
+          requests:
+            cpu: 100m
+            memory: 90Mi
+        volumeMounts:
+        - name: webhook-cert
+          readOnly: true
+          mountPath: /usr/local/certificates/
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 10254
+            scheme: HTTP
+          initialDelaySeconds: 10
+          timeoutSeconds: 1
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 10254
+            scheme: HTTP
+          initialDelaySeconds: 10
+          timeoutSeconds: 1
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /wait-shutdown
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - ALL
+          runAsUser: 101
+          allowPrivilegeEscalation: true
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 300
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/os: linux
+      serviceAccountName: ingress-nginx
+      serviceAccount: ingress-nginx
+      securityContext: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

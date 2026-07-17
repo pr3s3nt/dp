@@ -1,0 +1,15 @@
+metadata:
+  name: cattle-fleet-clusters-system
+  labels:
+    field.cattle.io/projectId: p-wnc8s
+    objectset.rio.cattle.io/hash: 4510303f19b6cbafc9031148b1866f16c2be7aaa
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2022-07-28T08:27:09Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2022-07-28T08:27:10Z"}]}'
+    field.cattle.io/projectId: local:p-wnc8s
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+    management.cattle.io/no-default-sa-token: <REDACTED:env>
+    objectset.rio.cattle.io/applied: H4sIAAAAAAAA/3zOTW6DQAyG4bt4HShTUprMOXoBj2OUqeYH4Y9Fhbh7NWSfnS1Zj9+dsoIfDCa/E5dSwYi1WFtr+FWBKfo11l4YSNrH+hEf5GlOquhCrTCsvHSncVxIVj2Fn5jVwHkhX7aULpQ4aHrrPtme5On65YZxGGd3D5MEnuU+jM5db8Hdpml2k3wG/WY+vxXOSp5eRvdqkrQZdLXO/gya25ktKuT3NoGxtYrj+A8AAP//GNBA4fwAAAA
+    objectset.rio.cattle.io/id: fleet-bootstrap-data
+spec: {}
+apiVersion: v1
+kind: Namespace

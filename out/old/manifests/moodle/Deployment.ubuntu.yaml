@@ -1,0 +1,53 @@
+metadata:
+  name: ubuntu
+  namespace: moodle
+  annotations: {}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ubuntu
+  template:
+    metadata:
+      labels:
+        app: ubuntu
+    spec:
+      volumes:
+      - name: volume-data
+        persistentVolumeClaim:
+          claimName: moodle-moodle
+      - name: hostpath-volume
+        hostPath:
+          path: /home/<CLEANUP_USER_1>/<DOMAIN_699>/moodle-app-backup
+          type: ''
+      containers:
+      - name: container-ubuntu
+        image: artifactory.<COMPANY><DOMAIN_14>:30807/docker-local/ubuntu:mantic-20230712
+        command:
+        - /bin/sleep
+        - 3650d
+        resources: {}
+        volumeMounts:
+        - name: volume-data
+          mountPath: /data-volume-claim
+        - name: hostpath-volume
+          mountPath: /hostpath-data
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/hostname: <CLEANUP_HOST_6>
+      securityContext: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

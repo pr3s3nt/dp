@@ -1,0 +1,20 @@
+metadata:
+  name: fem-prd-pvc-2025-fem-prd-web-2025-0
+  namespace: fem
+  labels:
+    app: fem-prd-web-2025
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_530>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  volumeName: pvc-df93a4e4-3a08-408d-8d26-916e4f89d582
+  storageClassName: ceph-cephfs
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

@@ -1,0 +1,20 @@
+metadata:
+  name: elasticsearch-pvc-els-0
+  namespace: kube-system
+  labels:
+    app: els
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_529>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  volumeName: pvc-3a273a36-2dbe-4e55-829a-4883be9d1731
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

@@ -1,0 +1,41 @@
+metadata:
+  name: event-manage-ingress
+  namespace: event-management
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"event-management:event-manage-fe","ingressName":"event-management:event-manage-ingress","hostname":"event-management.<COMPANY><DOMAIN_14>","path":"/","allNodes":false},{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"event-management:event-manage-be","ingressName":"event-management:event-manage-ingress","hostname":"<DOMAIN_555>.<COMPANY><DOMAIN_14>","path":"/","allNodes":false}]'
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/configuration-snippet: 'proxy_set_header Upgrade $http_upgrade;
+
+      proxy_set_header Connection "upgrade";
+
+      proxy_cache_bypass $http_upgrade;
+
+      '
+    nginx.ingress.kubernetes.io/proxy-http-version: '1.1'
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: event-management.<COMPANY><DOMAIN_14>
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: event-manage-fe
+            port:
+              number: 80
+  - host: <DOMAIN_555>.<COMPANY><DOMAIN_14>
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: event-manage-be
+            port:
+              number: 5000
+apiVersion: <DOMAIN_775>/v1
+kind: Ingress

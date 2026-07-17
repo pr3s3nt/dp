@@ -1,0 +1,20 @@
+metadata:
+  name: extension-apiserver-authentication-reader
+  namespace: kube-system
+  labels:
+    kubernetes.io/bootstrapping: <REDACTED:env>
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: <REDACTED:env>
+rules:
+- verbs:
+  - get
+  - list
+  - watch
+  apiGroups:
+  - ''
+  resources:
+  - configmaps
+  resourceNames:
+  - extension-apiserver-authentication
+apiVersion: <DOMAIN_776>/v1
+kind: Role

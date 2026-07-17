@@ -1,0 +1,17 @@
+metadata:
+  name: helmops
+  namespace: cattle-fleet-system
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: fleet
+    meta.helm.sh/release-namespace: cattle-fleet-system
+rules:
+- verbs:
+  - '*'
+  apiGroups:
+  - <DOMAIN_129>
+  resources:
+  - leases
+apiVersion: <DOMAIN_1>/v1
+kind: Role

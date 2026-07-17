@@ -1,0 +1,19 @@
+metadata:
+  name: acs-redis-service
+  namespace: acs
+  labels:
+    app: acs-redis
+  annotations: {}
+spec:
+  ports:
+  - name: acs-redis
+    protocol: TCP
+    port: 6379
+    targetPort: 6379
+  selector:
+    app: acs-redis
+  clusterIP: <IP_34>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

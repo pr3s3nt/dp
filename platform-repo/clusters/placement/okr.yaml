@@ -1,0 +1,6 @@
+# okr — mỗi app một cụm riêng.
+# TODO: đổi tên cụm cho khớp `argocd cluster list` + secret KUBECONFIG_OKR_STAGING/_PROD.
+app: okr
+clusters:
+  staging: okr-staging
+  prod: okr-prod

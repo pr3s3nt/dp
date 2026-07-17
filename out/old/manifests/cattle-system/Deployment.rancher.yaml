@@ -1,0 +1,104 @@
+metadata:
+  name: rancher
+  namespace: cattle-system
+  labels:
+    app: rancher
+    chart: rancher-2.5.0
+    heritage: Helm
+    release: rancher
+  annotations:
+    field.cattle.io/publicEndpoints: 'null'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rancher
+  template:
+    metadata:
+      labels:
+        app: rancher
+        release: rancher
+      annotations:
+        kubectl.kubernetes.io/restartedAt: '2024-09-04T14:58:35+07:00'
+    spec:
+      containers:
+      - name: rancher
+        image: rancher/rancher:v2.5.0
+        args:
+        - --http-listen-port=80
+        - --https-listen-port=443
+        - --add-local=true
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        env:
+        - name: CATTLE_NAMESPACE
+          value: cattle-system
+        - name: CATTLE_PEER_SERVICE
+          value: rancher
+        - name: CATTLE_SYSTEM_CATALOG
+          value: bundled
+        - name: AUDIT_LEVEL
+          value: '1'
+        - name: AUDIT_LOG_PATH
+          value: /var/log/k8s-audit/<DOMAIN_665>
+        resources:
+          limits:
+            cpu: '2'
+            memory: 10Gi
+          requests:
+            cpu: '1'
+            memory: 6Gi
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 60
+          timeoutSeconds: 1
+          periodSeconds: 30
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 80
+            scheme: HTTP
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+          periodSeconds: 30
+          successThreshold: 1
+          failureThreshold: 3
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        node-master: 'true'
+      serviceAccountName: rancher
+      serviceAccount: rancher
+      securityContext: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - rancher
+              topologyKey: <DOMAIN_138>/hostname
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

@@ -21,8 +21,12 @@
 # Secrets cần có trong platform-repo (Settings -> Secrets -> Actions):
 #   APP_REPOS_TOKEN            đọc các app repo trong org
 #   CONFIG_REPO_TOKEN          push vào các repo <app>-config
-#   KUBECONFIG_ONPREM_STAGING  base64 kubeconfig cụm staging (apply secret)
+#   KUBECONFIG_ONPREM_STAGING  base64 kubeconfig cụm quản lý - staging (app đặt `in-cluster`)
 #   KUBECONFIG_ONPREM_PROD     như trên, cho prod
+#   KUBECONFIG_<TÊN_CỤM>       đa cụm (mỗi app một cụm riêng): base64 kubeconfig của từng
+#                              cụm app, tên theo clusters/placement/<app>.yaml viết hoa,
+#                              gạch nối -> gạch dưới (vd okr-staging -> KUBECONFIG_OKR_STAGING).
+#                              Xem clusters/README.md.
 #   HARBOR_HOST                vd harbor.example.com
 #   HARBOR_ROBOT_USER          robot account chỉ quyền pull (tạo secret harbor-pull)
 #   HARBOR_ROBOT_PASS          password của robot đó
@@ -74,6 +78,13 @@ jobs:
           ref: ${{ steps.lock.outputs.ref }}
           path: catalog
 
+      # Placement (app nào -> cụm nào) là dữ liệu VẬN HÀNH: luôn đọc từ main,
+      # không theo platform.lock — đổi cụm không bắt app nâng lock.
+      - name: Checkout platform@main (clusters/placement)
+        uses: actions/checkout@v4
+        with:
+          path: platform
+
       # Air-gap: cài sẵn score-k8s trên runner -> bước này tự skip, không cần internet
       - name: Install score-k8s (chỉ khi runner chưa có)
         run: |
@@ -122,18 +133,43 @@ jobs:
             fi
           done
 
-      - name: Apply secrets lên cụm (create-if-missing)
+      - name: Apply secrets lên cụm (create-if-missing, theo placement từng app)
         env:
           KUBECONFIG_STAGING_B64: ${{ secrets.KUBECONFIG_ONPREM_STAGING }}
           KUBECONFIG_PROD_B64: ${{ secrets.KUBECONFIG_ONPREM_PROD }}
+          # Đa cụm: kubeconfig tra động theo tên cụm (KUBECONFIG_<CỤM>). GitHub Actions
+          # không cho index secrets bằng biến runtime -> đưa cả context secrets vào env
+          # (workflow này là của platform-repo, credential vốn tập trung ở đây).
+          ALL_SECRETS: ${{ toJSON(secrets) }}
           HARBOR_HOST: ${{ secrets.HARBOR_HOST }}
           HARBOR_ROBOT_USER: ${{ secrets.HARBOR_ROBOT_USER }}
           HARBOR_ROBOT_PASS: ${{ secrets.HARBOR_ROBOT_PASS }}
         run: |
           set -euo pipefail
+          # ---- placement: app này deploy lên cụm nào? (mặc định in-cluster) ----
+          PLACEMENT="platform/clusters/placement/${APP}.yaml"
+          if [ -f "$PLACEMENT" ]; then
+            CL_STAGING=$(yq '.clusters.staging // "in-cluster"' "$PLACEMENT")
+            CL_PROD=$(yq '.clusters.prod // "in-cluster"' "$PLACEMENT")
+          else
+            echo "::warning::${APP} chưa có clusters/placement/${APP}.yaml -> dùng in-cluster (ApplicationSet sẽ KHÔNG deploy app này cho tới khi có file placement)"
+            CL_STAGING=in-cluster; CL_PROD=in-cluster
+          fi
+          echo "==> placement: staging=${CL_STAGING} prod=${CL_PROD}"
+
+          resolve_kc() { # $1=tên cụm  $2=secret legacy (in-cluster)
+            local cluster=$1 legacy=$2
+            if [ -z "$cluster" ] || [ "$cluster" = "in-cluster" ]; then echo "$legacy"; return; fi
+            local key="KUBECONFIG_$(echo "$cluster" | tr '[:lower:]-' '[:upper:]_')"
+            local val
+            val=$(echo "$ALL_SECRETS" | yq -p=json ".${key} // \"\"")
+            [ -n "$val" ] || echo "::warning::thiếu secret ${key} cho cụm ${cluster}" >&2
+            echo "$val"
+          }
+
           setup_ns() {
-            local kc_b64=$1 ns=$2 file=$3
-            [ -n "$kc_b64" ] || { echo "skip ${ns}: chưa cấu hình kubeconfig"; return 0; }
+            local kc_b64=$1 ns=$2 file=$3 cluster=$4
+            [ -n "$kc_b64" ] || { echo "skip ${ns} (cụm ${cluster}): chưa cấu hình kubeconfig"; return 0; }
             echo "$kc_b64" | base64 -d > kubeconfig.tmp
             export KUBECONFIG=kubeconfig.tmp
             kubectl create namespace "$ns" 2>/dev/null || true
@@ -148,8 +184,8 @@ jobs:
             fi
             unset KUBECONFIG && rm -f kubeconfig.tmp
           }
-          setup_ns "${KUBECONFIG_STAGING_B64}" "${APP}-staging" work-onprem-staging/secrets.yaml
-          setup_ns "${KUBECONFIG_PROD_B64}"    "${APP}-prod"    work-onprem-prod/secrets.yaml
+          setup_ns "$(resolve_kc "$CL_STAGING" "$KUBECONFIG_STAGING_B64")" "${APP}-staging" work-onprem-staging/secrets.yaml "$CL_STAGING"
+          setup_ns "$(resolve_kc "$CL_PROD"    "$KUBECONFIG_PROD_B64")"    "${APP}-prod"    work-onprem-prod/secrets.yaml    "$CL_PROD"
 
       - name: Commit & push config repo
         run: |
@@ -224,12 +260,30 @@ jobs:
             "https://github.com/score-spec/score-k8s/releases/download/${SCORE_K8S_VERSION}/score-k8s_${SCORE_K8S_VERSION}_linux_amd64.tar.gz"
           tar xzf score-k8s.tgz score-k8s && sudo mv score-k8s /usr/local/bin/
 
+      # Placement luôn đọc main (như job deploy)
+      - name: Checkout platform@main (clusters/placement)
+        uses: actions/checkout@v4
+        with:
+          path: platform
+
       - name: Promote
         env:
           KUBECONFIG_PROD_B64: ${{ secrets.KUBECONFIG_ONPREM_PROD }}
+          ALL_SECRETS: ${{ toJSON(secrets) }}
         run: |
           set -euo pipefail
           FILE="config/${TARGET}/prod/manifests.yaml"
+
+          # ---- placement: prod của app này nằm cụm nào? ----
+          PLACEMENT="platform/clusters/placement/${APP}.yaml"
+          CL_PROD=in-cluster
+          [ -f "$PLACEMENT" ] && CL_PROD=$(yq '.clusters.prod // "in-cluster"' "$PLACEMENT")
+          if [ "$CL_PROD" != "in-cluster" ]; then
+            KEY="KUBECONFIG_$(echo "$CL_PROD" | tr '[:lower:]-' '[:upper:]_')"
+            KUBECONFIG_PROD_B64=$(echo "$ALL_SECRETS" | yq -p=json ".${KEY} // \"\"")
+            [ -n "$KUBECONFIG_PROD_B64" ] || echo "::warning::thiếu secret ${KEY} cho cụm ${CL_PROD}"
+          fi
+          echo "==> placement prod: ${CL_PROD}"
 
           if [ "$MODE" = "tag-only" ]; then
             [ -f "$FILE" ] || { echo "Chưa có ${FILE} — chạy mode re-render trước"; exit 1; }

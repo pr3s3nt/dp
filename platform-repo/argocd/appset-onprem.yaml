@@ -1,14 +1,19 @@
 # =============================================================================
-# ApplicationSet — ONPREM
-# Quy ước: mỗi app có 1 config repo tên <app>-config, bên trong:
-#   onprem/staging/manifests.yaml
-#   onprem/prod/manifests.yaml      (manifest ĐÃ render sẵn bởi CI — không Kustomize/Helm)
+# ApplicationSet — ONPREM (đa cụm: mỗi app một cụm k8s riêng)
 #
-# SCM Provider generator tự quét org tìm repo *-config
-# -> THÊM APP MỚI = TẠO REPO <app>-config, KHÔNG sửa file này.
+# ArgoCD chạy trên CỤM QUẢN LÝ; app deploy sang cụm ghi trong
+# platform-repo/clusters/placement/<app>.yaml (nguồn sự thật duy nhất — xem clusters/README.md).
 #
-# staging: sync tự động (prune + selfHeal)
-# prod:    manual sync (bấm Sync trong ArgoCD sau khi commit promote đã vào repo)
+# THÊM APP = tạo repo <app>-config + thêm 1 file placement (PR vào platform-repo).
+# ĐỔI CỤM CỦA APP = sửa file placement — không đụng file này.
+#
+# Config repo giữ nguyên khuôn: <app>-config/onprem/{staging,prod}/manifests.yaml
+# staging: sync tự động (prune + selfHeal) | prod: manual sync
+#
+# Yêu cầu:
+#   - Cụm app đã `argocd cluster add <ctx> --name <tên>` (destination dùng NAME).
+#   - ArgoCD đọc được platform-repo (thêm repo credential nếu private).
+#   - `in-cluster` = cụm quản lý (tên có sẵn của ArgoCD).
 # =============================================================================
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
@@ -21,43 +26,35 @@ spec:
   generators:
     - matrix:
         generators:
-          # Quét mọi repo *-config trong org. Cần Secret 'github-token' trong ns argocd.
-          - scmProvider:
-              github:
-                organization: your-org            # TODO: thay your-org
-                tokenRef:
-                  secretName: github-token
-                  key: token
-              filters:
-                - repositoryMatch: .*-config$
-          # --- Nếu chưa muốn cấp token quét org, thay scmProvider bằng list: ---
-          # - list:
-          #     elements:
-          #       - url: https://github.com/your-org/shop-app-config.git
-          #         repository: shop-app-config
-          #         branch: main
+          # Mỗi file placement -> 1 app (nội dung file thành params: .app, .clusters.*)
+          - git:
+              repoURL: https://github.com/your-org/platform-repo.git   # TODO: thay your-org
+              revision: main            # placement là dữ liệu vận hành — LUÔN đọc main, không theo platform.lock
+              files:
+                - path: "clusters/placement/*.yaml"
           - list:
               elements:
                 - env: staging
                 - env: prod
   template:
     metadata:
-      name: '{{ .repository | trimSuffix "-config" }}-{{ .env }}-onprem'
+      name: '{{ .app }}-{{ .env }}-onprem'
       labels:
         platform: onprem
         env: '{{ .env }}'
+        cluster: '{{ index .clusters .env }}'
     spec:
       project: idp
       source:
-        repoURL: '{{ .url }}'
-        targetRevision: '{{ .branch }}'
+        repoURL: 'https://github.com/your-org/{{ .app }}-config.git'   # TODO: thay your-org
+        targetRevision: main
         path: 'onprem/{{ .env }}'
         directory:
           recurse: false
       destination:
-        # Cụm onprem = cụm đang chạy ArgoCD:
-        server: https://kubernetes.default.svc
-        namespace: '{{ .repository | trimSuffix "-config" }}-{{ .env }}'
+        # Deploy chéo cụm theo placement (destination.name — cluster đã đăng ký với ArgoCD)
+        name: '{{ index .clusters .env }}'
+        namespace: '{{ .app }}-{{ .env }}'
       syncPolicy:
         syncOptions:
           - CreateNamespace=true

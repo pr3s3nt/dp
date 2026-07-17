@@ -2,11 +2,22 @@
 # CATALOG PROVISIONER — CLOUD (EKS)
 # Cùng giao diện Score với onprem, chỉ khác cách "hiện thực hóa":
 #
-# type: postgres -> KHÔNG dựng gì trong cluster. Trỏ vào RDS do Terraform tạo.
-#                   Terraform ghi sẵn Secret <workload>-db-credentials vào namespace
-#                   (xem terraform/envs/*). Provisioner chỉ nối app vào Secret đó.
-# type: route    -> Ingress (AWS Load Balancer Controller / ALB)
-# type: service  -> giống onprem (DNS nội bộ)
+# type: postgres   -> RDS PostgreSQL (Secret do Terraform ghi) — không dựng gì trong cluster
+# type: mysql      -> RDS MySQL/MariaDB (Secret do Terraform ghi) — cùng khuôn postgres
+# type: mongodb    -> DocumentDB / MongoDB managed (Secret do Terraform ghi)
+# type: redis      -> ElastiCache (Secret do Terraform ghi)
+# type: app-config -> Secret gom key cấu hình — GIỐNG HỆT onprem (secret sống trong cụm)
+# type: route      -> Ingress (AWS Load Balancer Controller / ALB)
+# type: service    -> giống onprem (DNS nội bộ)
+#
+# QUY ƯỚC: mọi datastore đọc kết nối từ Secret <workload>-db-credentials
+# (redis: <workload>-redis-credentials) do Terraform tạo sẵn trong namespace —
+# app không biết và không cần biết đằng sau là RDS hay StatefulSet.
+# Biến xuất ra đồng nhất với onprem: host / port / name / username / password.
+#
+# LƯU Ý params: các params chỉ-có-ý-nghĩa-onprem (image, storage, backup) được Ở ĐÂY
+# bỏ qua một cách CÓ CHỦ ĐÍCH — backup/sizing của managed service do Terraform quản
+# (RDS automated backup...). score.yaml của app giữ nguyên khi đổi nền tảng.
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -25,7 +36,85 @@
     password: {{ encodeSecretRef .Init.secretName "password" }}
 
 # ---------------------------------------------------------------------------
+# mysql: RDS MySQL (hoặc MariaDB) — Terraform tạo instance + ghi Secret
+# <workload>-db-credentials với các key: host, port, dbname, username, password.
+# (xem terraform/ — module rds; stage "infra" của orchestrator là chỗ cắm tự động hóa)
+# ---------------------------------------------------------------------------
+- uri: template://cloud/mysql
+  type: mysql
+  init: |
+    secretName: {{ .SourceWorkload }}-db-credentials
+  outputs: |
+    host: {{ encodeSecretRef .Init.secretName "host" }}
+    port: {{ encodeSecretRef .Init.secretName "port" }}
+    name: {{ encodeSecretRef .Init.secretName "dbname" }}
+    username: {{ encodeSecretRef .Init.secretName "username" }}
+    password: {{ encodeSecretRef .Init.secretName "password" }}
+
+# ---------------------------------------------------------------------------
+# mongodb: DocumentDB (hoặc MongoDB Atlas) — Terraform ghi Secret cùng khuôn.
+# authSource cho DocumentDB/Mongo managed thường là admin — giữ key trong Secret
+# để Terraform quyết (đỡ hardcode khác biệt giữa các managed service).
+# ---------------------------------------------------------------------------
+- uri: template://cloud/mongodb
+  type: mongodb
+  init: |
+    secretName: {{ .SourceWorkload }}-db-credentials
+  outputs: |
+    host: {{ encodeSecretRef .Init.secretName "host" }}
+    port: {{ encodeSecretRef .Init.secretName "port" }}
+    name: {{ encodeSecretRef .Init.secretName "dbname" }}
+    username: {{ encodeSecretRef .Init.secretName "username" }}
+    password: {{ encodeSecretRef .Init.secretName "password" }}
+    authSource: {{ encodeSecretRef .Init.secretName "authSource" }}
+
+# ---------------------------------------------------------------------------
+# redis: ElastiCache — Terraform ghi Secret <workload>-redis-credentials
+# (key: host, port, password; cluster không bật AUTH thì password để chuỗi rỗng).
+# Secret riêng (không phải -db-credentials) để workload dùng được cả DB + redis.
+# ---------------------------------------------------------------------------
+- uri: template://cloud/redis
+  type: redis
+  init: |
+    secretName: {{ .SourceWorkload }}-redis-credentials
+  outputs: |
+    host: {{ encodeSecretRef .Init.secretName "host" }}
+    port: {{ encodeSecretRef .Init.secretName "port" }}
+    password: {{ encodeSecretRef .Init.secretName "password" }}
+
+# ---------------------------------------------------------------------------
+# app-config: GIỐNG HỆT onprem — secret cấu hình app sống trong cụm, bất kể nền tảng.
+# TODO vận hành: orchestrator hiện chỉ apply secret lên cụm onprem
+# (KUBECONFIG_ONPREM_*). Khi bật cloud thật, thêm bước apply tương tự với
+# kubeconfig EKS, hoặc để Terraform tạo secret này (giữ nguyên tên).
+# ---------------------------------------------------------------------------
+- uri: template://cloud/app-config
+  type: app-config
+  init: |
+    {{ if not .Params.keys }}{{ fail "app-config: thiếu params.keys (danh sách tên biến app cần)" }}{{ end }}
+    secretName: {{ .SourceWorkload }}-app-config
+  outputs: |
+    secretName: {{ .Init.secretName }}
+    {{- range .Params.keys }}
+    {{ . }}: {{ encodeSecretRef $.Init.secretName . }}
+    {{- end }}
+  manifests: |
+    - apiVersion: v1
+      kind: Secret
+      metadata:
+        name: {{ .Init.secretName }}
+        labels:
+          app.kubernetes.io/component: app-config
+      type: Opaque
+      stringData:
+        {{- range .Params.keys }}
+        {{ . }}: "CHANGE_ME"
+        {{- end }}
+
+# ---------------------------------------------------------------------------
 # route: Ingress class alb — AWS Load Balancer Controller tạo ALB.
+# Đa host/path: mỗi host/path một resource route — tên Ingress chứa host+path
+# chuẩn hóa nên không đụng nhau (đồng bộ convention với onprem).
 # ---------------------------------------------------------------------------
 - uri: template://cloud/route
   type: route
@@ -40,7 +129,7 @@
     - apiVersion: networking.k8s.io/v1
       kind: Ingress
       metadata:
-        name: {{ .SourceWorkload }}-route{{ if ne .Init.path "/" }}-{{ .Init.path | trimPrefix "/" | replace "/" "-" }}{{ end }}
+        name: {{ .SourceWorkload }}-route-{{ .Init.host | lower | replace "." "-" }}{{ if ne .Init.path "/" }}-{{ .Init.path | trimPrefix "/" | replace "/" "-" | lower }}{{ end }}
         annotations:
           alb.ingress.kubernetes.io/scheme: internet-facing
           alb.ingress.kubernetes.io/target-type: ip

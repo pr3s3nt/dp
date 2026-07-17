@@ -1,0 +1,24 @@
+metadata:
+  name: rancher-expose
+  namespace: cattle-system
+  labels:
+    app: rancher
+    chart: rancher-2.5.0
+    heritage: Helm
+    release: rancher
+  annotations: {}
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    port: 443
+    targetPort: 443
+  selector:
+    app: rancher
+  clusterIP: <IP_53>
+  type: ClusterIP
+  externalIPs:
+  - <CLEANUP_IP_5>
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

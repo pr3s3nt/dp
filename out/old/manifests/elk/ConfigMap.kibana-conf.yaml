@@ -1,0 +1,11 @@
+metadata:
+  name: kibana-conf
+  namespace: elk
+  annotations: {}
+data:
+  kibana.yml: "<DOMAIN_468>:\n        #  <DOMAIN_460>:\n        #    order: 0\n  \
+    \      #    realm: sysops-<COMPANY>-services\n        #    description: \"Log\
+    \ in with Keycloak\"\n  basic.basic1:\n    order: 1\n    icon: \"logoElasticsearch\"\
+    \n    hint: \"Typically for administrators\"\n"
+apiVersion: v1
+kind: ConfigMap

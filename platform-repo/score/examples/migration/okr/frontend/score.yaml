@@ -1,0 +1,28 @@
+# APP MẪU MIGRATION — okr/frontend (nginx, port 80; route công khai duy nhất của app)
+# BE không lộ ra ngoài — FE gọi BE qua `type: service` (DNS nội bộ namespace).
+apiVersion: score.dev/v1b1
+
+metadata:
+  name: okr-frontend
+
+containers:
+  main:
+    image: "."
+    variables:
+      API_URL: http://${resources.api.host}:${resources.api.port}
+
+service:
+  ports:
+    http:
+      port: 80
+      targetPort: 80
+
+resources:
+  api:
+    type: service
+    params: { workload: okr-backend, port: 8080 }
+  site:
+    type: route
+    params:
+      host: okr.example.com               # TODO: đổi domain thật
+      port: 80

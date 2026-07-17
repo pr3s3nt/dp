@@ -1,0 +1,16 @@
+metadata:
+  name: mongodb-backup-pvc
+  namespace: shift-handover
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+  volumeName: mongodb-backup-pv
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

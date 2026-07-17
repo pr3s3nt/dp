@@ -1,0 +1,72 @@
+metadata:
+  name: devops-security-dashboard
+  namespace: security-cloud
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"security-cloud:dsd-service","ingressName":"security-cloud:sec-dashboard-ingress","hostname":"security-dashboard.<COMPANY><DOMAIN_14>","path":"/","allNodes":false}]'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: <COMPANY>-sre-dsd
+  template:
+    metadata:
+      labels:
+        app: <COMPANY>-sre-dsd
+    spec:
+      volumes:
+      - name: log
+        hostPath:
+          path: /devops-security-dashboard/log
+          type: ''
+      containers:
+      - name: devops-security-dashboard
+        image: artifactory.<COMPANY><DOMAIN_14>:30807/docker-local/devops-security-dashboard/prd:26
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        env:
+        - name: MONGODB_URL
+          valueFrom:
+            secretKeyRef:
+              name: dsd-secret
+              key: MONGODB_URL
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: dsd-secret
+              key: JWT_SECRET
+        - name: SEND_EMAIL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: dsd-secret
+              key: SEND_EMAIL_USERNAME
+        - name: SEND_EMAIL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: dsd-secret
+              key: SEND_EMAIL_PASSWORD
+        - name: NODE_ENV
+          valueFrom:
+            secretKeyRef:
+              name: dsd-secret
+              key: NODE_ENV
+        resources: {}
+        volumeMounts:
+        - name: log
+          mountPath: /app/log
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+      - name: secret-registry-image
+      schedulerName: default-scheduler
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

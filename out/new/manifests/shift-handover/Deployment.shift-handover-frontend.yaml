@@ -1,0 +1,49 @@
+metadata:
+  name: shift-handover-frontend
+  namespace: shift-handover
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    objectset.rio.cattle.io/hash: f6c18b7826d97af6598f63b54624be8cc919b4f4
+  annotations:
+    meta.helm.sh/release-name: shift-handover
+    meta.helm.sh/release-namespace: shift-handover
+    objectset.rio.cattle.io/id: default-shift-handover-cattle-fleet-local-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shift-handover-frontend
+  template:
+    metadata:
+      labels:
+        app: shift-handover-frontend
+    spec:
+      containers:
+      - name: shift-handover-fe
+        image: <DOMAIN_30>.<COMPANY_DOMAIN>/shift-handover/frontend/main:8
+        env:
+        - name: REACT_APP_FRONTEND_URL
+          valueFrom:
+            secretKeyRef:
+              name: fe-secret
+              key: REACT_APP_FRONTEND_URL
+        - name: REACT_APP_API_URL
+          valueFrom:
+            secretKeyRef:
+              name: fe-secret
+              key: REACT_APP_API_URL
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

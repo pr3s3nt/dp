@@ -1,0 +1,12 @@
+metadata:
+  name: default
+  labels:
+    field.cattle.io/projectId: p-d874n
+    kubernetes.io/metadata.name: default
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2026-07-13T07:31:47Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2026-07-13T07:31:52Z"}]}'
+    field.cattle.io/projectId: local:p-d874n
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+spec: {}
+apiVersion: v1
+kind: Namespace

@@ -1,0 +1,13 @@
+metadata:
+  name: git-shift-handover
+  namespace: fleet-local
+subjects:
+- kind: ServiceAccount
+  name: git-shift-handover
+  namespace: fleet-local
+roleRef:
+  apiGroup: <DOMAIN_1>
+  kind: Role
+  name: git-shift-handover
+apiVersion: <DOMAIN_1>/v1
+kind: RoleBinding

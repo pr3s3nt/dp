@@ -1,0 +1,22 @@
+metadata:
+  name: rancher
+  namespace: cattle-system
+  labels:
+    app: rancher
+    chart: rancher-2.5.0
+    heritage: Helm
+    release: rancher
+  annotations: {}
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 80
+  selector:
+    app: rancher
+  clusterIP: <IP_52>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

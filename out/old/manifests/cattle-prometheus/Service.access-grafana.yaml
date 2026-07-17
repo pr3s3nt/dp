@@ -1,0 +1,28 @@
+metadata:
+  name: access-grafana
+  namespace: cattle-prometheus
+  labels:
+    app: grafana
+    chart: grafana-0.0.1
+    heritage: Tiller
+    io.cattle.field/appId: cluster-monitoring
+    kubernetes.io/cluster-service: 'true'
+    release: cluster-monitoring
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: http
+  selector:
+    app: grafana
+    chart: grafana-0.0.1
+    release: cluster-monitoring
+  clusterIP: <IP_50>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+apiVersion: v1
+kind: Service

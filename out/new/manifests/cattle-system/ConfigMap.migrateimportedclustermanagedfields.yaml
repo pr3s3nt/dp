@@ -1,0 +1,7 @@
+metadata:
+  name: migrateimportedclustermanagedfields
+  namespace: cattle-system
+data:
+  importedClusterManagedFieldsMigrated: 'true'
+apiVersion: v1
+kind: ConfigMap

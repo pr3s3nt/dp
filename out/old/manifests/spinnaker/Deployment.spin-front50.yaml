@@ -1,0 +1,88 @@
+metadata:
+  name: spin-front50
+  namespace: spinnaker
+  labels:
+    app: spin
+    app.kubernetes.io/managed-by: halyard
+    app.kubernetes.io/name: front50
+    app.kubernetes.io/part-of: spinnaker
+    app.kubernetes.io/version: local1.21.3
+    cluster: spin-front50
+  annotations:
+    moniker.spinnaker.io/application: <REDACTED:env>
+    moniker.spinnaker.io/cluster: <REDACTED:env>
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spin
+      cluster: spin-front50
+  template:
+    metadata:
+      labels:
+        app: spin
+        app.kubernetes.io/managed-by: halyard
+        app.kubernetes.io/name: front50
+        app.kubernetes.io/part-of: spinnaker
+        app.kubernetes.io/version: local1.21.3
+        cluster: spin-front50
+    spec:
+      volumes:
+      - name: spin-front50-files-1822566069
+        secret:
+          secretName: <REDACTED:env>
+          defaultMode: 420
+      - name: spin-front50-files-1253799442
+        secret:
+          secretName: <REDACTED:env>
+          defaultMode: 420
+      containers:
+      - name: front50
+        image: <COMPANY>-<DOMAIN_607>/spinnaker/front50:0.24.0-20200625140019
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        env:
+        - name: JAVA_OPTS
+          value: -XX:MaxRAMPercentage=50.0
+        resources: {}
+        volumeMounts:
+        - name: spin-front50-files-1822566069
+          mountPath: /opt/spinnaker/config
+        - name: spin-front50-files-1253799442
+          mountPath: /root/.aws
+        - name: spin-front50-files-1253799442
+          mountPath: /home/spinnaker/.aws
+        readinessProbe:
+          exec:
+            command:
+            - wget
+            - --no-check-certificate
+            - --spider
+            - -q
+            - http://localhost:8080/health
+          timeoutSeconds: 1
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        lifecycle: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 60
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+      - name: registrypullsecret
+      affinity: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

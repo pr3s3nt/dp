@@ -1,0 +1,18 @@
+metadata:
+  name: p-wnc8s-u-pg7qxfe7lh-member-project-member
+  namespace: local
+  labels:
+    auth.management.cattle.io/rtb-label-updated: <REDACTED:env>
+    cattle.io/creator: norman
+    ec3b180c-fb3b-4681-90db-da90ac9afa67: prtb-in-cluster-binding-owner
+    p-wnc8s_u-pg7qxfe7lh-member: prtb-in-cluster-binding-owner
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-pg7qxfe7lh
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: project-member
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

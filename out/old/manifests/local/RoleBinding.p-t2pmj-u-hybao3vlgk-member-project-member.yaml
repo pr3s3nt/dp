@@ -1,0 +1,18 @@
+metadata:
+  name: p-t2pmj-u-hybao3vlgk-member-project-member
+  namespace: local
+  labels:
+    auth.management.cattle.io/rtb-label-updated: <REDACTED:env>
+    c58c89c8-243e-41cf-946e-3464d4883822: prtb-in-cluster-binding-owner
+    cattle.io/creator: norman
+    p-t2pmj_u-hybao3vlgk-member: prtb-in-cluster-binding-owner
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-hybao3vlgk
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: project-member
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

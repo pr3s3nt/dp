@@ -1,0 +1,5 @@
+# shop-app (app mẫu) — giữ trên cụm quản lý, hành vi như trước khi có placement.
+app: shop-app
+clusters:
+  staging: in-cluster
+  prod: in-cluster

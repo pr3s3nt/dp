@@ -1,0 +1,26 @@
+metadata:
+  name: rook-ceph-exporter
+  namespace: rook-ceph
+  labels:
+    app: rook-ceph-exporter
+    rook_cluster: rook-ceph
+spec:
+  ports:
+  - name: ceph-exporter-http-metrics
+    protocol: TCP
+    port: 9926
+    targetPort: 9926
+  selector:
+    app: rook-ceph-exporter
+    rook_cluster: rook-ceph
+  clusterIP: <IP_32>
+  clusterIPs:
+  - <IP_32>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  internalTrafficPolicy: Cluster
+apiVersion: v1
+kind: Service

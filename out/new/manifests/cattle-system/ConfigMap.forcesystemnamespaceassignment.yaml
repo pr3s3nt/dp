@@ -1,0 +1,7 @@
+metadata:
+  name: forcesystemnamespaceassignment
+  namespace: cattle-system
+data:
+  namespacesAssigned: v2.14.2
+apiVersion: v1
+kind: ConfigMap

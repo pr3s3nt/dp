@@ -1,0 +1,25 @@
+metadata:
+  name: expose-kubelets-metrics
+  namespace: cattle-prometheus
+  labels:
+    k8s-app: kubelet
+    monitoring.coreos.com: 'true'
+spec:
+  ports:
+  - name: https-metrics
+    protocol: TCP
+    port: 10250
+    targetPort: 10250
+  - name: http-metrics
+    protocol: TCP
+    port: 10255
+    targetPort: 10255
+  - name: cadvisor
+    protocol: TCP
+    port: 4194
+    targetPort: 4194
+  clusterIP: None
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

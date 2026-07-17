@@ -1,0 +1,58 @@
+metadata:
+  name: rke2-machineconfig-cleanup-cronjob
+  namespace: fleet-local
+  labels:
+    objectset.rio.cattle.io/hash: dd9dbcfd7c38885d30e78acb65a58e5962640802
+  annotations:
+    objectset.rio.cattle.io/applied: H4sIAAAAAAAA/4xT3W7bPAx9lYKXHxwnTevE8V0QBN+A/qxo090MRUHLjK1YP65Eu+sKv/ugOMWyblgH30gUz+HhofkKmhgLZITsFdAYy8jSGh+uNt+RYE8cO2ljgcyKYmnHsoAMXE3TkUZRSUMjYc1WliOhCE3bQB+BwpzUX1kq9BVkUBSLIhfbYi7O0jRNirMJzVMU+SzBJKVkMZvOzifpZBpIDWp6V/rXyiPhrNnZHIZc36AIgK0i4pGyAlWg8Q2JoGxn8w3pRiFTuB45cZSUo6jtdnsptWTITicR8IcYYQ2jNOQ8ZF9fAV0ZDjCuSDXkxgexsa/gIQJhtUZT7BNyacZDlEy3xx5aXi03m8v149369sv6FiLoULUhXjE3PhuPHRpRkYs9l7F3XUGdbXwsrIY+ek+yWj6uPq1XF3f3V3943Xy+WF8fVyjL9LlOK+P97Hk+eyqTXb1Lxbx+mvv6Oe/qJMkXi+9p2fBO6SfV6W6bKOgfIpAay/28BnFvIkdYkuGsm8an5/EU/mWsjS0gAkfetk6QP7hNonWSX1bWMH3jYLxrzdL/72zbQDZLkrPzaAjde3KHSB9BZ1Wr6cq2hocB6XC8QQ7/42FIP2UdpAwg6B9CZ448o+Mbq6R4gQyuqdtDPLlOCloKERivP+zLI7zJGZQM71fYhG4+9sULJxs+Wo3fxPZ9cEpUVLQqJCQnk5P/wrdfBEZu9272PwIAAP//yLn99QkEAAA
+    objectset.rio.cattle.io/id: rke2-machine-config-cleanup
+spec:
+  schedule: 5 0 * * *
+  concurrencyPolicy: Allow
+  suspend: false
+  jobTemplate:
+    metadata: {}
+    spec:
+      backoffLimit: 10
+      template:
+        metadata: {}
+        spec:
+          volumes:
+          - name: config-volume
+            configMap:
+              name: rke2-machineconfig-cleanup-script
+              defaultMode: 420
+          containers:
+          - name: rke2-machineconfig-cleanup-pod
+            image: rancher/rancher-agent:v2.14.2
+            command:
+            - /bin/sh
+            args:
+            - /helper/<DOMAIN_127>
+            env:
+            - name: CATTLE_SERVER
+              value: https://<DOMAIN_8>.<COMPANY_DOMAIN>
+            - name: CATTLE_CA_CHECKSUM
+            - name: CATTLE_TOKEN
+              value: <REDACTED:env>
+            resources: {}
+            volumeMounts:
+            - name: config-volume
+              mountPath: /helper
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            imagePullPolicy: IfNotPresent
+            securityContext:
+              runAsUser: 65534
+              runAsGroup: 65534
+          restartPolicy: Never
+          terminationGracePeriodSeconds: 30
+          dnsPolicy: ClusterFirst
+          serviceAccountName: rke2-machineconfig-cleanup-sa
+          serviceAccount: rke2-machineconfig-cleanup-sa
+          securityContext: {}
+          schedulerName: default-scheduler
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+apiVersion: batch/v1
+kind: CronJob

@@ -1,0 +1,17 @@
+metadata:
+  name: kubeadm-config
+  namespace: kube-system
+data:
+  ClusterConfiguration: "apiServer:\n  extraArgs:\n    authorization-mode: Node,RBAC\n\
+    \  timeoutForControlPlane: 4m0s\napiVersion: <DOMAIN_491>/v1beta2\ncertificatesDir:\
+    \ /etc/kubernetes/pki\nclusterName: kubernetes\ncontrolPlaneEndpoint: <CLEANUP_IP_5>:6443\n\
+    controllerManager: {}\ndns:\n  type: CoreDNS\netcd:\n  local:\n    dataDir: /var/lib/etcd\n\
+    imageRepository: k8s.gcr.io\nkind: ClusterConfiguration\nkubernetesVersion: v1.19.0\n\
+    networking:\n  dnsDomain: cluster.local\n  podSubnet: <IP_8>/16\n  serviceSubnet:\
+    \ <IP_9>/12\nscheduler: {}\n"
+  ClusterStatus: "apiEndpoints:\n  <CLEANUP_HOST_5>:\n    advertiseAddress: <CLEANUP_IP_8>\n\
+    \    bindPort: 6443\n  <CLEANUP_HOST_4>:\n    advertiseAddress: <CLEANUP_IP_9>\n  \
+    \  bindPort: 6443\n  <CLEANUP_HOST_8>:\n    advertiseAddress: <CLEANUP_IP_19>\n    bindPort:\
+    \ 6443\napiVersion: <DOMAIN_491>/v1beta2\nkind: ClusterStatus\n"
+apiVersion: v1
+kind: ConfigMap

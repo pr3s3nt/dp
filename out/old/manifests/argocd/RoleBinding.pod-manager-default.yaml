@@ -1,0 +1,15 @@
+metadata:
+  name: pod-manager-default
+  namespace: argocd
+  labels:
+    app.kubernetes.io/instance: argocd-workflow
+  annotations: {}
+subjects:
+- kind: ServiceAccount
+  name: default
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: pod-manager
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

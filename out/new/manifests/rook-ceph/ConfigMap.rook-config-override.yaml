@@ -1,0 +1,7 @@
+metadata:
+  name: rook-config-override
+  namespace: rook-ceph
+data:
+  config: ''
+apiVersion: v1
+kind: ConfigMap

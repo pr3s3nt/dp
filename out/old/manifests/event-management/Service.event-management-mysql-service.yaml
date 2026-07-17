@@ -1,0 +1,16 @@
+metadata:
+  name: event-management-mysql-service
+  namespace: event-management
+spec:
+  ports:
+  - name: event-management-mysql
+    protocol: TCP
+    port: 3306
+    targetPort: 3306
+  selector:
+    app: event-manage-db
+  clusterIP: <IP_64>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

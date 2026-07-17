@@ -1,0 +1,20 @@
+metadata:
+  name: face-reco-fe-svc
+  namespace: face-reco
+  labels:
+    appname: face-reco
+  annotations: {}
+spec:
+  ports:
+  - protocol: TCP
+    port: 39060
+    targetPort: 80
+  selector:
+    app: face-reco-fe
+  clusterIP: <IP_66>
+  type: ClusterIP
+  externalIPs:
+  - <CLEANUP_IP_5>
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

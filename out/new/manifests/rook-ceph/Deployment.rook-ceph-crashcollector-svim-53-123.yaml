@@ -1,0 +1,225 @@
+metadata:
+  name: rook-ceph-crashcollector-<CLEANUP_HOST_3>
+  namespace: rook-ceph
+  labels:
+    app: rook-ceph-crashcollector
+    ceph-version: 19.2.3-0
+    ceph_daemon_id: crash
+    crashcollector: crash
+    kubernetes.io/hostname: <CLEANUP_HOST_3>
+    node_name: <CLEANUP_HOST_3>
+    rook-version: v1.19.2
+    rook_cluster: rook-ceph
+  annotations: {}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rook-ceph-crashcollector
+      kubernetes.io/hostname: <CLEANUP_HOST_3>
+      node_name: <CLEANUP_HOST_3>
+  template:
+    metadata:
+      labels:
+        app: rook-ceph-crashcollector
+        ceph-version: 19.2.3-0
+        ceph_daemon_id: crash
+        crashcollector: crash
+        kubernetes.io/hostname: <CLEANUP_HOST_3>
+        node_name: <CLEANUP_HOST_3>
+        rook_cluster: rook-ceph
+    spec:
+      volumes:
+      - name: rook-config-override
+        projected:
+          sources:
+          - configMap:
+              name: rook-config-override
+              items:
+              - key: config
+                path: <DOMAIN_100>
+                mode: 292
+          defaultMode: 420
+      - name: ceph-daemons-sock-dir
+        hostPath:
+          path: /var/lib/rook/exporter
+          type: DirectoryOrCreate
+      - name: rook-ceph-log
+        hostPath:
+          path: /var/lib/rook/rook-ceph/log
+          type: ''
+      - name: rook-ceph-crash
+        hostPath:
+          path: /var/lib/rook/rook-ceph/crash
+          type: ''
+      - name: rook-ceph-crash-collector-keyring
+        secret:
+          secretName: <REDACTED:env>
+          defaultMode: 420
+      initContainers:
+      - name: make-container-crash-dir
+        image: quay.io/ceph/ceph:v19.2.3
+        command:
+        - mkdir
+        - -p
+        args:
+        - /var/lib/ceph/crash/posted
+        resources: {}
+        volumeMounts:
+        - name: rook-config-override
+          readOnly: true
+          mountPath: /etc/ceph
+        - name: ceph-daemons-sock-dir
+          mountPath: /run/ceph
+        - name: rook-ceph-log
+          mountPath: /var/log/ceph
+        - name: rook-ceph-crash
+          mountPath: /var/lib/ceph/crash
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+          privileged: false
+      - name: chown-container-data-dir
+        image: quay.io/ceph/ceph:v19.2.3
+        command:
+        - chown
+        args:
+        - --verbose
+        - --recursive
+        - ceph:ceph
+        - /var/log/ceph
+        - /var/lib/ceph/crash
+        - /run/ceph
+        resources: {}
+        volumeMounts:
+        - name: rook-config-override
+          readOnly: true
+          mountPath: /etc/ceph
+        - name: ceph-daemons-sock-dir
+          mountPath: /run/ceph
+        - name: rook-ceph-log
+          mountPath: /var/log/ceph
+        - name: rook-ceph-crash
+          mountPath: /var/lib/ceph/crash
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+          privileged: false
+      containers:
+      - name: ceph-crash
+        image: quay.io/ceph/ceph:v19.2.3
+        command:
+        - ceph-crash
+        env:
+        - name: CONTAINER_IMAGE
+          value: quay.io/ceph/ceph:v19.2.3
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_24>
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_72>
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: <DOMAIN_66>
+        - name: POD_MEMORY_LIMIT
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_101>
+              divisor: '0'
+        - name: POD_MEMORY_REQUEST
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_102>
+              divisor: '0'
+        - name: POD_CPU_LIMIT
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_103>
+              divisor: '1'
+        - name: POD_CPU_REQUEST
+          valueFrom:
+            resourceFieldRef:
+              resource: <DOMAIN_104>
+              divisor: '0'
+        - name: CEPH_USE_RANDOM_NONCE
+          value: 'true'
+        - name: ROOK_MSGR2
+          value: msgr2_false_encryption_false_compression_false
+        - name: ROOK_CEPH_MON_HOST
+          valueFrom:
+            secretKeyRef:
+              name: rook-ceph-config
+              key: mon_host
+        - name: ROOK_CEPH_MON_INITIAL_MEMBERS
+          valueFrom:
+            secretKeyRef:
+              name: rook-ceph-config
+              key: mon_initial_members
+        - name: CEPH_ARGS
+          value: -m $(ROOK_CEPH_MON_HOST) -k /etc/ceph/crash-collector-keyring-store/keyring
+        resources: {}
+        volumeMounts:
+        - name: rook-config-override
+          readOnly: true
+          mountPath: /etc/ceph
+        - name: ceph-daemons-sock-dir
+          mountPath: /run/ceph
+        - name: rook-ceph-log
+          mountPath: /var/log/ceph
+        - name: rook-ceph-crash
+          mountPath: /var/lib/ceph/crash
+        - name: rook-ceph-crash-collector-keyring
+          readOnly: true
+          mountPath: /etc/ceph/crash-collector-keyring-store/
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          capabilities:
+            drop:
+            - NET_RAW
+          privileged: false
+          runAsUser: 167
+          runAsGroup: 167
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/hostname: <CLEANUP_HOST_3>
+      serviceAccountName: rook-ceph-default
+      serviceAccount: rook-ceph-default
+      securityContext: {}
+      schedulerName: default-scheduler
+      tolerations:
+      - key: <DOMAIN_105>/not-ready
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 300
+      - key: <DOMAIN_105>/unreachable
+        operator: Exists
+        effect: NoExecute
+        tolerationSeconds: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

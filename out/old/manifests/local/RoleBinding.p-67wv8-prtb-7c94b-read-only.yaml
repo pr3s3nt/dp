@@ -1,0 +1,16 @@
+metadata:
+  name: p-67wv8-prtb-7c94b-read-only
+  namespace: local
+  labels:
+    cattle.io/creator: norman
+    p-67wv8_prtb-7c94b: prtb-in-cluster-binding-owner
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-ef76duapmo
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: read-only
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

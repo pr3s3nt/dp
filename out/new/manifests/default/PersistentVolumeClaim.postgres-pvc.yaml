@@ -1,0 +1,19 @@
+metadata:
+  name: postgres-pvc
+  namespace: default
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_52>
+    volume.kubernetes.io/storage-provisioner: <DOMAIN_52>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: pvc-7e2ea0f2-85b8-4eab-a939-05b7fd49ed62
+  storageClassName: rook-ceph-block
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

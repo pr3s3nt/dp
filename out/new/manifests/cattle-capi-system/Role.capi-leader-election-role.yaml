@@ -1,0 +1,27 @@
+metadata:
+  name: capi-leader-election-role
+  namespace: cattle-capi-system
+  labels:
+    cluster.x-k8s.io/provider: cluster-api
+    clusterctl.cluster.x-k8s.io: ''
+rules:
+- verbs:
+  - create
+  apiGroups:
+  - ''
+  resources:
+  - events
+- verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+  apiGroups:
+  - <DOMAIN_129>
+  resources:
+  - leases
+apiVersion: <DOMAIN_1>/v1
+kind: Role

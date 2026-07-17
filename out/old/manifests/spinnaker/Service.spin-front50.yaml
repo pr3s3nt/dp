@@ -1,0 +1,20 @@
+metadata:
+  name: spin-front50
+  namespace: spinnaker
+  labels:
+    app: spin
+    cluster: spin-front50
+  annotations: {}
+spec:
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  selector:
+    app: spin
+    cluster: spin-front50
+  clusterIP: <IP_113>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

@@ -1,0 +1,7 @@
+metadata:
+  name: migratedynamicschematomachinepools
+  namespace: cattle-system
+data:
+  dynamicSchemaMachinePoolsMigrated: 'true'
+apiVersion: v1
+kind: ConfigMap

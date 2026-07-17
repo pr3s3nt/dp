@@ -1,0 +1,26 @@
+metadata:
+  name: expose-node-metrics
+  namespace: cattle-prometheus
+  labels:
+    app: exporter-node
+    chart: exporter-node-0.0.1
+    heritage: Tiller
+    io.cattle.field/appId: cluster-monitoring
+    k8s-app: node
+    monitoring.coreos.com: 'true'
+    release: cluster-monitoring
+spec:
+  ports:
+  - name: metrics
+    protocol: TCP
+    port: 9796
+    targetPort: 9796
+  selector:
+    app: exporter-node
+    chart: exporter-node-0.0.1
+    release: cluster-monitoring
+  clusterIP: None
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

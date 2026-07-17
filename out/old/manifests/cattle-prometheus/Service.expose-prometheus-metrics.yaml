@@ -1,0 +1,25 @@
+metadata:
+  name: expose-prometheus-metrics
+  namespace: cattle-prometheus
+  labels:
+    app: prometheus
+    chart: prometheus-0.0.1
+    heritage: Tiller
+    io.cattle.field/appId: cluster-monitoring
+    monitoring.coreos.com: 'true'
+    release: cluster-monitoring
+spec:
+  ports:
+  - name: metrics
+    protocol: TCP
+    port: 9090
+    targetPort: web
+  selector:
+    app: prometheus
+    chart: prometheus-0.0.1
+    release: cluster-monitoring
+  clusterIP: None
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

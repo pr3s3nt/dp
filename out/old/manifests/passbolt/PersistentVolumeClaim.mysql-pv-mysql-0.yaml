@@ -1,0 +1,20 @@
+metadata:
+  name: mysql-pv-mysql-0
+  namespace: passbolt
+  labels:
+    app: mysql
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_529>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  volumeName: pvc-dc556dff-02f9-4732-bbfa-35acdab7039a
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

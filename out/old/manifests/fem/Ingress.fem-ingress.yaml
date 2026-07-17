@@ -1,0 +1,22 @@
+metadata:
+  name: fem-ingress
+  namespace: fem
+  labels:
+    app.kubernetes.io/instance: fem-prd
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"fem:fem-prd-web-expose","ingressName":"fem:fem-ingress","hostname":"fem.<COMPANY_DOMAIN>","path":"/","allNodes":false}]'
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: fem.<COMPANY_DOMAIN>
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: fem-prd-web-expose
+            port:
+              number: 49200
+apiVersion: <DOMAIN_775>/v1
+kind: Ingress

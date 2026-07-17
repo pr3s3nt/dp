@@ -1,0 +1,71 @@
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/instance: argocd
+    app.kubernetes.io/name: argocd-rbac-cm
+    app.kubernetes.io/part-of: argocd
+  annotations: {}
+data:
+  policy.csv: 'g, /DevOps Platform/ArgoCDAdmins, role:admin
+
+    g, <COMPANY>-sre:argocd-prd-admin, role:admin
+
+    g, <COMPANY>-sre:dop-cicd, role:admin
+
+    # Assign readonly permission to ops user
+
+    g, ops, role:readonly
+
+    # Create role admin and assign role to passbolt-admin
+
+    p, role:passbolt-admins, applications, create, passbolt/*, allow
+
+    p, role:passbolt-admins, applications, delete, passbolt/*, allow
+
+    p, role:passbolt-admins, applications, get, passbolt/*, allow
+
+    p, role:passbolt-admins, applications, override, passbolt/*, allow
+
+    p, role:passbolt-admins, applications, sync, passbolt/*, allow
+
+    p, role:passbolt-admins, applications, update, passbolt/*, allow
+
+    p, role:passbolt-admins, projects, get, passbolt, allow
+
+    p, role:passbolt-admins, projects, update, passbolt, allow
+
+    g, passbolt-admin, role:passbolt-admins
+
+    # Create role readonly and assign role to passbolt-ops
+
+    p, role:passbolt-readonly, applications, get, passbolt/*, allow
+
+    p, role:passbolt-readonly, projects, get, passbolt, allow
+
+    g, passbolt-ops, role:passbolt-readonly
+
+
+    # Create role admin and assign role to okr-admin
+
+    p, role:okr-admins, applications, create, okr/*, allow
+
+    p, role:okr-admins, applications, delete, okr/*, allow
+
+    p, role:okr-admins, applications, get, okr/*, allow
+
+    p, role:okr-admins, applications, override, okr/*, allow
+
+    p, role:okr-admins, applications, sync, okr/*, allow
+
+    p, role:okr-admins, applications, update, okr/*, allow
+
+    p, role:okr-admins, projects, get, okr, allow
+
+    p, role:okr-admins, projects, update, okr, allow
+
+    g, <COMPANY>-sre:okr-ops, role:okr-admins
+
+    '
+apiVersion: v1
+kind: ConfigMap

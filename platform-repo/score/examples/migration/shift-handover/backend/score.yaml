@@ -1,0 +1,73 @@
+# APP MẪU MIGRATION — shift-handover/backend (từ cụm 1.19, ns shift-handover)
+# Chứng minh: mongodb + backup CronJob tùy chọn (§4C) + app-config + route riêng cho BE.
+# Nguồn đối chiếu: out/old/manifests/shift-handover/StatefulSet.shift-handover-mongo.yaml
+#                  (mongo:6.0.5) + CronJob.mongodb-auto-backup / mongodb-cleanup-backup
+apiVersion: score.dev/v1b1
+
+metadata:
+  name: shift-handover-backend
+
+containers:
+  main:
+    image: "."
+    variables:
+      # ---- bộ key đúng theo Secret `be-secret` cũ — ops điền giá trị 1 lần/namespace.
+      # MONGODB_URI chứa user/password bên trong -> đi qua app-config
+      # (password gốc nằm sẵn trong secret shift-handover-backend-db-credentials).
+      MONGODB_URI: ${resources.config.MONGODB_URI}
+      MONGODB_DB_NAME: ${resources.config.MONGODB_DB_NAME}
+      SECRET_KEY: ${resources.config.SECRET_KEY}
+      KEYCLOAK_URL: ${resources.config.KEYCLOAK_URL}
+      KEYCLOAK_REALM: ${resources.config.KEYCLOAK_REALM}
+      KEYCLOAK_CLIENT_ID: ${resources.config.KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_CLIENT_SECRET: ${resources.config.KEYCLOAK_CLIENT_SECRET}
+      CIP_BASE_URL: ${resources.config.CIP_BASE_URL}
+      CIP_CLIENT_ID: ${resources.config.CIP_CLIENT_ID}
+      CIP_CLIENT_SECRET: ${resources.config.CIP_CLIENT_SECRET}
+      CIP_KEYCLOAK_BASE_URL: ${resources.config.CIP_KEYCLOAK_BASE_URL}
+      # ---- từ provisioner mongodb (app nào đọc từng phần thì dùng bộ này):
+      MONGO_HOST: ${resources.db.host}
+      MONGO_PORT: ${resources.db.port}
+      MONGO_USER: ${resources.db.username}
+      MONGO_PASSWORD: ${resources.db.password}
+      MONGO_AUTH_SOURCE: ${resources.db.authSource}
+
+service:
+  ports:
+    http:
+      port: 5000              # cụm cũ: Service `backend` port 5000
+      targetPort: 5000
+
+resources:
+  db:
+    type: mongodb
+    params:
+      database: shift_handover
+      image: mongo:6.0        # cụm cũ chạy 6.0.5
+      storage: 30Gi           # cụm cũ cấp 30Gi
+      backup:                 # giữ đúng lịch backup của cụm cũ (18h dump, 19h dọn, giữ 7 ngày)
+        enabled: true
+        schedule: "0 18 * * *"
+        cleanupSchedule: "0 19 * * *"
+        retentionDays: 7
+        storage: 20Gi
+  config:
+    type: app-config
+    params:
+      keys:
+        - MONGODB_URI
+        - MONGODB_DB_NAME
+        - SECRET_KEY
+        - KEYCLOAK_URL
+        - KEYCLOAK_REALM
+        - KEYCLOAK_CLIENT_ID
+        - KEYCLOAK_CLIENT_SECRET
+        - CIP_BASE_URL
+        - CIP_CLIENT_ID
+        - CIP_CLIENT_SECRET
+        - CIP_KEYCLOAK_BASE_URL
+  api:
+    type: route
+    params:
+      host: api-shift-handover.example.com   # TODO: đổi domain thật
+      port: 5000

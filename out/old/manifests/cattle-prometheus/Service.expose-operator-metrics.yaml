@@ -1,0 +1,25 @@
+metadata:
+  name: expose-operator-metrics
+  namespace: cattle-prometheus
+  labels:
+    app: prometheus-operator
+    chart: prometheus-operator-0.0.2
+    heritage: Tiller
+    io.cattle.field/appId: monitoring-operator
+    monitoring.coreos.com: 'true'
+    release: monitoring-operator
+spec:
+  ports:
+  - name: metrics
+    protocol: TCP
+    port: 47323
+    targetPort: http
+  selector:
+    app: prometheus-operator
+    chart: prometheus-operator-0.0.2
+    release: monitoring-operator
+  clusterIP: None
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

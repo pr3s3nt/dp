@@ -1,0 +1,74 @@
+metadata:
+  name: face-reco-fe
+  namespace: face-reco
+  labels:
+    appname: face-reco
+  annotations: {}
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: face-reco-fe
+  template:
+    metadata:
+      labels:
+        app: face-reco-fe
+    spec:
+      volumes:
+      - name: face-reco-fe-config
+        configMap:
+          name: face-reco-fe-cm
+          defaultMode: 420
+      - name: face-reco-fe-log
+        hostPath:
+          path: /sservices/FaceReco/fe_logs
+          type: DirectoryOrCreate
+      - name: tz-config
+        hostPath:
+          path: /usr/share/zoneinfo/Asia/Ho_Chi_Minh
+          type: ''
+      containers:
+      - name: face-reco-fe
+        image: <COMPANY>-<DOMAIN_607>/face_reco/prod_<COMPANY>/face_reco_fe:v1.0.5.0-<COMPANY>
+        command:
+        - /bin/bash
+        - -c
+        - nginx -g 'daemon off;'
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        env:
+        - name: TZ
+          value: Asia/Ho_Chi_Minh
+        resources: {}
+        volumeMounts:
+        - name: face-reco-fe-log
+          mountPath: /var/log/nginx
+        - name: face-reco-fe-config
+          mountPath: /etc/nginx/conf.d
+        - name: tz-config
+          mountPath: /etc/localtime
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        acs: 'yes'
+      securityContext: {}
+      imagePullSecrets:
+      - name: regcred-bart
+      schedulerName: default-scheduler
+      tolerations:
+      - key: service
+        operator: Equal
+        value: acs
+        effect: NoSchedule
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

@@ -1,0 +1,15 @@
+metadata:
+  name: grb-mxv7t-global-catalog-binding
+  namespace: cattle-global-data
+  labels:
+    cattle.io/creator: norman
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-b4qkhsnliz
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: user-global-catalog
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

@@ -1,0 +1,14 @@
+metadata:
+  name: p-d874n-projectmember
+  namespace: local
+rules:
+- verbs:
+  - get
+  apiGroups:
+  - <DOMAIN_51>
+  resources:
+  - projects
+  resourceNames:
+  - p-d874n
+apiVersion: <DOMAIN_1>/v1
+kind: Role

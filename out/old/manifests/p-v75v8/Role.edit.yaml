@@ -1,0 +1,21 @@
+metadata:
+  name: edit
+  namespace: p-v75v8
+  labels:
+    cattle.io/creator: norman
+rules:
+- verbs:
+  - list
+  - watch
+  - create
+  - delete
+  - deletecollection
+  - patch
+  - update
+  - get
+  apiGroups:
+  - '*'
+  resources:
+  - secrets
+apiVersion: <DOMAIN_776>/v1
+kind: Role

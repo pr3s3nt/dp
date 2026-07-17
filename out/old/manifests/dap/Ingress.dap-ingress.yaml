@@ -1,0 +1,20 @@
+metadata:
+  name: dap-ingress
+  namespace: dap
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"dap:dap","ingressName":"dap:dap-ingress","hostname":"<DOMAIN_554>.<COMPANY><DOMAIN_14>","path":"/","allNodes":false}]'
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: <DOMAIN_554>.<COMPANY><DOMAIN_14>
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dap
+            port:
+              number: 3000
+apiVersion: <DOMAIN_775>/v1
+kind: Ingress

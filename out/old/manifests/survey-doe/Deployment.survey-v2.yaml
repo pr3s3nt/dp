@@ -1,0 +1,88 @@
+metadata:
+  name: survey-v2
+  namespace: survey-doe
+  labels:
+    app: survey-v2
+    version: latest
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"survey-doe:survey-v2-service","ingressName":"survey-doe:survey-v2-ingress","hostname":"survey-aqei.<COMPANY_DOMAIN>","path":"/","allNodes":false}]'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: survey-v2
+  template:
+    metadata:
+      labels:
+        app: survey-v2
+        version: latest
+    spec:
+      volumes:
+      - name: survey-uploads-volume
+        persistentVolumeClaim:
+          claimName: survey-aqei-pvc
+      containers:
+      - name: survey-v2
+        image: artifactory.<COMPANY><DOMAIN_14>:30807/docker-local/survey-aqei/survey:43
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        env:
+        - name: PORT
+          value: '8080'
+        - name: FLASK_DEBUG
+          value: 'false'
+        - name: PYTHONUNBUFFERED
+          value: '1'
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        volumeMounts:
+        - name: survey-uploads-volume
+          mountPath: /app/uploads
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 5
+          timeoutSeconds: 3
+          periodSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/hostname: <CLEANUP_HOST_4>
+      securityContext: {}
+      imagePullSecrets:
+      - name: jfrog-registry-secret
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600
+apiVersion: apps/v1
+kind: Deployment

@@ -1,0 +1,22 @@
+metadata:
+  name: csi-cephfsplugin-metrics
+  namespace: rook-ceph
+  labels:
+    app: csi-metrics
+spec:
+  ports:
+  - name: csi-http-metrics
+    protocol: TCP
+    port: 8080
+    targetPort: 9081
+  - name: csi-grpc-metrics
+    protocol: TCP
+    port: 8081
+    targetPort: 9091
+  selector:
+    contains: csi-cephfsplugin-metrics
+  clusterIP: <IP_101>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

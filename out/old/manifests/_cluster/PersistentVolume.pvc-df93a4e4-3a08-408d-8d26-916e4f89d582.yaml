@@ -1,0 +1,33 @@
+metadata:
+  name: pvc-df93a4e4-3a08-408d-8d26-916e4f89d582
+  annotations:
+    pv.kubernetes.io/provisioned-by: <DOMAIN_530>
+spec:
+  capacity:
+    storage: 10Gi
+  csi:
+    driver: <DOMAIN_530>
+    volumeHandle: 0001-0004-ceph-0000000000000001-314ab698-8fbc-11f0-b8eb-ba701654286b
+    fsType: ext4
+    volumeAttributes:
+      clusterID: ceph
+      fsName: ceph-cephfs
+      pool: ceph-cephfs-data0
+      provisionVolume: 'true'
+      storage.kubernetes.io/csiProvisionerIdentity: <DOMAIN_546>
+      subvolumeName: csi-vol-314ab698-8fbc-11f0-b8eb-ba701654286b
+    nodeStageSecretRef:
+      name: rook-csi-cephfs-node
+      namespace: ceph
+  accessModes:
+  - ReadWriteOnce
+  claimRef:
+    kind: PersistentVolumeClaim
+    namespace: fem
+    name: fem-prd-pvc-2025-fem-prd-web-2025-0
+    apiVersion: v1
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: ceph-cephfs
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolume

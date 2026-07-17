@@ -1,0 +1,21 @@
+metadata:
+  name: gitjob
+  namespace: cattle-fleet-system
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    meta.helm.sh/release-name: fleet
+    meta.helm.sh/release-namespace: cattle-fleet-system
+spec:
+  ports:
+  - name: http-80
+    protocol: TCP
+    port: 80
+    targetPort: 8080
+  selector:
+    app: gitjob
+  clusterIP: <IP_48>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+apiVersion: v1
+kind: Service

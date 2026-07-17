@@ -1,0 +1,15 @@
+metadata:
+  name: grb-69g2s-cattle-global-data
+  namespace: cattle-global-data
+  labels:
+    authz.management.cattle.io/grb-owner: <REDACTED:env>
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_1>
+  name: u-b4qkhsnliz
+roleRef:
+  apiGroup: <DOMAIN_1>
+  kind: Role
+  name: user-cattle-global-data
+apiVersion: <DOMAIN_1>/v1
+kind: RoleBinding

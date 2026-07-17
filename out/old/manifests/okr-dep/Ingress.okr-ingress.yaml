@@ -1,0 +1,20 @@
+metadata:
+  name: okr-ingress
+  namespace: okr-dep
+  annotations:
+    field.cattle.io/publicEndpoints: '[{"addresses":["<IP_72>"],"port":80,"protocol":"HTTP","serviceName":"okr-dep:okr-fe-expose","ingressName":"okr-dep:okr-ingress","hostname":"okr.<COMPANY_DOMAIN>","path":"/","allNodes":false}]'
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: okr.<COMPANY_DOMAIN>
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: okr-fe-expose
+            port:
+              number: 80
+apiVersion: <DOMAIN_775>/v1
+kind: Ingress

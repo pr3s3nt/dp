@@ -1,0 +1,35 @@
+metadata:
+  name: rancher
+  namespace: cattle-system
+  labels:
+    app: rancher
+    app.kubernetes.io/managed-by: Helm
+    chart: rancher-2.14.2
+    heritage: Helm
+    release: rancher
+  annotations:
+    meta.helm.sh/release-name: rancher
+    meta.helm.sh/release-namespace: cattle-system
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 80
+  - name: https
+    protocol: TCP
+    port: 443
+    targetPort: 443
+  selector:
+    app: rancher
+  clusterIP: <IP_16>
+  clusterIPs:
+  - <IP_16>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  internalTrafficPolicy: Cluster
+apiVersion: v1
+kind: Service

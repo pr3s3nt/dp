@@ -1,0 +1,98 @@
+metadata:
+  name: cluster-owner
+  namespace: p-67wv8
+  labels:
+    cattle.io/creator: norman
+rules:
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - pipelines
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - pipelinesettings
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectcatalogs
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - sourcecodeproviderconfigs
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - apprevisions
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - catalogtemplateversions
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - secrets
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectmonitorgraphs
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectroletemplatebindings
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - apps
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectalertgroups
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - catalogtemplates
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectalertrules
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - pipelineexecutions
+- verbs:
+  - '*'
+  apiGroups:
+  - '*'
+  resources:
+  - projectloggings
+apiVersion: <DOMAIN_776>/v1
+kind: Role

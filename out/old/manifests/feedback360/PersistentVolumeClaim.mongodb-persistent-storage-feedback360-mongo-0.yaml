@@ -1,0 +1,20 @@
+metadata:
+  name: mongodb-persistent-storage-feedback360-mongo-0
+  namespace: feedback360
+  labels:
+    app: feedback360-mongo
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_529>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  volumeName: pvc-2489212e-024f-4ad4-b2c5-927a8eaa6c80
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

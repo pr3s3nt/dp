@@ -1,0 +1,15 @@
+metadata:
+  name: ml-ops-config-f36a358183a8
+  namespace: fleet-local
+  labels:
+    objectset.rio.cattle.io/hash: 805b2edc7580aa95fb4d7b3ad0bc3eadb9018dc2
+  annotations:
+    objectset.rio.cattle.io/applied: H4sIAAAAAAAA/4SRzW7bMBCEX6XYs+RSVmT9AL0FTe0CDSC0apqih+VyZdOmSIFkUiiG372Q+180yZHcwex8O0eQ2qKfLjEiNEeI6Lccw2LCwUADPG3Ep5uNvb1pH9b7UfK02cs33YO66qYPyy7cfnwnZL7W1zbWfSfC2rY7GpRRrzeG8naCUwIDR1Q/7NFaFzFqZ8P8dHLPFAPHhdduQRij4YV2L7WCBrY67p0MkDwqc18t+3R7f4AGesMc/5jdZ2jGHWbJi7faqldXOrY8umfNLA4MDQwmdePzq2d1GJH4Z4DUOEIzU5PnM+d7PXCIOIzQ2DtjEjAo2TxJv8OwgwYqUcglKyqLSiDWRS8vVClzVEJSzqhkLbJK0XLe9lfslJzt9Tbt8xXmRZVVOVbwXfO/sAmcYVru2bMlDtB8PgKOumMftLNPHBcSkMbR4Xo2uGTD8azv0QROgJyN3hnD/tfXQdu52t9t/Hvvu3P1aqkkYSZSXHGRXlAp03pFZcqiEkR1XedcwunL6fQtAAD//zsfGSa/AgAA
+    objectset.rio.cattle.io/id: gitjobs
+    objectset.rio.cattle.io/owner-gvk: <DOMAIN_474>/v1alpha1, Kind=GitRepo
+    objectset.rio.cattle.io/owner-name: ml-ops
+    objectset.rio.cattle.io/owner-namespace: fleet-local
+binaryData:
+  targets.yaml: eyJ0YXJnZXRzIjpbeyJjbHVzdGVyU2VsZWN0b3IiOnt9fV0sInRhcmdldFJlc3RyaWN0aW9ucyI6W3siY2x1c3RlclNlbGVjdG9yIjp7fX1dfQ==
+apiVersion: v1
+kind: ConfigMap

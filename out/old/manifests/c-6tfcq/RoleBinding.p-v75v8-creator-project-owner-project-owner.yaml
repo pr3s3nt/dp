@@ -1,0 +1,16 @@
+metadata:
+  name: p-v75v8-creator-project-owner-project-owner
+  namespace: c-6tfcq
+  labels:
+    cattle.io/creator: norman
+    p-v75v8_creator-project-owner: prtb-in-cluster-binding-owner
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-72uggsypy6
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: project-owner
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

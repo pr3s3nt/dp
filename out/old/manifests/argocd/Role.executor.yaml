@@ -1,0 +1,20 @@
+metadata:
+  name: executor
+  namespace: argocd
+  labels:
+    app.kubernetes.io/instance: argocd-workflow
+  annotations:
+    workflows.argoproj.io/description: 'Recomended minimum permissions for the `emissary`
+      executor.
+
+      '
+rules:
+- verbs:
+  - create
+  - patch
+  apiGroups:
+  - <DOMAIN_777>
+  resources:
+  - workflowtaskresults
+apiVersion: <DOMAIN_776>/v1
+kind: Role

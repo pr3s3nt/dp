@@ -1,0 +1,12 @@
+metadata:
+  name: rook-ceph-mon-endpoints
+  namespace: rook-ceph
+data:
+  csi-cluster-config-json: '[{"clusterID":"rook-ceph","monitors":["<IP_4>:6789","<IP_5>:6789","<IP_6>:6789"],"cephFS":{"netNamespaceFilePath":"","subvolumeGroup":"","radosNamespace":"","kernelMountOptions":"","fuseMountOptions":""},"rbd":{"netNamespaceFilePath":"","radosNamespace":"","mirrorDaemonCount":0},"nfs":{"netNamespaceFilePath":""},"readAffinity":{"enabled":false,"crushLocationLabels":null},"namespace":""}]'
+  data: a=<IP_6>:6789,b=<IP_4>:6789,c=<IP_5>:6789
+  externalMons: ''
+  mapping: <REDACTED:env>
+  maxMonId: '2'
+  outOfQuorum: ''
+apiVersion: v1
+kind: ConfigMap

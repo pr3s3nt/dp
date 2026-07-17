@@ -1,0 +1,40 @@
+metadata:
+  name: grafana-ini
+  namespace: svms
+  annotations: {}
+data:
+  grafana.ini: '[database]
+
+    type = mysql
+
+    host = mysql-grafana-svc:13306
+
+    name = grafana
+
+    user = grafana
+
+    password = <REDACTED:password>
+
+    [session]
+
+    provider = mysql
+
+    [log]
+
+    mode = console
+
+    [paths]
+
+    logs = /var/log/grafana
+
+    plugins = /var/lib/grafana/plugins
+
+    [server]
+
+    domain = <CLEANUP_IP_5>
+
+    root_url = http://<CLEANUP_IP_5>:13000
+
+    '
+apiVersion: v1
+kind: ConfigMap

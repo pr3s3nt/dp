@@ -1,0 +1,23 @@
+metadata:
+  name: moodle-moodle
+  namespace: moodle
+  labels:
+    app.kubernetes.io/instance: moodle
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: moodle
+    helm.sh/chart: moodle-10.0.0
+  annotations:
+    pv.kubernetes.io/bind-completed: 'yes'
+    pv.kubernetes.io/bound-by-controller: 'yes'
+    volume.beta.kubernetes.io/storage-provisioner: <DOMAIN_529>
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+  volumeName: pvc-67aa1ebc-f5cb-448f-9ecf-479f9de18997
+  storageClassName: ceph-block-replica-2
+  volumeMode: Filesystem
+apiVersion: v1
+kind: PersistentVolumeClaim

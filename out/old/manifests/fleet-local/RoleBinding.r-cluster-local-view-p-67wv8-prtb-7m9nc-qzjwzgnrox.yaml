@@ -1,0 +1,21 @@
+metadata:
+  name: r-cluster-local-view-p-67wv8-prtb-7m9nc-qzjwzgnrox
+  namespace: fleet-local
+  labels:
+    objectset.rio.cattle.io/hash: 8b8b869c0fd2b1275fa07745b9d0262c0ccb9055
+  annotations:
+    objectset.rio.cattle.io/applied: H4sIAAAAAAAA/5SSv47bPBDEX+XD1qI+nWxZf4A0SZEiTWBc0gQpluRK5pkieSQlBzb87gGlc85NDpdOAji785udC4wUUWJE6C6AxtiIUVkT0q/lTyRioJh7ZXOBMWrKlf1fSegAp3hgztuZzSVzPnLmrSaujFRmgOyvYnsy5NkwH6GDEQ0ONJKJdw/mTfbfF2Xkh6/ephF7q+mRRqcx0sd3jjc4EnSw2KrH1oh3KYJDscjYrj7NDVwzEJ6WPB7VSCHi6KAzk9YZaOSk30zpgOEAHTS84c2uFUUvS/5Q1lWPRV1vK97KotyVohCCt0VVpW0vtj0TegqRPNNWoGazohN7McVemdjz+el0Hoy3v2DV3gB6TRRXcQJPgHvqyZMRFKD7cQF06jv5oKxZYrKzSt/KDPeHeIAMjsqka39aDcEfj7fh01qGais3NRJrsCe2bQpkbVlUTPZtVZbtFmXN4frzmkEqyZ76pW1OffZ2comYo8hTo6xX5yXw/NiEXNlXB6kG8GZEKcEwrde4Qf7Dgm/hnm9iTj5X87ipy5Cc/w4AAP//FT1ZiikDAAA
+    objectset.rio.cattle.io/id: auth-prov-v2-prtb-rolebinding
+    objectset.rio.cattle.io/owner-gvk: <DOMAIN_528>/v3, Kind=ProjectRoleTemplateBinding
+    objectset.rio.cattle.io/owner-name: prtb-7m9nc
+    objectset.rio.cattle.io/owner-namespace: p-67wv8
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: u-pdq5vm372s
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: r-cluster-local-view
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

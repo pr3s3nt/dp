@@ -1,0 +1,26 @@
+metadata:
+  name: capi-webhook-service
+  namespace: cattle-capi-system
+  labels:
+    cluster.x-k8s.io/provider: cluster-api
+    clusterctl.cluster.x-k8s.io: ''
+  annotations:
+    need-a-cert.cattle.io/secret-name: <REDACTED:env>
+spec:
+  ports:
+  - protocol: TCP
+    port: 443
+    targetPort: webhook-server
+  selector:
+    cluster.x-k8s.io/provider: cluster-api
+  clusterIP: <IP_11>
+  clusterIPs:
+  - <IP_11>
+  type: ClusterIP
+  sessionAffinity: <REDACTED:env>
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  internalTrafficPolicy: Cluster
+apiVersion: v1
+kind: Service

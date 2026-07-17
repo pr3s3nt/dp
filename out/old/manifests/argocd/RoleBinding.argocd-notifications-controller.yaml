@@ -1,0 +1,15 @@
+metadata:
+  name: argocd-notifications-controller
+  namespace: argocd
+  labels:
+    app.kubernetes.io/instance: argocd
+  annotations: {}
+subjects:
+- kind: ServiceAccount
+  name: argocd-notifications-controller
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: Role
+  name: argocd-notifications-controller
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

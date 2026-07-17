@@ -1,0 +1,17 @@
+metadata:
+  name: clusterrolebinding-nfb7s
+  generateName: clusterrolebinding-
+  namespace: cert-manager
+  labels:
+    authz.cluster.cattle.io/rtb-owner-updated: <REDACTED:env>
+    cattle.io/creator: norman
+subjects:
+- kind: User
+  apiGroup: <DOMAIN_776>
+  name: user-9h9cp
+roleRef:
+  apiGroup: <DOMAIN_776>
+  kind: ClusterRole
+  name: project-owner
+apiVersion: <DOMAIN_776>/v1
+kind: RoleBinding

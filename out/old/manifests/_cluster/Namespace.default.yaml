@@ -1,0 +1,11 @@
+metadata:
+  name: default
+  labels:
+    field.cattle.io/projectId: p-t2pmj
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2020-10-07T04:13:58Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2020-10-07T04:14:03Z"}]}'
+    field.cattle.io/projectId: local:p-t2pmj
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+spec: {}
+apiVersion: v1
+kind: Namespace

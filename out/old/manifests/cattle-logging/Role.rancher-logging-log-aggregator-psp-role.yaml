@@ -1,0 +1,20 @@
+metadata:
+  name: rancher-logging-log-aggregator-psp-role
+  namespace: cattle-logging
+  labels:
+    app: log-aggregator
+    chart: log-aggregator-0.0.2
+    heritage: Tiller
+    io.cattle.field/appId: rancher-logging
+    release: rancher-logging
+rules:
+- verbs:
+  - use
+  apiGroups:
+  - policy
+  resources:
+  - podsecuritypolicies
+  resourceNames:
+  - rancher-logging-psp
+apiVersion: <DOMAIN_776>/v1
+kind: Role

@@ -1,0 +1,11 @@
+metadata:
+  name: survey-doe
+  labels:
+    app.kubernetes.io/name: survey-doe
+    name: survey-doe
+  annotations:
+    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2026-06-17T04:15:35Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2026-06-17T04:15:35Z"}]}'
+    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
+spec: {}
+apiVersion: v1
+kind: Namespace
