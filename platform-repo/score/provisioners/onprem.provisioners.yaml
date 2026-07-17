@@ -7,7 +7,7 @@
 # type: mongodb    -> StatefulSet MongoDB + Secret (cùng khuôn)
 # type: redis      -> Deployment Redis (mặc định KHÔNG PVC — xem ghi chú block)
 # type: app-config -> Secret gom nhiều key cấu hình; dev khai TÊN key, ops điền GIÁ TRỊ trên cụm
-# type: route      -> Traefik IngressRoute (hỗ trợ nhiều host/path trên cùng workload)
+# type: route      -> Ingress nginx chuẩn (networking.k8s.io/v1 — khuôn công ty; đa host/path)
 # type: service    -> chỉ xuất DNS nội bộ (không sinh manifest)
 #
 # QUY ƯỚC CHUNG cho mọi datastore (hợp đồng ổn định — xem docs/them-provisioner-moi.md):
@@ -122,7 +122,9 @@
       kind: Service
       metadata:
         name: {{ .Init.name }}
+        labels: { app: {{ .Init.name }} }
       spec:
+        clusterIP: None    # headless — khuôn công ty cho Service của StatefulSet DB
         selector: { app: {{ .Init.name }} }
         ports:
           - port: 5432
@@ -318,7 +320,9 @@
       kind: Service
       metadata:
         name: {{ .Init.name }}
+        labels: { app: {{ .Init.name }} }
       spec:
+        clusterIP: None    # headless — khuôn công ty (vd Service mysql-prd trên Rancher)
         selector: { app: {{ .Init.name }} }
         ports:
           - port: 3306
@@ -504,7 +508,9 @@
       kind: Service
       metadata:
         name: {{ .Init.name }}
+        labels: { app: {{ .Init.name }} }
       spec:
+        clusterIP: None    # headless — khuôn công ty cho Service của StatefulSet DB
         selector: { app: {{ .Init.name }} }
         ports:
           - port: 27017
@@ -739,12 +745,23 @@
         {{- end }}
 
 # ---------------------------------------------------------------------------
-# route: lộ service ra ngoài qua Traefik.
-# Dev khai: api: {type: route, params: {host: shop.example.com, path: /api, port: 8080}}
-# Trỏ vào Service do score-k8s sinh cho workload (mặc định trùng tên workload).
+# route: lộ service ra ngoài qua Ingress nginx CHUẨN (networking.k8s.io/v1) —
+# đúng khuôn công ty đang dùng trên Rancher (ingressClassName: nginx).
+#
+# Dev khai:
+#   api:
+#     type: route
+#     params:
+#       host: otm.example.com        # BẮT BUỘC
+#       port: 1080                   # BẮT BUỘC — port của Service workload
+#       path: /                      # tùy chọn (mặc định /)
+#       pathType: Prefix             # tùy chọn (Prefix|Exact)
+#       ingressClass: nginx          # tùy chọn — đổi nếu cụm dùng class khác
+#       bodySize: 100M               # tùy chọn -> nginx.ingress.kubernetes.io/proxy-body-size
+#       tlsSecret: otm-tls           # tùy chọn -> khối tls (secret cert có sẵn trong ns)
 #
 # ĐA HOST/ĐA PATH (kiểu feedback360/otm — be/fe mỗi cái một host): mỗi host/path là
-# MỘT resource route riêng trong score.yaml; tên IngressRoute chứa host+path đã
+# MỘT resource route riêng trong score.yaml; tên Ingress chứa host+path đã
 # chuẩn hóa nên không đụng nhau:  <workload>-route-<host>[-<path>]
 # ---------------------------------------------------------------------------
 - uri: template://onprem/route
@@ -753,22 +770,38 @@
     host: {{ .Params.host }}
     path: {{ .Params.path | default "/" }}
     port: {{ .Params.port }}
+    class: {{ .Params.ingressClass | default "nginx" }}
+    pathType: {{ .Params.pathType | default "Prefix" }}
   outputs: |
     host: {{ .Init.host }}
     path: {{ .Init.path }}
   manifests: |
-    - apiVersion: traefik.io/v1alpha1
-      kind: IngressRoute
+    - apiVersion: networking.k8s.io/v1
+      kind: Ingress
       metadata:
         name: {{ .SourceWorkload }}-route-{{ .Init.host | lower | replace "." "-" }}{{ if ne .Init.path "/" }}-{{ .Init.path | trimPrefix "/" | replace "/" "-" | lower }}{{ end }}
+        {{ if .Params.bodySize }}
+        annotations:
+          nginx.ingress.kubernetes.io/proxy-body-size: {{ .Params.bodySize | quote }}
+        {{ end }}
       spec:
-        entryPoints: [web]   # TODO: đổi thành websecure + TLS khi có cert
-        routes:
-          - match: Host(`{{ .Init.host }}`) && PathPrefix(`{{ .Init.path }}`)
-            kind: Rule
-            services:
-              - name: {{ (index .WorkloadServices .SourceWorkload).ServiceName }}
-                port: {{ .Init.port }}
+        ingressClassName: {{ .Init.class }}
+        {{ if .Params.tlsSecret }}
+        tls:
+          - hosts: [{{ .Init.host | quote }}]
+            secretName: {{ .Params.tlsSecret }}
+        {{ end }}
+        rules:
+          - host: {{ .Init.host }}
+            http:
+              paths:
+                - path: {{ .Init.path }}
+                  pathType: {{ .Init.pathType }}
+                  backend:
+                    service:
+                      name: {{ (index .WorkloadServices .SourceWorkload).ServiceName }}
+                      port:
+                        number: {{ .Init.port }}
 
 # ---------------------------------------------------------------------------
 # service: gọi service khác trong cùng app (cùng namespace).

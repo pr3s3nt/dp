@@ -6,20 +6,25 @@ Giai đoạn 1: hạ tầng dựng tay. Chuỗi lệnh dưới chạy trên máy
 
 - Cụm K8s đã có (kubeadm / k3s / RKE2...), có StorageClass (sửa `storageClassName` trong
   `score/provisioners/onprem.provisioners.yaml` cho khớp — mặc định `standard`).
-- DNS wildcard (vd `*.shop.example.com`) trỏ vào node chạy Traefik, hoặc sửa `/etc/hosts` khi thử.
+- DNS wildcard (vd `*.shop.example.com`) trỏ vào node chạy ingress-nginx, hoặc sửa `/etc/hosts` khi thử.
 
-## 1. Traefik (gateway)
+## 1. ingress-nginx (gateway — khuôn công ty đang dùng trên Rancher)
 
 ```bash
-helm repo add traefik https://traefik.github.io/charts
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
-helm install traefik traefik/traefik \
-  --namespace traefik --create-namespace \
-  --set ports.web.nodePort=30080 \
-  --set service.type=NodePort   # hoặc LoadBalancer nếu có MetalLB
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx --create-namespace \
+  --set controller.service.type=NodePort \
+  --set controller.service.nodePorts.http=30080 \
+  --set controller.service.nodePorts.https=30443
+# hoặc service.type=LoadBalancer nếu có MetalLB
+# air-gap: mirror image ingress-nginx qua Harbor rồi --set controller.image.registry=...
 ```
 
-Provisioner `route` sinh `IngressRoute` với entryPoint `web`. Khi có TLS, đổi sang `websecure` trong provisioner (một chỗ, mọi app hưởng).
+Provisioner `route` sinh Ingress chuẩn `networking.k8s.io/v1` với `ingressClassName: nginx`
+(đổi qua `params.ingressClass` nếu cụm dùng class khác). TLS: tạo secret cert trong
+namespace app rồi khai `params.tlsSecret` ở resource route — không cần sửa provisioner.
 
 ## 2. ArgoCD (CD/GitOps)
 

@@ -9,8 +9,8 @@
 #   3. Validate KHÔNG PHÁ app đang chạy: apply vào namespace sandbox riêng
 #      (<app>-sandbox) bằng `kubectl apply --dry-run=server` (server-side dry-run
 #      kiểm tra cả schema + admission trên cụm thật) — in PASS/FAIL từng manifest.
-#   4. --apply: áp THẬT lên namespace sandbox (mặc định BỎ route để không cướp
-#      traffic Traefik của app thật — thêm --with-routes nếu cố ý).
+#   4. --apply: áp THẬT lên namespace sandbox (mặc định BỎ route — Ingress sandbox
+#      trùng host sẽ tranh traffic với app thật trên ingress-nginx; --with-routes nếu cố ý).
 #   5. --cleanup: xóa namespace sandbox (chỉ xóa ns có label idp-sandbox=true).
 #
 # Idempotent: chạy lại bao nhiêu lần cũng được. Password datastore giữ ổn định
@@ -203,8 +203,8 @@ check_doc() { # $1=file  $2=dry|real  $3=create|apply
   kind="$(yq '.kind' "$f")"; name="$(yq '.metadata.name' "$f")"
   label="$kind/$name"
 
-  # --apply mặc định bỏ route: IngressRoute/Ingress trong sandbox trùng Host() sẽ
-  # cướp traffic của app thật trên Traefik. Dry-run thì vẫn kiểm tra đủ.
+  # --apply mặc định bỏ route: Ingress trong sandbox trùng host/path sẽ tranh traffic
+  # với app thật trên ingress-nginx. Dry-run thì vẫn kiểm tra đủ.
   if [ "$mode" = "real" ] && [ "$WITH_ROUTES" = 0 ] && { [ "$kind" = "IngressRoute" ] || [ "$kind" = "Ingress" ]; }; then
     skip "$label — route bị bỏ khi --apply (dùng --with-routes nếu cố ý)"; SKIPPED=$((SKIPPED+1)); return 0
   fi

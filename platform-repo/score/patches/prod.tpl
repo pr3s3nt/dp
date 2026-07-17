@@ -15,6 +15,12 @@
 - op: set
   path: {{ $i }}.metadata.labels.env
   value: prod
+{{/* Khuôn công ty (Rancher): rolling update không downtime */}}
+- op: set
+  path: {{ $i }}.spec.strategy
+  value:
+    type: RollingUpdate
+    rollingUpdate: { maxSurge: 1, maxUnavailable: 0 }
 {{ range $ci, $c := $m.spec.template.spec.containers }}
 {{- if not $c.resources }}
 - op: set

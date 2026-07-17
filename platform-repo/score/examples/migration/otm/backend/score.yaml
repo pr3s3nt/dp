@@ -1,0 +1,47 @@
+# APP MẪU MIGRATION — otm/backend
+# Theo manifest công ty trên Rancher: Service otm-be port 1080 + StatefulSet mysql
+# (Service headless mysql-prd, PVC 30Gi). mysql 5.6 giữ nguyên lúc migrate, nâng sau.
+apiVersion: score.dev/v1b1
+
+metadata:
+  name: otm-be                # giữ đúng tên công ty: <app>-be
+
+containers:
+  main:
+    image: "."
+    variables:
+      PORT: "1080"
+      DB_HOST: ${resources.db.host}
+      DB_PORT: ${resources.db.port}
+      DB_NAME: ${resources.db.name}
+      DB_USER: ${resources.db.username}
+      DB_PASSWORD: ${resources.db.password}
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 1080
+    resources:
+      requests: { cpu: 250m, memory: 512Mi }
+      limits: { cpu: "1", memory: 1Gi }
+
+service:
+  ports:
+    http:
+      port: 1080              # đúng Service otm-be trên Rancher
+      targetPort: 1080
+
+resources:
+  db:
+    type: mysql
+    params:
+      database: otm
+      image: mysql:5.6        # đúng bản cụm cũ (xtrabackup sidecar cũ -> thay bằng params.backup)
+      storage: 30Gi           # đúng PVC 30Gi trên Rancher
+      backup:
+        enabled: true         # thay vai trò xtrabackup sidecar cũ bằng mysqldump định kỳ
+  api:
+    type: route
+    params:
+      host: api-otm.example.com   # TODO: đổi domain thật
+      port: 1080
+      bodySize: 100M              # demo annotation proxy-body-size (khuôn okr/otm cũ)

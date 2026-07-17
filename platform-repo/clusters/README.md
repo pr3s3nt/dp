@@ -22,7 +22,7 @@ clusters:
 
 ## Onboard một CỤM mới (một lần cho mỗi cụm)
 
-1. Dựng cụm + Traefik (theo `bootstrap/onprem.md` — Traefik cần cho `type: route`;
+1. Dựng cụm + ingress-nginx (theo `bootstrap/onprem.md` — controller cần cho `type: route`;
    không cần cài lại ArgoCD trên cụm app).
 2. Đăng ký với ArgoCD từ máy quản trị:
    `argocd cluster add <context-cụm> --name <tên-cụm>` (tên ngắn, chữ thường, gạch nối).

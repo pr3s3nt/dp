@@ -11,7 +11,7 @@ platform-repo/
 ├── score/
 │   ├── provisioners/
 │   │   ├── onprem.provisioners.yaml   # postgres/mysql/mongodb->StatefulSet(rook-ceph-block), redis->Deployment,
-│   │   │                              #   app-config->Secret khai key, route->Traefik, service->DNS
+│   │   │                              #   app-config->Secret khai key, route->Ingress nginx, service->DNS
 │   │   └── cloud.provisioners.yaml    # datastore->RDS/DocumentDB/ElastiCache (Secret của Terraform), route->Ingress ALB
 │   ├── patches/
 │   │   ├── staging.tpl                # khác biệt env: replicas, resources (bỏ qua datastore) + pull secret ($pullSecret)
@@ -31,7 +31,7 @@ platform-repo/
 │   ├── README.md                      # mô hình mỗi app một cụm: onboard cụm, đặt tên, secret
 │   └── placement/<app>.yaml           # NGUỒN SỰ THẬT: app nào chạy cụm nào (staging/prod)
 └── bootstrap/
-    └── onprem.md                      # dựng tay Traefik + ArgoCD (Giai đoạn 1)
+    └── onprem.md                      # dựng tay ingress-nginx + ArgoCD (Giai đoạn 1)
 ```
 
 ## Mô hình orchestrator (CI tách khỏi deploy)

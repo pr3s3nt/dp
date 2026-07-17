@@ -1,0 +1,35 @@
+# APP MẪU MIGRATION — otm/frontend
+# Dựng từ ĐÚNG manifest công ty trích trên Rancher (Deployment otm-fe + Service otm-fe):
+#   - port 8080, readinessProbe httpGet / :8080, resources 1cpu/2Gi -> 2cpu/2Gi
+#   - strategy RollingUpdate maxSurge 1 / maxUnavailable 0 do patch env tự tiêm
+#   - imagePullSecrets do patch env tự tiêm (registry private)
+# Lưu ý: Score spec chỉ nhận httpGet path/port cho probe — các số timing
+# (initialDelay 5, period 10...) gần trùng mặc định k8s nên không cần chỉnh.
+apiVersion: score.dev/v1b1
+
+metadata:
+  name: otm-fe                # giữ đúng tên công ty: <app>-fe -> Service cùng tên
+
+containers:
+  main:
+    image: "."                # CI điền (cụm cũ: <registry>/otm/stg/fe:60)
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 8080
+    resources:                # đúng số trên Rancher — patch env sẽ KHÔNG ghi đè vì đã khai
+      requests: { cpu: "1", memory: 2Gi }
+      limits: { cpu: "2", memory: 2Gi }
+
+service:
+  ports:
+    http:
+      port: 8080
+      targetPort: 8080
+
+resources:
+  site:
+    type: route
+    params:
+      host: otm.example.com   # TODO: đổi domain thật
+      port: 8080

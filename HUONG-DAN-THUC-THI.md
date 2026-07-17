@@ -13,7 +13,8 @@ Làm tuần tự từ Bước 0. Mọi lệnh chạy từ thư mục `platform-r
 | D4 Test harness local (§6) | `platform-repo/scripts/test-local.sh` |
 | D5 score.yaml mẫu 3 app | `platform-repo/score/examples/migration/{feedback360,okr,shift-handover}/` |
 | D6 Tài liệu maintainer + mapping + đánh giá keycloak/svms/arangodb | `platform-repo/docs/them-provisioner-moi.md`, `docs/mapping-k8s-cu-sang-score.md` |
-| Route đa host (§4E) | tên IngressRoute chứa host+path — 2 host cùng workload không đụng nhau |
+| Route đa host (§4E) | render **Ingress nginx chuẩn** (khuôn công ty trên Rancher); tên chứa host+path — 2 host cùng workload không đụng nhau; params: `ingressClass/bodySize/tlsSecret/pathType` |
+| App mẫu format công ty | `examples/migration/otm/` — dựng từ đúng manifest Rancher bạn cung cấp (otm-fe 8080 + probe + resources, otm-be 1080, mysql 5.6 30Gi headless, strategy maxSurge 1/maxUnavailable 0 do patch tiêm) |
 | Postgres nâng cùng khuôn | `params.database/image/storage/backup` + label datastore + resources (mặc định giữ hành vi cũ — app cũ không đổi) |
 | **Đa cụm: mỗi app một cụm k8s riêng** | `platform-repo/clusters/placement/<app>.yaml` (nguồn sự thật); ArgoCD cụm quản lý deploy chéo (`appset-onprem.yaml`); orchestrator apply secret theo `KUBECONFIG_<TÊN_CỤM>`. Xem `platform-repo/clusters/README.md` |
 
@@ -52,7 +53,9 @@ cd platform-repo
 
 Đạt khi: mỗi lệnh liệt kê danh sách manifest, không lỗi template. Mở soi bằng mắt:
 `.sandbox/okr-onprem-staging/app.yaml` (manifest) — để ý StatefulSet mysql, Deployment redis,
-IngressRoute tên có host. `secrets.yaml` chứa password sinh ra — **không commit** (đã có .gitignore).
+Ingress nginx tên có host. `secrets.yaml` chứa password sinh ra — **không commit** (đã có .gitignore).
+So khuôn công ty nhanh nhất: `./scripts/test-local.sh score/examples/migration/otm --render-only`
+rồi so `app.yaml` với manifest Rancher (otm-fe/otm-be/mysql headless/strategy/probe/resources).
 
 Nếu lỗi template ở bước này: báo lại nguyên văn lỗi (khác biệt cú pháp giữa mô phỏng và
 score-k8s thật, sửa nhanh được).
@@ -76,8 +79,9 @@ từng cái. App đang chạy không bị đụng (namespace riêng, dry-run).
 Đạt khi (tiêu chí nghiệm thu §10): **cả 3 app PASS toàn bộ manifest**.
 
 Hay gặp:
-- `IngressRoute ... no matches for kind` → cụm mới chưa cài Traefik CRD → cài Traefik trước
-  (bootstrap/onprem.md) hoặc tạm thời chấp nhận FAIL riêng manifest đó.
+- Route giờ là Ingress nginx CHUẨN (`networking.k8s.io/v1`) → dry-run pass không cần cài gì;
+  nhưng traffic chỉ chạy khi cụm có ingress-nginx controller (bootstrap/onprem.md) và
+  `ingressClassName` khớp (`kubectl get ingressclass`; khác `nginx` thì khai `params.ingressClass`).
 - Lỗi TLS `specifying a root certificates file with the insecure flag is not allowed`
   → kubeconfig có sẵn `certificate-authority-data`; xóa field đó trong file kubeconfig rồi chạy lại.
 - `storageclass "rook-ceph-block" not found` → `kubectl get storageclass` xem tên thật,
@@ -94,8 +98,8 @@ kubectl --kubeconfig ~/.kube/new-cluster.yaml -n okr-sandbox get pods -w
 ```
 
 Ghi chú:
-- `--apply` mặc định **bỏ route** (IngressRoute trong sandbox trùng Host sẽ cướp traffic
-  app thật trên Traefik). Muốn test route: đổi host trong score.yaml mẫu thành
+- `--apply` mặc định **bỏ route** (Ingress trong sandbox trùng host/path sẽ tranh traffic
+  với app thật trên ingress-nginx). Muốn test route: đổi host trong score.yaml mẫu thành
   `*-sandbox.<domain>` rồi thêm `--with-routes`.
 - Không truyền `--registry/--tag` thì image là `"."` — pod sẽ ImagePullBackOff (bình thường);
   datastore (mysql/redis/mongo) vẫn phải Running.
@@ -136,7 +140,7 @@ Mỗi app một cụm riêng → làm 5a trước, mỗi cụm chỉ một lần
 argocd cluster add <context-cụm-okr> --name okr-staging
 # secret cho orchestrator (Settings → Secrets → Actions của platform-repo):
 #   KUBECONFIG_OKR_STAGING = base64 kubeconfig cụm đó
-# + cài Traefik trên cụm app (bootstrap/onprem.md — không cần ArgoCD trên cụm app)
+# + cài ingress-nginx trên cụm app (bootstrap/onprem.md — không cần ArgoCD trên cụm app)
 ```
 
 **5b. Onboard APP:**
@@ -153,7 +157,7 @@ argocd cluster add <context-cụm-okr> --name okr-staging
    config → ArgoCD (cụm quản lý) sync `okr-staging` **trên cụm okr-staging**.
 6. Điền app-config secret (nếu app có) + restore dữ liệu (xem
    `platform-repo/docs/mapping-k8s-cu-sang-score.md` mục "Di trú dữ liệu").
-7. Trỏ DNS host về Traefik **của cụm app** sau khi nghiệm thu.
+7. Trỏ DNS host về ingress-nginx **của cụm app** sau khi nghiệm thu.
 
 ## Bước 6 — Rollout 21 app còn lại theo wave
 

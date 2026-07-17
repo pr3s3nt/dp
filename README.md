@@ -34,7 +34,7 @@ v2/
 │   ├── score/provisioners/           #   postgres / route / service (onprem + cloud)
 │   ├── score/patches/                #   staging.tpl / prod.tpl — khác biệt env
 │   ├── argocd/                       #   project + 2 ApplicationSet (tự quét repo *-config)
-│   └── bootstrap/onprem.md           #   dựng tay Traefik + ArgoCD (Giai đoạn 1)
+│   └── bootstrap/onprem.md           #   dựng tay ingress-nginx + ArgoCD (Giai đoạn 1)
 ├── app-repos/shop-app/               # app mẫu: 4 service × (score.yaml + code + Dockerfile)
 │   └── .github/workflows/            #   ci.yaml (staging) + promote.yaml (nút lên prod)
 ├── config-repos/shop-app-config/     # 1 app = 1 config repo — ArgoCD đọc, máy ghi
@@ -64,7 +64,7 @@ v2/
 
 ## Thứ tự triển khai
 
-1. **Giai đoạn 1 — onprem:** làm theo `platform-repo/bootstrap/onprem.md` (Traefik, ArgoCD, token, appset). Tạo 3 repo từ 3 thư mục: `platform-repo`, `shop-app`, `shop-app-config`. Cấu hình secrets cho CI (xem `app-repos/shop-app/README.md`). Push shop-app → xem staging lên.
+1. **Giai đoạn 1 — onprem:** làm theo `platform-repo/bootstrap/onprem.md` (ingress-nginx, ArgoCD, token, appset). Tạo 3 repo từ 3 thư mục: `platform-repo`, `shop-app`, `shop-app-config`. Cấu hình secrets cho CI (xem `app-repos/shop-app/README.md`). Push shop-app → xem staging lên.
 2. **Giai đoạn 2 — cloud:** `terraform/README.md` (apply staging → prod, argocd cluster add, bật `TARGETS="onprem cloud"` trong ci.yaml, apply appset-cloud).
 
 ## TODO trước khi dùng thật
@@ -72,5 +72,5 @@ v2/
 - Thay toàn bộ `your-org`, domain `shop.example.com`, region/CIDR.
 - Cú pháp provisioner (`encodeSecretRef`, `.WorkloadServices`) và patch template đã đối chiếu với score-k8s 0.15.0 (bản pin trong workflow). Vẫn nên chạy `score-k8s init/generate` local một lần trước khi bật CI để soi output thực tế.
 - `storageClassName` trong provisioner postgres onprem cho khớp cụm.
-- TLS cho Traefik (entryPoint `websecure`) và cài AWS Load Balancer Controller trên EKS.
+- TLS: tạo secret cert trong ns app + khai `params.tlsSecret` ở resource route; cài AWS Load Balancer Controller trên EKS.
 - Về sau: thay bước CI apply secret bằng Sealed Secrets hoặc External Secrets Operator (convention tên Secret giữ nguyên nên app không đổi).
