@@ -233,3 +233,81 @@ Dọn phần do lần này tạo ra (giữ nguyên cụm & droplet của bạn):
   helm uninstall ingress-nginx -n ingress-nginx   # xoá luôn DO LoadBalancer
   doctl registry delete idp-notes-thanhnt          # nếu không cần registry nữa
 ================================================================================
+
+
+################################################################################
+# PHẦN 2 — FULL CI/CD TRÊN GITHUB + ARGOCD (test tính khả thi)
+################################################################################
+
+MỤC TIÊU: tạo repo GitHub cho app repo + config repo (+ platform repo), chạy THẬT
+một vòng CI/CD: push code -> CI build/push DOCR -> orchestrator render+commit config
+repo -> ArgoCD sync lên cụm DOKS. Tách 2 môi trường bằng namespace.
+
+FILE MỚI (không sửa file cũ, theo yêu cầu):
+  app-repos/notes-app/.github/workflows/do-ci.yaml         (ubuntu-latest, DOCR, dispatch target=do)
+  platform-repo/.github/workflows/do-orchestrator.yaml     (render do + apply secret + commit config)
+  platform-repo/argocd/do-appset.yaml, do-project.yaml     (ArgoCD sync do/{env}, in-cluster)
+  platform-repo/clusters/placement/notes-app.yaml
+  platform-repo/scripts/bootstrap-do-cicd.sh               (tạo 3 repo + secrets + cài ArgoCD)
+
+BOOTSTRAP (bootstrap-do-cicd.sh, PAT do người dùng cấp qua file tạm, đọc xong xoá):
+  - Tạo + push 3 repo public dưới pr3s3nt: platform-repo, notes-app, notes-app-config
+    (mỗi thư mục monorepo -> 1 repo riêng, git init/commit/push).
+  - Đặt secrets: notes-app{DO_TOKEN, PLATFORM_DISPATCH_TOKEN},
+                 platform-repo{DO_TOKEN, CONFIG_REPO_TOKEN}. DO_TOKEN đọc từ doctl config.
+  - Cài ArgoCD + apply do-project + do-appset.
+
+LỖI & SỬA (phần 2):
+  3) [ArgoCD install] CRD applicationsets.argoproj.io: "metadata.annotations Too long"
+     -> kubectl apply thường vượt giới hạn annotation last-applied cho CRD lớn.
+     SỬA: kubectl apply --server-side (đã vá trong bootstrap-do-cicd.sh).
+  4) [Control-plane DO] apply server-side bị "unexpected EOF" giữa chừng -> CRD kẹt
+     Established=False ("Installing"). SỬA: xoá CRD, apply riêng applicationset-crd.yaml
+     server-side + kubectl wait --for=condition=established.
+  5) [Thứ tự bootstrap] push repo notes-app KÍCH HOẠT do-ci TRƯỚC khi secret DO_TOKEN
+     được đặt -> "Must provide --username" (token rỗng). SỬA tức thời: rerun do-ci sau
+     khi secrets đã có. (Nên vá: đặt secret trước khi push nội dung — ghi chú trong repo.)
+  6) [Workflow cũ] ci.yaml + orchestrator.yaml gốc (self-hosted/Harbor) cũng bị trigger,
+     treo vô hạn. SỬA: gh workflow disable ci / orchestrator + cancel run.
+  7) [ArgoCD sync] Deployment backend/frontend từ lần deploy TAY (Phần 1) có
+     selector.app.kubernetes.io/instance khác hash với bản render orchestrator ->
+     spec.selector IMMUTABLE, sync fail. SỬA: xoá 2 Deployment cũ để ArgoCD tạo lại
+     từ git (giữ StatefulSet+PVC -> dữ liệu note cũ còn nguyên). Sau lần này selector
+     ổn định giữa các sync (ArgoCD luôn apply cùng file trong git).
+
+CHẠY THẬT — chuỗi sự kiện:
+  push notes-app (bootstrap commit 833bc87)
+   -> do-ci: build (frontend) OK, build (backend) OK -> push DOCR tag=<svc>-833bc87
+             notify-platform: repository_dispatch deploy-request target=do  [SUCCESS]
+   -> do-orchestrator (platform-repo): render staging+prod (do provisioner + do-<env>.tpl,
+             image=DOCR:<svc>-833bc87, host=notes-app-<env>.104.248.96.140.nip.io),
+             apply secret+pull-secret create-if-missing, commit sang notes-app-config/do/*
+             commit: "deploy(notes-app): do staging+prod 833bc87..."  [SUCCESS]
+   -> ArgoCD do-apps (ApplicationSet, đọc placement + config repo):
+             notes-app-staging-do: AUTO-SYNC -> Synced/Healthy
+             notes-app-prod-do:    MANUAL sync (patch operation) -> Synced/Healthy
+
+KIỂM CHỨNG CUỐI:
+  staging: GET / -> 200 ; /api/health -> {"ok":true} ; image đang chạy =
+           registry.digitalocean.com/idp-notes-thanhnt/notes-app:backend-833bc871...
+           (đúng tag git SHA -> chứng minh image do CI build chảy tới cụm qua GitOps)
+  prod:    GET / -> 200 ; POST /api/notes -> 201 {"id":2,"text":"Note qua full CI/CD..."}
+           2 replica/service (patch do-prod), note id 1 cũ vẫn còn (PVC bền vững)
+  ArgoCD:  cả 2 app Synced/Healthy cùng revision config repo (fa88f7f...)
+
+REPO ĐÃ TẠO (public, github.com/pr3s3nt):
+  platform-repo, notes-app, notes-app-config
+
+KÍCH HOẠT VÒNG MỚI (đổi code -> tự chảy tới cụm):
+  sửa app-repos/notes-app rồi git commit && git push  (hoặc commit --allow-empty)
+  -> do-ci -> do-orchestrator -> ArgoCD (staging tự sync; prod bấm Sync/patch operation)
+
+ArgoCD UI:  kubectl -n argocd port-forward svc/argocd-server 8080:443
+  user admin / pass: kubectl -n argocd get secret argocd-initial-admin-secret \
+    -o jsonpath='{.data.password}' | base64 -d
+
+DỌN PHẦN 2:
+  kubectl delete -n argocd applicationset do-apps
+  kubectl delete ns argocd                          # gỡ ArgoCD
+  # (repos GitHub: xoá thủ công hoặc gh repo delete pr3s3nt/{notes-app,platform-repo,notes-app-config})
+################################################################################

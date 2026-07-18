@@ -64,7 +64,8 @@ log "secrets đã đặt cho notes-app + platform-repo"
 # ----- 3. ArgoCD ----------------------------------------------------------------------
 if ! kubectl get ns argocd >/dev/null 2>&1; then
   kubectl create namespace argocd
-  kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+  # --server-side: CRD applicationsets quá lớn cho annotation last-applied của apply thường
+  kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
   log "chờ ArgoCD server sẵn sàng..."
   kubectl -n argocd rollout status deploy/argocd-server --timeout=300s
 fi
