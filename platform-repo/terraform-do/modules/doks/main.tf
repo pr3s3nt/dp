@@ -40,4 +40,10 @@ resource "digitalocean_kubernetes_cluster" "this" {
     node_count = var.node_count
     auto_scale = false
   }
+
+  # DOKS đôi khi provision node rất chậm (đã gặp ~30–60 phút) -> nới timeout
+  # để terraform không bỏ cuộc giữa chừng.
+  timeouts {
+    create = "60m"
+  }
 }
