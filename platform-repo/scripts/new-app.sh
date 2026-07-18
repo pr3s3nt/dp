@@ -241,17 +241,23 @@ fi
 [ -n "$DO_TOKEN" ] || die "thiếu DO_TOKEN"
 command -v gh >/dev/null || die "thiếu gh"
 
-log "Tạo + push repo GitHub"
-for pair in "$APP:$APPDIR" "${APP}-config:$CFGDIR"; do
-  name="${pair%%:*}"; dir="${pair#*:}"
+log "Tạo repo GitHub (rỗng) TRƯỚC"
+for name in "$APP" "${APP}-config"; do
   gh repo view "$OWNER/$name" >/dev/null 2>&1 || gh repo create "$OWNER/$name" --public -y >/dev/null
-  ( cd "$dir"; git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${OWNER}/${name}.git" main )
-  log "pushed $OWNER/$name"
 done
 
+# Đặt secrets TRƯỚC khi push nội dung — nếu không, push app sẽ kích hoạt do-ci lúc
+# secret DO_TOKEN chưa có -> build fail ("Must provide --username").
 log "Đặt secrets cho $OWNER/$APP"
 gh secret set DO_TOKEN                --repo "$OWNER/$APP" --body "$DO_TOKEN"
 gh secret set PLATFORM_DISPATCH_TOKEN --repo "$OWNER/$APP" --body "$GH_TOKEN"
+
+log "Push nội dung app + config repo"
+for pair in "$APP:$APPDIR" "${APP}-config:$CFGDIR"; do
+  name="${pair%%:*}"; dir="${pair#*:}"
+  ( cd "$dir"; git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${OWNER}/${name}.git" main )
+  log "pushed $OWNER/$name"
+done
 
 # placement mới phải lên platform-repo để ArgoCD/appset thấy app này:
 log "Đẩy placement/${APP}.yaml lên platform-repo"
