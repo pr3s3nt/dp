@@ -58,12 +58,47 @@ jobs:
             echo "==> cụm $CLUSTER đã tồn tại -> bỏ qua terraform (idempotent)"
           else
             echo "==> tạo hạ tầng bằng terraform cho app=$APP"
-            cd terraform/do/app-cluster
+            cd terraform-do/app-cluster
             terraform init -no-color -input=false
-            terraform apply -no-color -input=false -auto-approve -var "app_name=${APP}"
+            terraform apply -no-color -input=false -auto-approve -var "app_name=${APP}" -var "node_count=2"
             cd - >/dev/null
           fi
           doctl kubernetes cluster kubeconfig save "$CLUSTER"
+
+      - name: Đảm bảo node khỏe mạng (pod→API), recycle nếu lỗi
+        env:
+          DIGITALOCEAN_TOKEN: ${{ secrets.DO_TOKEN }}
+        run: |
+          set -uo pipefail
+          doctl auth init -t "$DIGITALOCEAN_TOKEN" >/dev/null
+          CLUSTER="idp-${APP}"
+          CIP=$(kubectl get svc kubernetes -n default -o jsonpath='{.spec.clusterIP}')
+          check_api() {  # pod→API bằng exit-code (không cần konnectivity cho logs)
+            kubectl delete pod netcheck -n default --ignore-not-found >/dev/null 2>&1
+            kubectl run netcheck -n default --restart=Never --image=curlimages/curl:8.10.1 --command -- \
+              sh -c "curl -sf --max-time 8 https://${CIP}:443/healthz >/dev/null && exit 0 || exit 1" >/dev/null 2>&1
+            for i in $(seq 1 15); do
+              ph=$(kubectl get pod netcheck -n default -o jsonpath='{.status.phase}' 2>/dev/null)
+              [ "$ph" = Succeeded ] && { kubectl delete pod netcheck -n default --ignore-not-found >/dev/null 2>&1; return 0; }
+              [ "$ph" = Failed ]    && { kubectl delete pod netcheck -n default --ignore-not-found >/dev/null 2>&1; return 1; }
+              sleep 8
+            done
+            kubectl delete pod netcheck -n default --ignore-not-found >/dev/null 2>&1; return 1
+          }
+          for attempt in 1 2 3 4; do
+            if check_api; then echo "==> pod→API OK (mạng node khỏe)"; exit 0; fi
+            echo "==> pod→API lỗi -> recycle toàn bộ node (lần $attempt)"
+            POOL=$(doctl kubernetes cluster node-pool list "$CLUSTER" --format ID --no-header)
+            for nid in $(doctl kubernetes cluster get "$CLUSTER" -o json | yq '.[0].node_pools[0].nodes[].id'); do
+              doctl kubernetes cluster node-pool replace-node "$CLUSTER" "$POOL" "$nid" --skip-drain -f || true
+            done
+            echo "   chờ node Ready lại..."
+            for i in $(seq 1 40); do
+              r=$(kubectl get nodes --no-headers 2>/dev/null | grep -c ' Ready ')
+              [ "$r" -ge 2 ] && break; sleep 15
+            done
+          done
+          echo "::warning::pod→API vẫn lỗi sau nhiều lần recycle — DOKS có thể đang trục trặc"; exit 1
 
       - name: Bootstrap cụm (ingress-nginx + ArgoCD + Application của app)
         run: |
