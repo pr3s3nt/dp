@@ -1,0 +1,235 @@
+================================================================================
+LOG TRIỂN KHAI notes-app LÊN DIGITALOCEAN (DOKS) QUA IDP (score-k8s)
+Ngày: 2026-07-18
+Người/máy: it.thanhnt97@gmail.com (WSL2, doctl 1.163, kubectl 1.36, score-k8s 0.15.0)
+================================================================================
+
+MỤC TIÊU
+  - Viết provisioner + patch RIÊNG cho DigitalOcean (đúng mô hình catalog của IDP).
+  - Dùng score-k8s render tài nguyên qua provisioner + patch cho 2 môi trường,
+    2 môi trường TÁCH NHAU BẰNG NAMESPACE (notes-app-staging / notes-app-prod).
+  - Deploy notes-app lên cụm DOKS chi phí tối thiểu.
+  - Commit + push.
+
+KẾT QUẢ CUỐI (TÓM TẮT)
+  - staging: http://notes-app-staging.104.248.96.140.nip.io/   (1 replica/service)
+  - prod   : http://notes-app-prod.104.248.96.140.nip.io/      (2 replica/service)
+  - Cả 2 đều CRUD note thật qua Postgres riêng từng env. Đã kiểm chứng bằng curl.
+  - 3 file code mới: do.provisioners.yaml, do-staging.tpl, do-prod.tpl, deploy-do.sh
+  - 2 lỗi phát sinh đã sửa (chi tiết §LỖI & SỬA).
+
+
+================================================================================
+§0. KHẢO SÁT MÔI TRƯỜNG
+================================================================================
+
+$ doctl auth list            -> default (current), account it.thanhnt97@gmail.com
+$ doctl account get          -> Droplet Limit 3, Status: warning
+$ which score-k8s            -> (chưa có) => cài 0.15.0 (bản platform ghim)
+$ which yq                   -> (chưa có) => cài yq v4.44.3
+$ which docker/kubectl/helm  -> docker 29.5.2, kubectl 1.36.1, helm 3.21.0 (đủ)
+
+Cấu trúc app (app-repos/notes-app): backend (Express+pg, score.yaml khai db=postgres,
+api=route /api :8080), frontend (React/Vite -> nginx, route / :80). Provisioner có sẵn:
+onprem (StatefulSet DB + Ingress nginx) và cloud (RDS + ALB). => Viết thêm target "do".
+
+Cài công cụ:
+$ curl -fsSL .../score-k8s_0.15.0_linux_amd64.tar.gz | tar xz; mv score-k8s /usr/local/bin
+  -> score-k8s 0.15.0 (go1.26.4)
+$ curl -fsSL .../yq_linux_amd64 -o /usr/local/bin/yq; chmod +x
+  -> yq v4.44.3
+
+
+================================================================================
+§1. VIẾT CODE RIÊNG CHO DIGITALOCEAN (deliverable chính)
+================================================================================
+
+1) platform-repo/score/provisioners/do.provisioners.yaml
+   - Cùng giao diện Score với onprem/cloud; 7 loại resource:
+     postgres/mysql/mongodb/redis/app-config/route/service.
+   - KHÁC onprem: storageClassName = do-block-storage (CSI mặc định DOKS, KHÔNG Rook Ceph);
+     postgres default storage = 1Gi (DO tính tiền theo GiB -> cụm test rẻ nhất).
+   - KHÁC cloud: KHÔNG dùng managed DB -> datastore chạy trong cụm (như onprem) cho rẻ.
+   - route: Ingress class nginx (ingress-nginx trên DOKS tự xin 1 DO LoadBalancer).
+
+2) platform-repo/score/patches/do-staging.tpl  (replicas 1, resources nhỏ)
+   platform-repo/score/patches/do-prod.tpl     (replicas 2, resources lớn hơn)
+   - $pullSecret = "registry-idp-notes-thanhnt" (secret DOCR, khác "harbor-pull" onprem).
+   - Quy tắc giữ nguyên: bỏ qua manifest label component=datastore (không set
+     replicas/resources cho DB); tiêm imagePullSecrets cho mọi pod template.
+   - prod để replicas=2 (không phải 3 như EKS) để vừa cụm test 1 node mà vẫn KHÁC staging.
+
+3) platform-repo/scripts/deploy-do.sh
+   - Render mỗi service bằng: score-k8s init --provisioners do.provisioners.yaml
+       --patch-templates do-<env>.tpl ; rồi score-k8s generate (override image về DOCR).
+   - 2 env TÁCH NHAU BẰNG NAMESPACE: notes-app-staging vs notes-app-prod.
+   - Override host route theo env bằng nip.io (<app>-<env>.<LB_IP>.nip.io) vì 2 env
+     chung 1 cụm/1 ingress -> phải khác host để không tranh traffic.
+   - Tách Secret khỏi manifest (secret KHÔNG vào git; apply create-if-missing).
+   - Tạo namespace + pull secret DOCR + apply.
+
+KIỂM THỬ RENDER (không cần cụm):
+$ ./scripts/deploy-do.sh ../app-repos/notes-app --env staging \
+    --registry registry.digitalocean.com/idp-notes-thanhnt/notes-app \
+    --lb-ip 203.0.113.10 --render-only
+  -> Render xong: 8 manifest + 1 secret. Kiểm tra output:
+     image: notes-app:backend / notes-app:frontend đúng theo service
+     storageClassName: do-block-storage
+     host: notes-app-staging.203.0.113.10.nip.io (cả 2 Ingress)
+     imagePullSecrets: registry-idp-notes-thanhnt (backend-db, backend, frontend)
+     replicas: 1
+$ ... --env prod --render-only
+  -> backend/frontend replicas: 2 ; backend-db (datastore) vẫn replicas: 1 (patch bỏ qua)
+     host: notes-app-prod.203.0.113.10.nip.io  => phân tách môi trường OK.
+
+
+================================================================================
+§2. REGISTRY + BUILD + PUSH IMAGE
+================================================================================
+
+$ doctl registry create idp-notes-thanhnt --subscription-tier starter --region sgp1
+  -> registry.digitalocean.com/idp-notes-thanhnt  (starter = FREE, 1 repo, 500MB)
+
+  Vì starter chỉ cho 1 repository -> đẩy 2 image thành 2 TAG của cùng 1 repo "notes-app":
+$ doctl registry login
+$ docker build -t registry.digitalocean.com/idp-notes-thanhnt/notes-app:backend  ./backend
+$ docker build -t registry.digitalocean.com/idp-notes-thanhnt/notes-app:frontend ./frontend
+$ docker push ...:backend    -> digest sha256:868edeca... OK
+$ docker push ...:frontend   -> digest sha256:802efebb... OK
+$ doctl registry repository list-v2
+  -> notes-app  Tag Count 3  Manifest Count 6  (1 repo, đúng giới hạn starter)
+
+
+================================================================================
+§3. CỤM K8S  — LỖI DROPLET LIMIT & QUYẾT ĐỊNH TÁI DÙNG
+================================================================================
+
+$ doctl kubernetes cluster create notes-idp --region sgp1 --version 1.36.0-do.3 \
+    --node-pool "name=pool-default;size=s-2vcpu-4gb;count=1" --wait
+  -> LỖI 422: "1 additional nodes but not enough available droplet limit"
+
+Nguyên nhân (kiểm tra bằng doctl compute droplet list):
+  - Droplet limit của tài khoản = 3, đã dùng HẾT 3:
+      control-plane (thủ công), worker (thủ công),
+      pool-43aihlkc0-3cdn3q  (node của 1 cụm DOKS ĐÃ TỒN TẠI: k8s-1-36-0-do-2-sgp1-...)
+  => Không tạo được cụm mới. Xoá 2 droplet control-plane/worker là PHÁ tài nguyên
+     KHÔNG PHẢI do tôi tạo -> KHÔNG làm.
+
+QUYẾT ĐỊNH (đúng tinh thần "ít tiền, tối thiểu"): TÁI DÙNG cụm DOKS đang chạy sẵn
+  k8s-1-36-0-do-2-sgp1-1783313804464 (1 node s-2vcpu-4gb, sgp1) -> KHÔNG phát sinh droplet mới.
+
+$ doctl kubernetes cluster kubeconfig save k8s-1-36-0-do-2-sgp1-1783313804464
+$ kubectl get nodes         -> 1 node Ready, v1.36.0
+$ kubectl get storageclass  -> do-block-storage (default) [khớp provisioner]
+$ kubectl get ingressclass  -> (chưa có) => phải cài ingress-nginx
+
+
+================================================================================
+§4. INGRESS-NGINX + LOADBALANCER
+================================================================================
+
+$ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx; helm repo update
+$ helm install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx \
+    --create-namespace --set controller.replicaCount=1 \
+    --set controller.service.type=LoadBalancer \
+    --set controller.resources.requests.cpu=100m,controller.resources.requests.memory=128Mi
+  -> controller Running; DigitalOcean cấp 1 LoadBalancer.
+$ kubectl get svc ingress-nginx-controller -n ingress-nginx
+  -> EXTERNAL-IP = 104.248.96.140   (dùng cho nip.io hosts)
+
+
+================================================================================
+§5. DEPLOY STAGING  — LỖI PULL SECRET & SỬA
+================================================================================
+
+$ ./scripts/deploy-do.sh ../app-repos/notes-app --env staging \
+    --registry registry.digitalocean.com/idp-notes-thanhnt/notes-app --lb-ip 104.248.96.140
+  -> Render 8 manifest + 1 secret; tạo ns notes-app-staging; apply toàn bộ OK.
+  -> NHƯNG bước tạo pull secret DOCR LỖI:
+     "the namespace from the provided object \"kube-system\" does not match the
+      namespace \"notes-app-staging\""
+
+  Nguyên nhân: `doctl registry kubernetes-manifest` gắn CỨNG metadata.namespace=kube-system
+  trong manifest secret -> apply vào namespace khác bị từ chối. Hệ quả: pod ImagePullBackOff
+  (không có secret kéo image từ DOCR private).
+
+  SỬA (deploy-do.sh): xoá field namespace trước khi apply:
+     doctl registry kubernetes-manifest | yq 'del(.metadata.namespace)' \
+       | kubectl apply -n "$NAMESPACE" -f -
+
+$ (áp lại pull secret đã sửa cho staging) -> secret/registry-idp-notes-thanhnt created
+$ kubectl -n notes-app-staging delete pod <backend/frontend đang lỗi>  (ép pull lại)
+$ kubectl -n notes-app-staging get pods
+  -> backend 1/1, backend-db-0 1/1, frontend 1/1  (Running)
+
+KIỂM CHỨNG STAGING (curl qua ingress):
+$ curl http://notes-app-staging.104.248.96.140.nip.io/            -> HTTP 200 (frontend)
+$ curl .../api/health                                             -> {"ok":true}
+$ curl .../api/notes                                              -> []
+$ curl -XPOST .../api/notes -d '{"text":"Ghi chú staging đầu tiên"}'
+      -> 201 {"id":1,"text":"Ghi chú staging đầu tiên",...}
+$ curl .../api/notes  -> [{"id":1,"text":"Ghi chú staging đầu tiên",...}]  (LƯU DB OK)
+
+
+================================================================================
+§6. DEPLOY PROD  (pull secret đã đúng ngay nhờ bản vá §5)
+================================================================================
+
+$ ./scripts/deploy-do.sh ../app-repos/notes-app --env prod \
+    --registry registry.digitalocean.com/idp-notes-thanhnt/notes-app --lb-ip 104.248.96.140
+  -> OK pull secret DOCR trong notes-app-prod; apply toàn bộ manifest.
+$ kubectl -n notes-app-prod get pods
+  -> backend x2, frontend x2, backend-db-0 x1  (đều Running; backend restart 1 lần
+     do tự retry chờ Postgres — đúng logic init() của app)
+
+KIỂM CHỨNG PROD + PHÂN TÁCH MÔI TRƯỜNG:
+$ curl http://notes-app-prod.104.248.96.140.nip.io/api/notes  -> []  (DB prod RIÊNG, rỗng)
+$ curl -XPOST .../api/notes -d '{"text":"Ghi chú PROD"}'      -> 201 {"id":1,...}
+$ curl .../api/notes (prod)     -> [{"text":"Ghi chú PROD",...}]
+$ curl .../api/notes (staging)  -> [{"text":"Ghi chú staging đầu tiên",...}]
+  => 2 môi trường TÁCH BIỆT hoàn toàn: namespace riêng, Postgres riêng, host riêng.
+
+
+================================================================================
+§7. TRẠNG THÁI CUỐI (bằng chứng patch phân tách môi trường)
+================================================================================
+
+NS                  NAME       REPLICAS   ENV LABEL
+notes-app-staging   backend    1          staging
+notes-app-staging   frontend   1          staging
+notes-app-prod      backend    2          prod
+notes-app-prod      frontend   2          prod
+
+PVC:   notes-app-staging/data-backend-db-0  1Gi  do-block-storage  Bound
+       notes-app-prod/data-backend-db-0     1Gi  do-block-storage  Bound
+INGRESS (class nginx, ADDRESS 104.248.96.140):
+       notes-app-{staging,prod}: 2 Ingress/env (/ -> frontend:80, /api -> backend:8080)
+
+
+================================================================================
+§LỖI & SỬA (tổng hợp)
+================================================================================
+1) [Hạ tầng] Tạo cụm mới thất bại — droplet limit 3 đã hết.
+   SỬA: tái dùng cụm DOKS sẵn có (không phát sinh droplet), không đụng droplet của người dùng.
+
+2) [Code deploy-do.sh] Pull secret DOCR không apply được vào ns app do doctl gắn cứng
+   namespace=kube-system.  SỬA: `yq 'del(.metadata.namespace)'` trước khi apply -n <ns>.
+   (Đã sửa trong file; prod deploy sau đó chạy đúng ngay từ đầu.)
+
+Ghi chú: cách tiếp cận ban đầu (kubectl thuần) đã ĐỔI theo yêu cầu -> làm đúng mô hình
+IDP: provisioner + patch DO, render bằng score-k8s, tách env bằng namespace.
+
+
+================================================================================
+§CHI PHÍ & DỌN DẸP
+================================================================================
+Phát sinh thêm do lần chạy này:
+  - DigitalOcean Load Balancer (ingress-nginx): ~12 USD/tháng (tính theo giờ).
+  - 2 PVC block storage 1Gi: ~0.2 USD/tháng.
+  - DOCR starter + cụm DOKS tái dùng: 0 thêm (cụm vốn đã chạy; registry free).
+
+Dọn phần do lần này tạo ra (giữ nguyên cụm & droplet của bạn):
+  kubectl delete ns notes-app-staging notes-app-prod
+  helm uninstall ingress-nginx -n ingress-nginx   # xoá luôn DO LoadBalancer
+  doctl registry delete idp-notes-thanhnt          # nếu không cần registry nữa
+================================================================================

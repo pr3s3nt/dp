@@ -4,6 +4,8 @@ secrets.yaml
 work-*/
 # workdir của scripts/test-local.sh (render + state + secret tách ra — không commit)
 .sandbox/
+# workdir của scripts/deploy-do.sh (render + state + secret tách ra — không commit)
+.do-deploy/
 
 # terraform
 .terraform/
