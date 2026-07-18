@@ -1,0 +1,37 @@
+# Template 2 ArgoCD Application cho MỘT app trên cụm riêng của nó (per-app cluster).
+# do-platform.yaml thay __APP__ bằng tên app rồi kubectl apply.
+# staging: auto-sync (prune+selfHeal) | prod: manual (gate).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: __APP__-staging-do
+  namespace: argocd
+spec:
+  project: idp
+  source:
+    repoURL: https://github.com/pr3s3nt/__APP__-config.git
+    targetRevision: main
+    path: do/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: __APP__-staging
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true]
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: __APP__-prod-do
+  namespace: argocd
+spec:
+  project: idp
+  source:
+    repoURL: https://github.com/pr3s3nt/__APP__-config.git
+    targetRevision: main
+    path: do/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: __APP__-prod
+  syncPolicy:
+    syncOptions: [CreateNamespace=true]
