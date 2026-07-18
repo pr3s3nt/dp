@@ -1,0 +1,140 @@
+# =============================================================================
+# ORCHESTRATOR — biến thể DIGITALOCEAN (chạy song song orchestrator.yaml gốc).
+#
+# CI app (do-ci.yaml) build image lên DOCR rồi dispatch "deploy-request" target=do.
+# Orchestrator này:
+#   - render score-k8s bằng do.provisioners.yaml + do-<env>.tpl (staging & prod)
+#   - override image -> DOCR (REGISTRY_REPO:<svc>-<sha>) + host route -> nip.io theo LB IP
+#   - tách Secret, apply create-if-missing lên cụm (DB secret + pull secret DOCR)
+#   - commit manifest sang <app>-config/do/<env>/manifests.yaml  -> ArgoCD sync
+#
+# Khác orchestrator gốc: ubuntu-latest + doctl (không self-hosted/Harbor), 2 env
+# TÁCH BẰNG NAMESPACE trên CÙNG cụm, host nip.io khác nhau theo env.
+#
+# Secrets cần trong platform-repo:
+#   DO_TOKEN            DigitalOcean API token (kubeconfig DOKS + pull secret DOCR)
+#   CONFIG_REPO_TOKEN   GitHub PAT push vào notes-app-config (và đọc app repo nếu private)
+# =============================================================================
+name: do-orchestrator
+
+on:
+  repository_dispatch:
+    types: [deploy-request, promote-request]
+
+env:
+  ORG: pr3s3nt
+  SCORE_K8S_VERSION: "0.15.0"
+  REGISTRY_REPO: registry.digitalocean.com/idp-notes-thanhnt/notes-app
+  CLUSTER_ID: k8s-1-36-0-do-2-sgp1-1783313804464
+  PULL_SECRET: registry-idp-notes-thanhnt
+
+jobs:
+  deploy:
+    if: github.event.action == 'deploy-request' && github.event.client_payload.targets == 'do'
+    runs-on: ubuntu-latest
+    env:
+      APP: ${{ github.event.client_payload.app }}
+      APP_REPO: ${{ github.event.client_payload.repo }}
+      SHA: ${{ github.event.client_payload.sha }}
+    steps:
+      - name: Checkout catalog (platform-repo — provisioner + patch DO)
+        uses: actions/checkout@v4
+        with:
+          path: catalog
+
+      - name: Checkout app repo tại đúng commit
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.APP_REPO }}
+          ref: ${{ env.SHA }}
+          token: ${{ secrets.CONFIG_REPO_TOKEN }}
+          path: app
+
+      - name: Checkout config repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.ORG }}/${{ env.APP }}-config
+          token: ${{ secrets.CONFIG_REPO_TOKEN }}
+          path: config
+
+      - name: Cài công cụ (score-k8s, yq, doctl)
+        run: |
+          set -euo pipefail
+          curl -fsSL -o sk.tgz "https://github.com/score-spec/score-k8s/releases/download/${SCORE_K8S_VERSION}/score-k8s_${SCORE_K8S_VERSION}_linux_amd64.tar.gz"
+          tar xzf sk.tgz score-k8s && sudo mv score-k8s /usr/local/bin/
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq
+          curl -fsSL https://github.com/digitalocean/doctl/releases/download/v1.163.0/doctl-1.163.0-linux-amd64.tar.gz | tar xz && sudo mv doctl /usr/local/bin/
+          score-k8s --version && yq --version && doctl version
+
+      - name: Kết nối cụm DOKS + lấy LB IP
+        run: |
+          set -euo pipefail
+          doctl auth init -t "${{ secrets.DO_TOKEN }}" >/dev/null
+          doctl kubernetes cluster kubeconfig save "$CLUSTER_ID"
+          LB_IP=$(kubectl get svc ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          [ -n "$LB_IP" ] || { echo "Chưa có LB IP của ingress-nginx"; exit 1; }
+          echo "LB_IP=$LB_IP" >> "$GITHUB_ENV"
+          echo "==> LB_IP=$LB_IP"
+
+      - name: Render manifests (staging + prod) rồi apply secret + commit config
+        run: |
+          set -euo pipefail
+          SERVICES=$(cd app && for f in */score.yaml; do dirname "$f"; done)
+          echo "==> app=${APP} services: ${SERVICES}"
+
+          render() {  # $1=env
+            local env=$1 dir="work-${env}" host="${APP}-${env}.${LB_IP}.nip.io"
+            rm -rf "$dir"; mkdir -p "$dir/src"
+            cp -r app/. "$dir/src/"
+            # host route theo env (nip.io) — 2 env cùng cụm phải khác host
+            for svc in $SERVICES; do
+              local f="$dir/src/$svc/score.yaml"
+              for r in $(yq '.resources | to_entries | map(select(.value.type=="route")) | .[].key' "$f"); do
+                HOST="$host" yq -i ".resources.${r}.params.host = strenv(HOST)" "$f"
+              done
+            done
+            pushd "$dir" >/dev/null
+            score-k8s init --no-sample \
+              --provisioners "../catalog/score/provisioners/do.provisioners.yaml" \
+              --patch-templates "../catalog/score/patches/do-${env}.tpl"
+            for svc in $SERVICES; do
+              score-k8s generate "src/${svc}/score.yaml" \
+                --override-property "containers.main.image=\"${REGISTRY_REPO}:${svc}-${SHA}\"" \
+                --output manifests.yaml
+            done
+            yq eval 'select(.kind == "Secret")' manifests.yaml > secrets.yaml
+            yq eval 'select(.kind != "Secret")' manifests.yaml > app.yaml
+            popd >/dev/null
+          }
+
+          apply_infra() {  # $1=env — namespace + pull secret + DB secret (create-if-missing)
+            local env=$1 ns="${APP}-${env}"
+            kubectl create namespace "$ns" 2>/dev/null || true
+            doctl registry kubernetes-manifest | yq 'del(.metadata.namespace)' | kubectl apply -n "$ns" -f - >/dev/null
+            while IFS= read -r s; do
+              [ -n "$s" ] || continue
+              kubectl -n "$ns" get secret "$s" >/dev/null 2>&1 && { echo "secret $s giữ nguyên"; continue; }
+              yq "select(.kind==\"Secret\" and .metadata.name==\"$s\")" "work-${env}/secrets.yaml" | kubectl -n "$ns" apply -f - >/dev/null
+              echo "secret $s (mới)"
+            done < <(yq 'select(.kind=="Secret") | .metadata.name' "work-${env}/secrets.yaml")
+          }
+
+          for env in staging prod; do
+            render "$env"
+            apply_infra "$env"
+            mkdir -p "config/do/${env}"
+            cp "work-${env}/app.yaml" "config/do/${env}/manifests.yaml"
+          done
+
+      - name: Commit & push config repo
+        run: |
+          cd config
+          git config user.name "idp-orchestrator"
+          git config user.email "idp-ci@users.noreply.github.com"
+          git add .
+          if git diff --cached --quiet; then
+            echo "Không có thay đổi manifest"
+          else
+            git commit -m "deploy(${APP}): do staging+prod ${SHA}"
+            git push
+          fi

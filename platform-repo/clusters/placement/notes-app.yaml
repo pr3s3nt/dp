@@ -1,0 +1,5 @@
+# notes-app — deploy in-cluster (cùng cụm DOKS chạy ArgoCD).
+app: notes-app
+clusters:
+  staging: in-cluster
+  prod: in-cluster
