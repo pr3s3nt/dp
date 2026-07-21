@@ -1,6 +1,12 @@
 # APP MẪU MIGRATION — feedback360/backend (từ cụm 1.19, ns feedback360)
 # Chứng minh: postgres + app-config (pattern `be-secret` cũ) + route riêng cho BE.
 # Nguồn đối chiếu: out/old/manifests/feedback360/Deployment.feedback360-backend.yaml
+#
+# QUY TẮC XẾP BIẾN (áp dụng cho mọi app) — câu hỏi không phải "có bí mật không"
+# mà là "giá trị này ai biết, và nó đổi theo cái gì":
+#   1. Không đổi bao giờ            -> literal ngay dưới đây
+#   2. Do resource khác sinh ra     -> ${resources.<tên>.<output>}
+#   3. Đổi theo môi trường / bí mật -> type: app-config, ops điền 1 lần/namespace
 apiVersion: score.dev/v1b1
 
 metadata:
@@ -10,27 +16,27 @@ containers:
   main:                       # convention platform: container chính tên 'main', image do CI điền
     image: "."
     variables:
-      # ---- từ app-config: đúng bộ key của Secret `be-secret` trên cụm cũ.
-      # Ops điền giá trị 1 lần/namespace (kubectl patch secret feedback360-backend-app-config ...)
-      NODE_ENV: ${resources.config.NODE_ENV}
-      PORT: ${resources.config.PORT}
+      # ---- (1) hằng số: giống nhau ở mọi môi trường, không phải secret.
+      # PORT để literal vì nó phải khớp service.ports bên dưới — đưa vào app-config
+      # thì một con số có hai nguồn sự thật, và mặc định là "CHANGE_ME" -> pod chết.
+      NODE_ENV: production
+      PORT: "8000"
+      JWT_EXPIRES_IN: "7d"    # TODO: đối chiếu giá trị thật trong be-secret cũ
+
+      # ---- (2) từ provisioner postgres: connection string ĐẦY ĐỦ, đã có password.
+      # Provisioner ghép chuỗi (nơi duy nhất còn thấy password dạng plaintext) rồi
+      # xuất ra dưới dạng secretKeyRef -> ops KHÔNG phải chép password lần thứ hai.
+      DATABASE_URL: ${resources.db.url}
+
+      # ---- (3) đổi theo môi trường hoặc bí mật -> ops điền 1 lần/namespace:
+      #   kubectl -n <ns> patch secret feedback360-backend-app-config \
+      #     -p '{"stringData":{"JWT_SECRET":"..."}}'
       FRONTEND_URL: ${resources.config.FRONTEND_URL}
-      # DATABASE_URL kiểu prisma chứa cả password -> để ops điền nguyên chuỗi qua app-config
-      # (score-k8s không cho nối chuỗi quanh một giá trị secretKeyRef).
-      # Password DB nằm sẵn trong secret feedback360-backend-db-credentials.
-      DATABASE_URL: ${resources.config.DATABASE_URL}
       DEFAULT_PASSWORD: ${resources.config.DEFAULT_PASSWORD}
       JWT_SECRET: ${resources.config.JWT_SECRET}
-      JWT_EXPIRES_IN: ${resources.config.JWT_EXPIRES_IN}
       KEYCLOAK_URL: ${resources.config.KEYCLOAK_URL}
       KEYCLOAK_REALM: ${resources.config.KEYCLOAK_REALM}
       KEYCLOAK_CLIENT_ID: ${resources.config.KEYCLOAK_CLIENT_ID}
-      # ---- từ provisioner postgres: app nào đọc từng phần thay vì DATABASE_URL thì dùng bộ này
-      DB_HOST: ${resources.db.host}
-      DB_PORT: ${resources.db.port}
-      DB_NAME: ${resources.db.name}
-      DB_USER: ${resources.db.username}
-      DB_PASSWORD: ${resources.db.password}
 
 service:
   ports:
@@ -40,25 +46,22 @@ service:
 
 resources:
   db:
-    type: postgres            # onprem -> StatefulSet; cloud -> RDS. App không đổi.
+    type: postgres            # onprem/do -> StatefulSet; cloud -> RDS. App không đổi.
     params:
       database: feedback360   # giữ đúng tên DB cụm cũ để restore dump không phải đổi app
       image: postgres:16-alpine
+      urlQuery: "?schema=public"   # Prisma: schema mặc định — bỏ dòng này nếu app không dùng Prisma
       resources:              # bỏ trống = 100m/256Mi + limit 512Mi (default catalog)
         cpu: 200m
         memory: 512Mi
         memoryLimit: 1Gi
   config:
-    type: app-config
+    type: app-config          # chỉ còn các key thuộc nhóm (3) — càng ít càng đỡ sai sót
     params:
       keys:
-        - NODE_ENV
-        - PORT
         - FRONTEND_URL
-        - DATABASE_URL
         - DEFAULT_PASSWORD
         - JWT_SECRET
-        - JWT_EXPIRES_IN
         - KEYCLOAK_URL
         - KEYCLOAK_REALM
         - KEYCLOAK_CLIENT_ID

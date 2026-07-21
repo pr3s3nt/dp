@@ -114,6 +114,8 @@ resource "kubernetes_secret" "shop_app_db" {
     dbname   = module.shop_app_db.dbname
     username = module.shop_app_db.username
     password = module.shop_app_db.password
+    # Xem ghi chú ở envs/staging/main.tf — key `url` là hợp đồng với provisioner cloud.
+    url = "postgresql://${module.shop_app_db.username}:${module.shop_app_db.password}@${module.shop_app_db.host}:${module.shop_app_db.port}/${module.shop_app_db.dbname}"
   }
 }
 

@@ -128,6 +128,10 @@ resource "kubernetes_secret" "shop_app_db" {
     dbname   = module.shop_app_db.dbname
     username = module.shop_app_db.username
     password = module.shop_app_db.password
+    # Connection string ghép sẵn — provisioner cloud (type: postgres) xuất ra
+    # ${resources.db.url} từ key này. App một-biến (Prisma...) chỉ đọc DATABASE_URL;
+    # onprem/do tự ghép trong provisioner, cloud thì Terraform ghép vì Secret do TF sở hữu.
+    url = "postgresql://${module.shop_app_db.username}:${module.shop_app_db.password}@${module.shop_app_db.host}:${module.shop_app_db.port}/${module.shop_app_db.dbname}"
   }
 }
 

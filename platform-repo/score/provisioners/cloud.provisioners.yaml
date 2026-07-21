@@ -23,6 +23,10 @@
 # ---------------------------------------------------------------------------
 # postgres: toàn bộ thông tin kết nối đọc từ Secret do Terraform tạo.
 # App vẫn chỉ thấy DB_HOST/DB_PASSWORD... — không biết và không cần biết đó là RDS.
+#
+# KEY `url`: onprem/do tự ghép connection string trong provisioner; ở đây Secret do
+# Terraform ghi nên Terraform phải ghi luôn key `url` (xem terraform/envs/*/main.tf).
+# Bắt buộc phải có để score.yaml dùng ${resources.db.url} chạy được ở CẢ BA target.
 # ---------------------------------------------------------------------------
 - uri: template://cloud/postgres
   type: postgres
@@ -34,6 +38,7 @@
     name: {{ encodeSecretRef .Init.secretName "dbname" }}
     username: {{ encodeSecretRef .Init.secretName "username" }}
     password: {{ encodeSecretRef .Init.secretName "password" }}
+    url: {{ encodeSecretRef .Init.secretName "url" }}
 
 # ---------------------------------------------------------------------------
 # mysql: RDS MySQL (hoặc MariaDB) — Terraform tạo instance + ghi Secret

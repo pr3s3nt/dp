@@ -46,8 +46,16 @@
 #         cpuLimit: "1"                # limits.cpu chỉ sinh ra khi khai
 #         memoryLimit: 512Mi
 #       backup: { enabled: true, schedule: "0 18 * * *", cleanupSchedule: "0 19 * * *", retentionDays: 7, storage: 10Gi }
+#       urlQuery: "?schema=public"     # query string ghép vào ${resources.db.url} (mặc định: rỗng)
 #
 # Biến xuất ra : host / port(5432) / name / username(postgres) / password(secretKeyRef)
+#                url(secretKeyRef) — connection string ĐẦY ĐỦ, đã có password bên trong
+#
+# VỀ `url`: app kiểu Prisma/SQLAlchemy chỉ đọc một biến DATABASE_URL chứ không đọc
+# rời từng phần. score-k8s KHÔNG nối chuỗi quanh secretKeyRef được, nên việc ghép
+# phải làm ở ĐÂY — nơi duy nhất còn thấy password dưới dạng chuỗi thật (.State.password).
+# Nhờ vậy app chỉ cần `DATABASE_URL: ${resources.db.url}`; không còn bản sao password
+# thứ hai để ops điền tay, cũng không còn nguy cơ hai bản lệch nhau khi state bị mất.
 # ---------------------------------------------------------------------------
 - uri: template://onprem/postgres
   type: postgres
@@ -57,6 +65,7 @@
     database: {{ .Params.database | default "appdb" }}
     image: {{ .Params.image | default "postgres:16-alpine" }}
     storage: {{ .Params.storage | default "5Gi" }}
+    urlQuery: {{ .Params.urlQuery | default "" | quote }}
     # Gói cả cụm resources vào Init (toRawJson = YAML hợp lệ) để manifests đọc
     # .Init.resources.cpu ... mà không nổ khi dev không khai params.resources.
     resources: {{ .Params.resources | default dict | toRawJson }}
@@ -68,6 +77,7 @@
     name: {{ .Init.database }}
     username: postgres
     password: {{ encodeSecretRef .Init.secretName "password" }}
+    url: {{ encodeSecretRef .Init.secretName "url" }}
   manifests: |
     {{ $backup := .Params.backup | default dict }}
     {{ $res := .Init.resources | default dict }}
@@ -80,6 +90,8 @@
       type: Opaque
       stringData:
         password: {{ .State.password | quote }}
+        # Connection string ghép sẵn cho app một-biến (Prisma...) — xem ghi chú `url` ở đầu block.
+        url: {{ printf "postgresql://postgres:%s@%s:5432/%s%s" .State.password .Init.name .Init.database .Init.urlQuery | quote }}
     - apiVersion: apps/v1
       kind: StatefulSet
       metadata:

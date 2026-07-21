@@ -34,6 +34,7 @@
 # postgres: mỗi workload khai `db: {type: postgres}` được một Postgres riêng.
 # Password sinh ngẫu nhiên, giữ trong state (.score-k8s/), app đọc qua secretKeyRef.
 # Biến xuất ra : host / port(5432) / name / username(postgres) / password(secretKeyRef)
+#                url(secretKeyRef) — connection string đầy đủ (xem ghi chú ở onprem)
 # ---------------------------------------------------------------------------
 - uri: template://do/postgres
   type: postgres
@@ -44,6 +45,7 @@
     image: {{ .Params.image | default "postgres:16-alpine" }}
     storage: {{ .Params.storage | default "1Gi" }}
     storageClass: {{ .Params.storageClass | default "do-block-storage" }}
+    urlQuery: {{ .Params.urlQuery | default "" | quote }}
   state: |
     {{ if not .State.password }}password: {{ randAlphaNum 20 | quote }}{{ else }}password: {{ .State.password | quote }}{{ end }}
   outputs: |
@@ -52,6 +54,7 @@
     name: {{ .Init.database }}
     username: postgres
     password: {{ encodeSecretRef .Init.secretName "password" }}
+    url: {{ encodeSecretRef .Init.secretName "url" }}
   manifests: |
     {{ $backup := .Params.backup | default dict }}
     # Secret bị deploy-do.sh TÁCH RA, apply create-if-missing — KHÔNG vào git.
@@ -62,6 +65,7 @@
       type: Opaque
       stringData:
         password: {{ .State.password | quote }}
+        url: {{ printf "postgresql://postgres:%s@%s:5432/%s%s" .State.password .Init.name .Init.database .Init.urlQuery | quote }}
     - apiVersion: apps/v1
       kind: StatefulSet
       metadata:
