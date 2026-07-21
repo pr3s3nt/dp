@@ -1,8 +1,0 @@
-metadata:
-  name: security-cloud
-  annotations:
-    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2025-05-28T10:31:26Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2025-05-28T10:31:26Z"}]}'
-    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
-spec: {}
-apiVersion: v1
-kind: Namespace

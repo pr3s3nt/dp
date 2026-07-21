@@ -1,7 +1,0 @@
-metadata:
-  name: managementnodecleanupmigration
-  namespace: cattle-system
-data:
-  managementcleanupcompleted: 'true'
-apiVersion: v1
-kind: ConfigMap

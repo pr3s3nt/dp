@@ -1,8 +1,0 @@
-metadata:
-  name: fem
-  annotations:
-    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2021-01-06T08:56:21Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2021-01-06T08:56:21Z"}]}'
-    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
-spec: {}
-apiVersion: v1
-kind: Namespace

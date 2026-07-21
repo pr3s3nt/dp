@@ -1,8 +1,0 @@
-metadata:
-  name: elk
-  annotations:
-    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2021-06-17T09:04:01Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2021-06-17T09:04:01Z"}]}'
-    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
-spec: {}
-apiVersion: v1
-kind: Namespace

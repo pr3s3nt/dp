@@ -1,7 +1,0 @@
-metadata:
-  name: fleet-controller-lock
-  namespace: cattle-fleet-system
-  annotations:
-    control-plane.alpha.kubernetes.io/leader: '{"holderIdentity":"fleet-controller-5746685958-zvf4r","leaseDurationSeconds":45,"acquireTime":"2026-07-15T07:42:17Z","renewTime":"2026-07-17T02:41:33Z","leaderTransitions":10}'
-apiVersion: v1
-kind: ConfigMap

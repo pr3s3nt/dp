@@ -1,8 +1,0 @@
-metadata:
-  name: argocd-notifications-cm
-  namespace: argocd
-  labels:
-    app.kubernetes.io/instance: argocd
-  annotations: {}
-apiVersion: v1
-kind: ConfigMap

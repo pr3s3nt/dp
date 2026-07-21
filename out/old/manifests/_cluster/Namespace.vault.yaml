@@ -1,8 +1,0 @@
-metadata:
-  name: vault
-  annotations:
-    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2021-01-11T11:33:35Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2021-01-11T11:33:35Z"}]}'
-    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
-spec: {}
-apiVersion: v1
-kind: Namespace

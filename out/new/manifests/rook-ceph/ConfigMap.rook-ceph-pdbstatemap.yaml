@@ -1,9 +1,0 @@
-metadata:
-  name: rook-ceph-pdbstatemap
-  namespace: rook-ceph
-data:
-  draining-failure-domain: <CLEANUP_HOST_2>
-  draining-failure-domain-duration: '2026-07-13T04:16:35Z'
-  set-no-out: ''
-apiVersion: v1
-kind: ConfigMap

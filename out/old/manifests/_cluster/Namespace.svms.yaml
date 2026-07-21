@@ -1,8 +1,0 @@
-metadata:
-  name: svms
-  annotations:
-    cattle.io/status: '{"Conditions":[{"Type":"ResourceQuotaInit","Status":"True","Message":"","LastUpdateTime":"2021-01-11T08:38:11Z"},{"Type":"InitialRolesPopulated","Status":"True","Message":"","LastUpdateTime":"2021-01-11T08:38:11Z"}]}'
-    lifecycle.cattle.io/create.namespace-auth: <REDACTED:env>
-spec: {}
-apiVersion: v1
-kind: Namespace

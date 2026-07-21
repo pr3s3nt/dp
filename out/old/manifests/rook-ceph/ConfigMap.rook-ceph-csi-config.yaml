@@ -1,7 +1,0 @@
-metadata:
-  name: rook-ceph-csi-config
-  namespace: rook-ceph
-data:
-  csi-cluster-config-json: '[{"clusterID":"ceph","monitors":["<IP_7>:6789","<IP_3>:6789","<IP_5>:6789","<IP_6>:6789","<IP_2>:6789"]}]'
-apiVersion: v1
-kind: ConfigMap

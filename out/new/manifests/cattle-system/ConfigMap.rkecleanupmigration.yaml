@@ -1,7 +1,0 @@
-metadata:
-  name: rkecleanupmigration
-  namespace: cattle-system
-data:
-  rkecleanupcompleted: 'true'
-apiVersion: v1
-kind: ConfigMap

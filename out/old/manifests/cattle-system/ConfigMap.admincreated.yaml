@@ -1,5 +1,0 @@
-metadata:
-  name: admincreated
-  namespace: cattle-system
-apiVersion: v1
-kind: ConfigMap

@@ -1,7 +1,0 @@
-metadata:
-  name: ceph-csi-config
-  namespace: rook-ceph
-data:
-  config.json: '[{"clusterID":"rook-ceph","monitors":["<IP_4>:6789","<IP_5>:6789","<IP_6>:6789"],"cephFS":{"kernelMountOptions":"","fuseMountOptions":"","controllerPublishSecretRef":{"name":"rook-csi-cephfs-provisioner","namespace":"rook-ceph"}},"rbd":{"controllerPublishSecretRef":{"name":"rook-csi-rbd-provisioner","namespace":"rook-ceph"}},"nfs":{},"readAffinity":{}}]'
-apiVersion: v1
-kind: ConfigMap

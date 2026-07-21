@@ -1,8 +1,0 @@
-metadata:
-  name: halyard-read-bom
-  namespace: spinnaker
-  annotations: {}
-data:
-  halyard-local.yml: "<DOMAIN_501>: false\n  \n"
-apiVersion: v1
-kind: ConfigMap

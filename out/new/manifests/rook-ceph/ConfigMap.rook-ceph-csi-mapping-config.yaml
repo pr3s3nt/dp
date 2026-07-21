@@ -1,7 +1,0 @@
-metadata:
-  name: rook-ceph-csi-mapping-config
-  namespace: rook-ceph
-data:
-  csi-mapping-config-json: <REDACTED:env>
-apiVersion: v1
-kind: ConfigMap

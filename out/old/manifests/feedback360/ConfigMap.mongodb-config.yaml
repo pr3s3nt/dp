@@ -1,7 +1,0 @@
-metadata:
-  name: mongodb-config
-  namespace: feedback360
-data:
-  mongod.conf: "security:\n  authorization: enabled\n"
-apiVersion: v1
-kind: ConfigMap
