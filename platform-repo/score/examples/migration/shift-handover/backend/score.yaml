@@ -45,6 +45,10 @@ resources:
       database: shift_handover
       image: mongo:6.0        # cụm cũ chạy 6.0.5
       storage: 30Gi           # cụm cũ cấp 30Gi
+      resources:              # bỏ trống = 100m/1Gi + limit 1536Mi (default catalog)
+        cpu: 250m
+        memory: 1Gi
+        memoryLimit: 2Gi
       backup:                 # giữ đúng lịch backup của cụm cũ (18h dump, 19h dọn, giữ 7 ngày)
         enabled: true
         schedule: "0 18 * * *"

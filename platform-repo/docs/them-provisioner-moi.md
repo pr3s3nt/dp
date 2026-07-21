@@ -12,7 +12,7 @@ không sửa block cũ, không copy-paste logic ra ngoài.
 | Tên Secret | `<workload>-db-credentials` (datastore chính) / `<workload>-<loại>-credentials` (phụ trợ như redis) |
 | Ngữ nghĩa Secret | create-if-missing — CI/harness chỉ `kubectl create`, không bao giờ ghi đè, không commit git |
 | Label | Deployment/StatefulSet/CronJob/PVC do provisioner sinh: `app.kubernetes.io/component: datastore` — để patch env bỏ qua replicas/resources |
-| Resources | đặt NGAY trong provisioner (datastore tự biết nhu cầu); patch chỉ set cho container chưa có |
+| Resources | DEFAULT đặt NGAY trong provisioner (datastore tự biết nhu cầu), dev tinh chỉnh qua `params.resources` (`cpu`/`memory`/`cpuLimit`/`memoryLimit`); patch env chỉ set cho container chưa có → không bao giờ ghi đè |
 | Password | sinh trong `state:` (giữ ổn định giữa các lần generate), không nằm trong `outputs` dạng plaintext |
 | Storage | `storageClassName: rook-ceph-block` (onprem), dung lượng qua `params.storage` |
 | Service DB | headless (`clusterIP: None`) cho StatefulSet — khuôn công ty (vd `mysql-prd`) |
@@ -30,6 +30,9 @@ Giữ đúng bảng trên thì `score.yaml` của app **không đổi** khi back
    - `uri: template://onprem/<type>`, `type: <type>`
    - `init:` tên tài nguyên `{{ .SourceWorkload }}-<type>`, secretName theo hợp đồng
    - image/port/env/mount đặc thù của datastore
+   - `resources: {{ .Params.resources | default dict | toRawJson }}` trong `init:` +
+     `{{ $res := .Init.resources | default dict }}` đầu `manifests:`, rồi đọc
+     `$res.cpu|default "..."` ở container — default giữ đúng nhu cầu của datastore
    - phần `backup` giữ nếu có công cụ dump (đổi lệnh `mysqldump` → công cụ tương ứng), bỏ nếu không.
 3. **Viết block cloud** trong `cloud.provisioners.yaml`: copy block `mysql` cloud —
    thường CHỈ là `outputs` đọc từ Secret Terraform, không manifests. Ghi rõ key Secret

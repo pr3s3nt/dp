@@ -39,7 +39,12 @@
 #     params:
 #       database: feedback360          # tên DB tạo sẵn (mặc định: appdb)
 #       image: postgres:16-alpine
-#       storage: 5Gi
+#       storage: 5Gi                   # dung lượng PVC
+#       resources:                     # mặc định: requests 100m/256Mi, limits memory 512Mi
+#         cpu: 100m                    # khai cái nào đè cái đó, phần còn lại giữ default
+#         memory: 256Mi
+#         cpuLimit: "1"                # limits.cpu chỉ sinh ra khi khai
+#         memoryLimit: 512Mi
 #       backup: { enabled: true, schedule: "0 18 * * *", cleanupSchedule: "0 19 * * *", retentionDays: 7, storage: 10Gi }
 #
 # Biến xuất ra : host / port(5432) / name / username(postgres) / password(secretKeyRef)
@@ -52,6 +57,9 @@
     database: {{ .Params.database | default "appdb" }}
     image: {{ .Params.image | default "postgres:16-alpine" }}
     storage: {{ .Params.storage | default "5Gi" }}
+    # Gói cả cụm resources vào Init (toRawJson = YAML hợp lệ) để manifests đọc
+    # .Init.resources.cpu ... mà không nổ khi dev không khai params.resources.
+    resources: {{ .Params.resources | default dict | toRawJson }}
   state: |
     {{ if not .State.password }}password: {{ randAlphaNum 20 | quote }}{{ else }}password: {{ .State.password | quote }}{{ end }}
   outputs: |
@@ -62,6 +70,7 @@
     password: {{ encodeSecretRef .Init.secretName "password" }}
   manifests: |
     {{ $backup := .Params.backup | default dict }}
+    {{ $res := .Init.resources | default dict }}
     # Secret này sẽ bị CI TÁCH RA khỏi manifest trước khi commit sang config repo
     # (xem bước "split secrets" trong ci.yaml). Nó không bao giờ nằm trong git.
     - apiVersion: v1
@@ -121,9 +130,17 @@
                   periodSeconds: 5
                   timeoutSeconds: 3
                   failureThreshold: 3
+                # Default = giá trị catalog/v1; dev chỉnh qua params.resources.
+                # Patch env vẫn không ghi đè vì container đã có resources sẵn.
                 resources:
-                  requests: { cpu: 100m, memory: 256Mi }
-                  limits: { memory: 512Mi }
+                  requests:
+                    cpu: {{ $res.cpu | default "100m" }}
+                    memory: {{ $res.memory | default "256Mi" }}
+                  limits:
+                    {{- if $res.cpuLimit }}
+                    cpu: {{ $res.cpuLimit }}
+                    {{- end }}
+                    memory: {{ $res.memoryLimit | default "512Mi" }}
         volumeClaimTemplates:
           - metadata:
               name: data
@@ -666,7 +683,12 @@
 #     params:                                # tất cả TÙY CHỌN
 #       database: shift_handover             # tên DB logic app dùng (mặc định: appdb)
 #       image: mongo:6.0
-#       storage: 5Gi
+#       storage: 5Gi                         # dung lượng PVC
+#       resources:                           # mặc định: requests 100m/1Gi, limits memory 1536Mi
+#         cpu: 100m
+#         memory: 1Gi
+#         cpuLimit: "2"                      # limits.cpu chỉ sinh ra khi khai
+#         memoryLimit: 1536Mi
 #       config: |                            # mongod.conf tùy biến -> ConfigMap + args --config
 #         storage: { wiredTiger: { engineConfig: { cacheSizeGB: 1 } } }
 #       backup: { enabled: true, schedule: "...", cleanupSchedule: "...", retentionDays: 7, storage: 10Gi }
@@ -684,6 +706,7 @@
     database: {{ .Params.database | default "appdb" }}
     image: {{ .Params.image | default "mongo:6.0" }}
     storage: {{ .Params.storage | default "5Gi" }}
+    resources: {{ .Params.resources | default dict | toRawJson }}
   state: |
     {{ if not .State.password }}password: {{ randAlphaNum 20 | quote }}{{ else }}password: {{ .State.password | quote }}{{ end }}
   outputs: |
@@ -695,6 +718,7 @@
     authSource: admin
   manifests: |
     {{ $backup := .Params.backup | default dict }}
+    {{ $res := .Init.resources | default dict }}
     - apiVersion: v1
       kind: Secret
       metadata:
@@ -763,9 +787,16 @@
                   periodSeconds: 10
                   timeoutSeconds: 5
                   failureThreshold: 3
+                # Default = giá trị catalog/v1; dev chỉnh qua params.resources.
                 resources:
-                  requests: { cpu: 100m, memory: 1Gi }
-                  limits: { memory: 1536Mi }
+                  requests:
+                    cpu: {{ $res.cpu | default "100m" }}
+                    memory: {{ $res.memory | default "1Gi" }}
+                  limits:
+                    {{- if $res.cpuLimit }}
+                    cpu: {{ $res.cpuLimit }}
+                    {{- end }}
+                    memory: {{ $res.memoryLimit | default "1536Mi" }}
             {{ if .Params.config }}
             volumes:
               - name: config
@@ -909,6 +940,11 @@
 #     params:                 # TÙY CHỌN
 #       image: redis:6.2-alpine
 #       auth: true            # bật requirepass (mặc định false — giống app cũ nối không password)
+#       resources:            # mặc định: requests 50m/256Mi, limits memory 1Gi
+#         cpu: 50m            # cache: memoryLimit nên khớp maxmemory nếu có chỉnh config
+#         memory: 256Mi
+#         cpuLimit: "1"       # limits.cpu chỉ sinh ra khi khai
+#         memoryLimit: 1Gi
 #
 # Biến xuất ra : host / port(6379) / password ("" khi auth=false, secretKeyRef khi auth=true)
 # Secret       : <workload>-redis-credentials (chỉ tạo khi auth=true) — cố ý KHÁC
@@ -920,6 +956,7 @@
     name: {{ .SourceWorkload }}-redis
     secretName: {{ .SourceWorkload }}-redis-credentials
     image: {{ .Params.image | default "redis:6.2-alpine" }}
+    resources: {{ .Params.resources | default dict | toRawJson }}
   state: |
     {{ if .Params.auth }}{{ if not .State.password }}password: {{ randAlphaNum 20 | quote }}{{ else }}password: {{ .State.password | quote }}{{ end }}{{ end }}
   outputs: |
@@ -927,6 +964,7 @@
     port: 6379
     {{ if .Params.auth }}password: {{ encodeSecretRef .Init.secretName "password" }}{{ else }}password: ""{{ end }}
   manifests: |
+    {{ $res := .Init.resources | default dict }}
     {{ if .Params.auth }}
     - apiVersion: v1
       kind: Secret
@@ -988,9 +1026,16 @@
                   periodSeconds: 10
                   timeoutSeconds: 3
                   failureThreshold: 3
+                # Default = giá trị catalog/v1; dev chỉnh qua params.resources.
                 resources:
-                  requests: { cpu: 50m, memory: 256Mi }
-                  limits: { memory: 1Gi }
+                  requests:
+                    cpu: {{ $res.cpu | default "50m" }}
+                    memory: {{ $res.memory | default "256Mi" }}
+                  limits:
+                    {{- if $res.cpuLimit }}
+                    cpu: {{ $res.cpuLimit }}
+                    {{- end }}
+                    memory: {{ $res.memoryLimit | default "1Gi" }}
             volumes:
               - name: data
                 emptyDir: {}

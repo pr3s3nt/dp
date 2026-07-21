@@ -35,3 +35,7 @@ resources:
       image: mysql:8.0        # cụm cũ chạy 8.0.25
   cache:
     type: redis               # mặc định: không PVC, không auth — đúng cách okr dùng cũ
+    params:
+      resources:              # bỏ trống = 50m/256Mi + limit 1Gi (default catalog)
+        memory: 512Mi
+        memoryLimit: 1Gi
