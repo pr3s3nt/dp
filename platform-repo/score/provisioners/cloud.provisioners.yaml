@@ -46,6 +46,9 @@
     secretName: {{ .SourceWorkload }}-db-credentials
   outputs: |
     host: {{ encodeSecretRef .Init.secretName "host" }}
+    # RDS 1 instance: read = write. Nếu dùng Aurora có reader endpoint riêng,
+    # Terraform ghi thêm key readHost vào Secret rồi đổi dòng dưới sang key đó.
+    readHost: {{ encodeSecretRef .Init.secretName "host" }}
     port: {{ encodeSecretRef .Init.secretName "port" }}
     name: {{ encodeSecretRef .Init.secretName "dbname" }}
     username: {{ encodeSecretRef .Init.secretName "username" }}

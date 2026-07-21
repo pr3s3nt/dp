@@ -16,7 +16,7 @@ không sửa block cũ, không copy-paste logic ra ngoài.
 | Password | sinh trong `state:` (giữ ổn định giữa các lần generate), không nằm trong `outputs` dạng plaintext |
 | Storage | `storageClassName: rook-ceph-block` (onprem), dung lượng qua `params.storage` |
 | Service DB | headless (`clusterIP: None`) cho StatefulSet — khuôn công ty (vd `mysql-prd`) |
-| Probe | liveness + readiness exec bằng client của chính DB (mysqladmin ping / pg_isready / mongosh ping); lệnh sh POSIX, KHÔNG dùng bash-ism `&>` |
+| Probe | liveness (+readiness nếu khuôn công ty có) exec bằng client của chính DB (mysqladmin ping / pg_isready / mongosh ping); dùng `sh` POSIX trừ khi image chắc chắn có bash (mysql — đúng file công ty); tuyệt đối không `&>` trong `sh` |
 | File cấu hình DB | `params.config` (nội dung my.cnf/mongod.conf) → ConfigMap `<name>-config` + mount; ConfigMap nằm trong git (không phải secret) |
 
 Giữ đúng bảng trên thì `score.yaml` của app **không đổi** khi backend đổi

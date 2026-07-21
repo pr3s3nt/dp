@@ -3,7 +3,8 @@
 # Team hạ tầng sở hữu. Dev chỉ khai `type` trong score.yaml, KHÔNG đọc file này.
 #
 # type: postgres   -> StatefulSet Postgres + Secret (password tự sinh, app đọc qua secretKeyRef)
-# type: mysql      -> StatefulSet MySQL/MariaDB + Secret (cùng khuôn postgres; đổi image qua params)
+# type: mysql      -> StatefulSet MySQL replication đúng file công ty (init server-id +
+#                     clone/sidecar xtrabackup + master/slave.cnf); MariaDB: đổi params.image
 # type: mongodb    -> StatefulSet MongoDB + Secret (cùng khuôn)
 # type: redis      -> Deployment Redis (mặc định KHÔNG PVC — xem ghi chú block)
 # type: app-config -> Secret gom nhiều key cấu hình; dev khai TÊN key, ops điền GIÁ TRỊ trên cụm
@@ -234,33 +235,56 @@
     {{ end }}
 
 # ---------------------------------------------------------------------------
-# mysql: bao trùm cả MariaDB (đổi image qua params). Khuôn giống hệt postgres.
+# mysql: port TRUNG THỰC StatefulSet mysql công ty đang apply (bản Rancher):
+#   - initContainer init-mysql: sinh server-id theo ordinal, chọn master.cnf/slave.cnf
+#   - initContainer clone-mysql: clone dữ liệu từ peer trước (xtrabackup/ncat 3307)
+#   - sidecar xtrabackup: stream backup cho peer kế tiếp (ncat listen 3307)
+#   - ConfigMap master.cnf/slave.cnf, mount /etc/mysql/conf.d qua emptyDir
+#   - livenessProbe bash mysqladmin ping (delay 120 / period 20 / timeout 5 / fail 5)
+#     — file công ty KHÔNG có readinessProbe, giữ nguyên
+#   - Service headless <name> (DNS pod ổn định) + <name>-read (đọc, cân bằng mọi pod)
+#   - PVC retention Retain, updateStrategy RollingUpdate maxUnavailable 1
+# Bao trùm MariaDB về giao diện (đổi params.image); với mariadb nên để replicas=1
+# (xtrabackup 1.0 không đảm bảo với mariadb; replicas=1 thì sidecar chỉ nằm chờ).
 #
 # Dev khai:
 #   db:
 #     type: mysql
-#     params:                                # tất cả đều TÙY CHỌN
-#       database: okr                        # tên DB tạo sẵn (mặc định: appdb)
-#       image: mysql:8.0                     # mariadb:10.6 cũng dùng được (nhận MYSQL_* env)
-#       storage: 5Gi                         # dung lượng PVC
-#       config: |                            # my.cnf tùy biến -> ConfigMap mount vào conf.d
-#         [mysqld]                           #   (khuôn ConfigMap mysql/mysql-conf cụm cũ)
+#     params:                                # tất cả TÙY CHỌN
+#       database: otm                        # DB tạo sẵn (mặc định: appdb)
+#       image: mysql:5.6                     # image mysql/mariadb (air-gap: Harbor proxy-cache)
+#       xtrabackupImage: gcr.io/google-samples/xtrabackup:1.0   # air-gap: mirror qua Harbor
+#       replicas: 1                          # >1 = thêm replica read-only (tự clone từ peer)
+#       storage: 5Gi                         # dung lượng PVC mỗi pod (volumeClaimTemplates)
+#       resources:                           # container mysql — mặc định 500m / 1Gi, KHÔNG limits
+#         cpu: 500m                          # (đúng file công ty). Khai gì thì đè cái đó.
+#         memory: 1Gi
+#         cpuLimit: "2"                      # limits chỉ sinh ra khi khai
+#         memoryLimit: 4Gi
+#       sidecarResources:                    # container xtrabackup — mặc định 100m / 100Mi
+#         cpu: 100m
+#         memory: 100Mi
+#       config: |                            # cnf chung — GHÉP vào cả master.cnf lẫn slave.cnf
+#         [mysqld]
 #         character-set-server=utf8
-#       backup:                              # CronJob backup TÙY CHỌN (xem §backup dưới)
+#       masterConfig: |                      # thay hẳn master.cnf (mặc định: [mysqld] log-bin)
+#       slaveConfig: |                       # thay hẳn slave.cnf  (mặc định: [mysqld] super-read-only)
+#       backup:                              # CronJob mysqldump TÙY CHỌN (xem §backup dưới)
 #         enabled: true
-#         schedule: "0 18 * * *"             # giờ chạy mysqldump
-#         cleanupSchedule: "0 19 * * *"      # giờ dọn backup cũ
-#         retentionDays: 7                   # giữ backup bao nhiêu ngày
-#         storage: 10Gi                      # PVC chứa backup
+#         schedule: "0 18 * * *"
+#         cleanupSchedule: "0 19 * * *"
+#         retentionDays: 7
+#         storage: 10Gi
 #
-# Biến xuất ra : host / port(3306) / name / username(root) / password(secretKeyRef)
+# Biến xuất ra : host (<name>-0.<name> — master, để GHI) / readHost (<name>-read — ĐỌC)
+#                / port(3306) / name / username(root) / password(secretKeyRef)
 # Secret       : <workload>-db-credentials (key: password) — create-if-missing
-# Giả định     : storageClass rook-ceph-block; image kéo được từ Harbor proxy-cache
+#                (file công ty tên `mysql-root-pass`; platform giữ convention chung)
+# Pull secret  : patch env tự tiêm pod-level (file công ty: harbor-registry-secret
+#                -> chỉnh biến $pullSecret trong patches/<env>.tpl cho khớp)
 #
-# §backup: backup nằm NGAY TRONG provisioner datastore (không tách resource riêng) vì:
-#   (1) lệnh dump gắn chặt loại DB (mysqldump/mongodump), (2) bật/tắt chỉ 1 block trong
-#   score.yaml, (3) không phải lặp lại host/secret giữa 2 resource. Sinh ra:
-#   CronJob <name>-auto-backup + <name>-cleanup-backup + PVC <name>-backup.
+# §backup: CronJob <name>-auto-backup + <name>-cleanup-backup + PVC <name>-backup —
+# dump logic định kỳ, độc lập với cơ chế clone xtrabackup của replication.
 # ---------------------------------------------------------------------------
 - uri: template://onprem/mysql
   type: mysql
@@ -269,17 +293,26 @@
     secretName: {{ .SourceWorkload }}-db-credentials
     database: {{ .Params.database | default "appdb" }}
     image: {{ .Params.image | default "mysql:8.0" }}
+    xtrabackupImage: {{ .Params.xtrabackupImage | default "gcr.io/google-samples/xtrabackup:1.0" }}
     storage: {{ .Params.storage | default "5Gi" }}
+    replicas: {{ .Params.replicas | default 1 }}
+    # Gói nguyên cụm resources vào Init (toRawJson = YAML hợp lệ) để manifests đọc
+    # .Init.resources.cpu ... mà không nổ khi dev không khai params.resources.
+    resources: {{ .Params.resources | default dict | toRawJson }}
+    sidecarResources: {{ .Params.sidecarResources | default dict | toRawJson }}
   state: |
     {{ if not .State.password }}password: {{ randAlphaNum 20 | quote }}{{ else }}password: {{ .State.password | quote }}{{ end }}
   outputs: |
-    host: {{ .Init.name }}
+    host: {{ .Init.name }}-0.{{ .Init.name }}
+    readHost: {{ .Init.name }}-read
     port: 3306
     name: {{ .Init.database }}
     username: root
     password: {{ encodeSecretRef .Init.secretName "password" }}
   manifests: |
     {{ $backup := .Params.backup | default dict }}
+    {{ $res := .Init.resources | default dict }}
+    {{ $sres := .Init.sidecarResources | default dict }}
     # Secret bị CI tách ra, apply create-if-missing — không vào git.
     - apiVersion: v1
       kind: Secret
@@ -288,98 +321,7 @@
       type: Opaque
       stringData:
         password: {{ .State.password | quote }}
-    - apiVersion: apps/v1
-      kind: StatefulSet
-      metadata:
-        name: {{ .Init.name }}
-        labels:
-          app.kubernetes.io/component: datastore
-      spec:
-        serviceName: {{ .Init.name }}
-        replicas: 1
-        selector:
-          matchLabels: { app: {{ .Init.name }} }
-        template:
-          metadata:
-            labels: { app: {{ .Init.name }} }
-          spec:
-            containers:
-              - name: mysql
-                # Air-gap: trỏ Harbor proxy-cache, vd harbor.example.com/dockerhub/library/mysql:8.0
-                image: {{ .Init.image }}
-                env:
-                  - name: MYSQL_DATABASE
-                    value: {{ .Init.database | quote }}
-                  - name: MYSQL_ROOT_PASSWORD    # mariadb cũng nhận biến MYSQL_* này
-                    valueFrom:
-                      secretKeyRef:
-                        name: {{ .Init.secretName }}
-                        key: password
-                ports:
-                  - containerPort: 3306
-                volumeMounts:
-                  - name: data
-                    mountPath: /var/lib/mysql
-                  {{ if .Params.config }}
-                  - name: config
-                    mountPath: /etc/mysql/conf.d/custom.cnf   # image mysql/mariadb tự include conf.d
-                    subPath: custom.cnf
-                  {{ end }}
-                # Probe đúng khuôn StatefulSet.mysql của công ty (otm trên Rancher)
-                livenessProbe:
-                  exec:
-                    command:
-                      - sh
-                      - -c
-                      - mysqladmin -uroot -p"$MYSQL_ROOT_PASSWORD" ping > /dev/null 2>&1
-                  initialDelaySeconds: 30
-                  periodSeconds: 10
-                  timeoutSeconds: 5
-                  failureThreshold: 3
-                readinessProbe:
-                  exec:
-                    command:
-                      - sh
-                      - -c
-                      - mysql -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SELECT 1" > /dev/null 2>&1
-                  initialDelaySeconds: 5
-                  periodSeconds: 10
-                  timeoutSeconds: 5
-                  failureThreshold: 3
-                # Resource đặt TẠI provisioner (datastore tự biết nhu cầu của mình);
-                # patch env chỉ set resource cho container CHƯA có -> không bị ghi đè.
-                # Mức theo chuẩn cụm cũ (okr/otm request 1Gi cho mysql).
-                resources:
-                  requests: { cpu: 250m, memory: 1Gi }
-                  limits: { memory: 1536Mi }
-            {{ if .Params.config }}
-            volumes:
-              - name: config
-                configMap:
-                  name: {{ .Init.name }}-config
-            {{ end }}
-        volumeClaimTemplates:
-          - metadata:
-              name: data
-            spec:
-              accessModes: [ReadWriteOnce]
-              storageClassName: rook-ceph-block
-              resources:
-                requests:
-                  storage: {{ .Init.storage }}
-    - apiVersion: v1
-      kind: Service
-      metadata:
-        name: {{ .Init.name }}
-        labels: { app: {{ .Init.name }} }
-      spec:
-        clusterIP: None    # headless — khuôn công ty (vd Service mysql-prd trên Rancher)
-        selector: { app: {{ .Init.name }} }
-        ports:
-          - port: 3306
-            targetPort: 3306
-    {{ if .Params.config }}
-    # my.cnf tùy biến (khuôn ConfigMap mysql/mysql-conf của công ty) — nằm trong git, review được
+    # master.cnf / slave.cnf — đúng khuôn ConfigMap `mysql` của công ty
     - apiVersion: v1
       kind: ConfigMap
       metadata:
@@ -387,9 +329,244 @@
         labels:
           app.kubernetes.io/component: datastore
       data:
-        custom.cnf: |
-    {{ .Params.config | indent 10 }}
-    {{ end }}
+        master.cnf: |
+    {{ .Params.masterConfig | default "[mysqld]\nlog-bin" | indent 10 }}
+    {{ if .Params.config }}{{ .Params.config | indent 10 }}{{ end }}
+        slave.cnf: |
+    {{ .Params.slaveConfig | default "[mysqld]\nsuper-read-only" | indent 10 }}
+    {{ if .Params.config }}{{ .Params.config | indent 10 }}{{ end }}
+    - apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: {{ .Init.name }}
+        labels:
+          app: {{ .Init.name }}
+          app.kubernetes.io/component: datastore
+      spec:
+        serviceName: {{ .Init.name }}
+        replicas: {{ .Init.replicas }}
+        podManagementPolicy: OrderedReady
+        persistentVolumeClaimRetentionPolicy:
+          whenDeleted: Retain
+          whenScaled: Retain
+        updateStrategy:
+          type: RollingUpdate
+          rollingUpdate:
+            maxUnavailable: 1
+            partition: 0
+        selector:
+          matchLabels: { app: {{ .Init.name }} }
+        template:
+          metadata:
+            labels: { app: {{ .Init.name }} }
+          spec:
+            initContainers:
+              # Sinh server-id theo ordinal + chọn master/slave cnf (nguyên văn file công ty)
+              - name: init-mysql
+                image: {{ .Init.image }}
+                imagePullPolicy: IfNotPresent
+                command:
+                  - bash
+                  - "-c"
+                  - |
+                    set -ex
+                    [[ `hostname` =~ -([0-9]+)$ ]] || exit 1
+                    ordinal=${BASH_REMATCH[1]}
+                    echo [mysqld] > /mnt/conf.d/server-id.cnf
+                    echo server-id=$((100 + $ordinal)) >> /mnt/conf.d/server-id.cnf
+                    if [[ $ordinal -eq 0 ]]; then
+                      cp /mnt/config-map/master.cnf /mnt/conf.d/
+                    else
+                      cp /mnt/config-map/slave.cnf /mnt/conf.d/
+                    fi
+                env:
+                  - name: MYSQL_ROOT_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: {{ .Init.secretName }}
+                        key: password
+                volumeMounts:
+                  - name: conf
+                    mountPath: /mnt/conf.d
+                  - name: config-map
+                    mountPath: /mnt/config-map
+              # Clone dữ liệu từ peer trước khi vào cụm (chỉ chạy với ordinal > 0)
+              - name: clone-mysql
+                image: {{ .Init.xtrabackupImage }}
+                imagePullPolicy: IfNotPresent
+                command:
+                  - bash
+                  - "-c"
+                  - |
+                    set -ex
+                    [[ -d /var/lib/mysql/mysql ]] && exit 0
+                    [[ `hostname` =~ -([0-9]+)$ ]] || exit 1
+                    ordinal=${BASH_REMATCH[1]}
+                    [[ $ordinal -eq 0 ]] && exit 0
+                    ncat --recv-only {{ .Init.name }}-$(($ordinal-1)).{{ .Init.name }} 3307 | xbstream -x -C /var/lib/mysql
+                    xtrabackup --prepare --target-dir=/var/lib/mysql
+                volumeMounts:
+                  - name: data
+                    mountPath: /var/lib/mysql
+                    subPath: mysql
+                  - name: conf
+                    mountPath: /etc/mysql/conf.d
+            containers:
+              - name: mysql
+                image: {{ .Init.image }}
+                imagePullPolicy: IfNotPresent
+                env:
+                  - name: MYSQL_DATABASE
+                    value: {{ .Init.database | quote }}
+                  - name: MYSQL_ROOT_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: {{ .Init.secretName }}
+                        key: password
+                ports:
+                  - name: mysql
+                    containerPort: 3306
+                    protocol: TCP
+                # Probe nguyên văn file công ty (không có readinessProbe trong file gốc)
+                livenessProbe:
+                  exec:
+                    command:
+                      - bash
+                      - "-c"
+                      - |
+                        mysqladmin -uroot -p"$MYSQL_ROOT_PASSWORD" ping
+                  initialDelaySeconds: 120
+                  periodSeconds: 20
+                  timeoutSeconds: 5
+                  successThreshold: 1
+                  failureThreshold: 5
+                # Mặc định đúng file công ty (chỉ requests 500m/1Gi, không limits);
+                # dev chỉnh qua params.resources. Patch env không ghi đè vì container
+                # đã có resources sẵn.
+                resources:
+                  requests:
+                    cpu: {{ $res.cpu | default "500m" }}
+                    memory: {{ $res.memory | default "1Gi" }}
+                  {{- if or $res.cpuLimit $res.memoryLimit }}
+                  limits:
+                    {{- if $res.cpuLimit }}
+                    cpu: {{ $res.cpuLimit }}
+                    {{- end }}
+                    {{- if $res.memoryLimit }}
+                    memory: {{ $res.memoryLimit }}
+                    {{- end }}
+                  {{- end }}
+                volumeMounts:
+                  - name: data
+                    mountPath: /var/lib/mysql
+                    subPath: mysql
+                  - name: conf
+                    mountPath: /etc/mysql/conf.d
+              # Sidecar stream backup cho peer kế (nguyên văn file công ty).
+              # replicas=1: chỉ listen, không tốn tài nguyên đáng kể.
+              - name: xtrabackup
+                image: {{ .Init.xtrabackupImage }}
+                imagePullPolicy: IfNotPresent
+                ports:
+                  - name: xtrabackup
+                    containerPort: 3307
+                    protocol: TCP
+                command:
+                  - bash
+                  - "-c"
+                  - |
+                    set -ex
+                    cd /var/lib/mysql
+                    if [[ -f xtrabackup_slave_info ]]; then
+                      mv xtrabackup_slave_info change_master_to.sql.in
+                      rm -f xtrabackup_binlog_info
+                    elif [[ -f xtrabackup_binlog_info ]]; then
+                      [[ `cat xtrabackup_binlog_info` =~ ^(.*?)[[:space:]]+(.*?)$ ]] || exit 1
+                      rm xtrabackup_binlog_info
+                      echo "CHANGE MASTER TO MASTER_LOG_FILE='${BASH_REMATCH[1]}', MASTER_LOG_POS=${BASH_REMATCH[2]}" > change_master_to.sql.in
+                    fi
+                    if [[ -f change_master_to.sql.in ]]; then
+                      echo "Waiting for mysqld to be ready (accepting connections)"
+                      until mysql -h 127.0.0.1 -uroot -p$MYSQL_ROOT_PASSWORD -e "SELECT 1"; do sleep 1; done
+                      echo "Initializing replication from clone position"
+                      mv change_master_to.sql.in change_master_to.sql.orig
+                      mysql -h 127.0.0.1 -uroot -p$MYSQL_ROOT_PASSWORD <<EOF
+                    $(<change_master_to.sql.orig),
+                      MASTER_HOST='{{ .Init.name }}-0.{{ .Init.name }}',
+                      MASTER_USER='root',
+                      MASTER_PASSWORD=$MYSQL_ROOT_PASSWORD,
+                      MASTER_CONNECT_RETRY=10;
+                    START SLAVE;
+                    EOF
+                    fi
+                    exec ncat --listen --keep-open --send-only --max-conns=1 3307 -c \
+                      "xtrabackup --backup --slave-info --stream=xbstream --host=127.0.0.1 --user=root"
+                env:
+                  - name: MYSQL_ROOT_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: {{ .Init.secretName }}
+                        key: password
+                resources:
+                  requests:
+                    cpu: {{ $sres.cpu | default "100m" }}
+                    memory: {{ $sres.memory | default "100Mi" }}
+                  {{- if or $sres.cpuLimit $sres.memoryLimit }}
+                  limits:
+                    {{- if $sres.cpuLimit }}
+                    cpu: {{ $sres.cpuLimit }}
+                    {{- end }}
+                    {{- if $sres.memoryLimit }}
+                    memory: {{ $sres.memoryLimit }}
+                    {{- end }}
+                  {{- end }}
+                volumeMounts:
+                  - name: data
+                    mountPath: /var/lib/mysql
+                    subPath: mysql
+                  - name: conf
+                    mountPath: /etc/mysql/conf.d
+            volumes:
+              - name: conf
+                emptyDir: {}
+              - name: config-map
+                configMap:
+                  name: {{ .Init.name }}-config
+        volumeClaimTemplates:
+          - metadata:
+              name: data
+            spec:
+              accessModes: [ReadWriteOnce]
+              storageClassName: rook-ceph-block
+              volumeMode: Filesystem
+              resources:
+                requests:
+                  storage: {{ .Init.storage }}
+    # Headless — DNS pod ổn định (<name>-0.<name>); khuôn Service mysql-prd công ty
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: {{ .Init.name }}
+        labels: { app: {{ .Init.name }} }
+      spec:
+        clusterIP: None
+        selector: { app: {{ .Init.name }} }
+        ports:
+          - name: mysql
+            port: 3306
+            targetPort: 3306
+    # Đọc — cân bằng mọi pod (khuôn Service mysql-read công ty)
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: {{ .Init.name }}-read
+        labels: { app: {{ .Init.name }} }
+      spec:
+        selector: { app: {{ .Init.name }} }
+        ports:
+          - name: mysql
+            port: 3306
+            targetPort: 3306
     {{ if $backup.enabled }}
     - apiVersion: v1
       kind: PersistentVolumeClaim
@@ -438,7 +615,7 @@
                         set -e
                         TS=$(date +%Y%m%d-%H%M%S)
                         echo "MySQL backup bat dau: $TS"
-                        mysqldump -h {{ .Init.name }} -P 3306 -u root \
+                        mysqldump -h {{ .Init.name }}-0.{{ .Init.name }} -P 3306 -u root \
                           --single-transaction --routines --triggers --all-databases \
                           > /backup/backup-$TS.sql
                         echo "Xong: /backup/backup-$TS.sql"

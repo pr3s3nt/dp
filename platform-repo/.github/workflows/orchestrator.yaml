@@ -49,6 +49,12 @@ jobs:
   deploy:
     if: github.event.action == 'deploy-request'
     runs-on: self-hosted   # runner trong mạng, cài sẵn score-k8s/yq/kubectl + kubeconfig
+    # ĐỒNG THỜI: mọi run đụng vào CÙNG MỘT APP (deploy lẫn promote) xếp hàng tuần tự —
+    # chặn race 2 commit liên tiếp render song song rồi ghi config repo ngược thứ tự.
+    # App khác nhau vẫn chạy song song bình thường.
+    concurrency:
+      group: app-${{ github.event.client_payload.app }}
+      cancel-in-progress: false
     env:
       APP: ${{ github.event.client_payload.app }}
       APP_REPO: ${{ github.event.client_payload.repo }}
@@ -197,7 +203,13 @@ jobs:
             echo "Không có thay đổi manifest"
           else
             git commit -m "deploy(${APP}): staging ${SHA} (catalog: ${{ steps.lock.outputs.ref }})"
-            git push
+            # Ai đó vừa push vào config repo đúng lúc này -> rebase rồi thử lại (tối đa 3 lần)
+            for i in 1 2 3; do
+              git push && break
+              [ "$i" = 3 ] && { echo "push thất bại sau 3 lần"; exit 1; }
+              echo "push bị từ chối (có commit mới) -> pull --rebase, thử lại ($i/3)"
+              git pull --rebase
+            done
           fi
 
       # ------------------------------------------------------------------
@@ -212,6 +224,10 @@ jobs:
   promote:
     if: github.event.action == 'promote-request'
     runs-on: self-hosted
+    # Cùng hàng đợi với deploy của app đó — promote không bao giờ chen ngang một lần render.
+    concurrency:
+      group: app-${{ github.event.client_payload.app }}
+      cancel-in-progress: false
     env:
       APP: ${{ github.event.client_payload.app }}
       APP_REPO: ${{ github.event.client_payload.repo }}
@@ -325,4 +341,9 @@ jobs:
           git add .
           git diff --cached --quiet && { echo "Prod đã ở tag ${TAG}"; exit 0; }
           git commit -m "promote(${APP}/${TARGET}): prod -> ${TAG} (${MODE})"
-          git push
+          for i in 1 2 3; do
+            git push && break
+            [ "$i" = 3 ] && { echo "push thất bại sau 3 lần"; exit 1; }
+            echo "push bị từ chối (có commit mới) -> pull --rebase, thử lại ($i/3)"
+            git pull --rebase
+          done

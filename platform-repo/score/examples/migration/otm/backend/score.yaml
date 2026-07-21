@@ -32,17 +32,24 @@ service:
 
 resources:
   db:
-    type: mysql
-    params:
+    type: mysql               # render ĐÚNG StatefulSet công ty: init server-id + clone/sidecar
+    params:                   # xtrabackup + master/slave.cnf + liveness bash 120s
       database: otm
-      image: mysql:5.6        # đúng bản cụm cũ (xtrabackup sidecar cũ -> thay bằng params.backup)
-      storage: 30Gi           # đúng PVC 30Gi trên Rancher
-      config: |               # thay vai trò ConfigMap `mysql` cũ (my.cnf mount vào conf.d)
+      image: mysql:5.6        # đúng bản cụm cũ
+      # xtrabackupImage: harbor.<domain>/otm/prd/xtrabackup:1.0   # air-gap: đổi về Harbor
+      storage: 30Gi           # đúng PVC 30Gi trên Rancher — tăng ở đây khi cần thêm ổ
+      # replicas: 2           # bật khi cần replica read-only (đọc qua ${resources.db.readHost})
+      resources:              # bỏ trống = 500m/1Gi requests đúng file công ty
+        cpu: 500m
+        memory: 1Gi
+        # cpuLimit: "2"       # mở khi muốn có limits (mặc định không có, như file cũ)
+        # memoryLimit: 4Gi
+      config: |               # cnf ghép vào cả master.cnf lẫn slave.cnf (ConfigMap `mysql` cũ)
         [mysqld]
         character-set-server=utf8
         collation-server=utf8_general_ci
       backup:
-        enabled: true         # thay vai trò xtrabackup sidecar cũ bằng mysqldump định kỳ
+        enabled: true         # mysqldump định kỳ (độc lập với clone xtrabackup của replication)
   api:
     type: route
     params:

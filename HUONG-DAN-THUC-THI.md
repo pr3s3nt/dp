@@ -15,7 +15,7 @@ Làm tuần tự từ Bước 0. Mọi lệnh chạy từ thư mục `platform-r
 | D6 Tài liệu maintainer + mapping + đánh giá keycloak/svms/arangodb | `platform-repo/docs/them-provisioner-moi.md`, `docs/mapping-k8s-cu-sang-score.md` |
 | Route đa host (§4E) | render **Ingress nginx chuẩn** (khuôn công ty trên Rancher); tên chứa host+path — 2 host cùng workload không đụng nhau; params: `ingressClass/bodySize/tlsSecret/pathType` |
 | App mẫu format công ty | `examples/migration/otm/` — dựng từ đúng manifest Rancher bạn cung cấp (otm-fe 8080 + probe + resources, otm-be 1080, mysql 5.6 30Gi headless, strategy maxSurge 1/maxUnavailable 0 do patch tiêm) |
-| DB theo format công ty | mọi datastore có probe (mysqladmin ping / pg_isready / mongosh ping — đúng số của otm/feedback360 cũ), Service headless, `params.config` = my.cnf/mongod.conf (thay ConfigMap `mysql`/`mysql-conf`/`mongodb-config` cũ); rig replication xtrabackup cũ thu về 1 instance + backup CronJob (cụm cũ vốn chạy replicas:1) |
+| DB theo format công ty | **mysql = port trung thực StatefulSet bạn apply**: init server-id + clone/sidecar xtrabackup + master/slave.cnf + liveness bash 120s + Service headless & `-read` + PVC Retain; `params.replicas` bật read-replica, ghi vào `host` (pod-0), đọc `readHost`. postgres/mongodb/redis: probe + headless + `params.config` cùng khuôn |
 | Postgres nâng cùng khuôn | `params.database/image/storage/backup` + label datastore + resources (mặc định giữ hành vi cũ — app cũ không đổi) |
 | **Đa cụm: mỗi app một cụm k8s riêng** | `platform-repo/clusters/placement/<app>.yaml` (nguồn sự thật); ArgoCD cụm quản lý deploy chéo (`appset-onprem.yaml`); orchestrator apply secret theo `KUBECONFIG_<TÊN_CỤM>`. Xem `platform-repo/clusters/README.md` |
 
@@ -72,6 +72,11 @@ score-k8s thật, sửa nhanh được).
 Mô hình **mỗi app một cụm riêng**: `--kubeconfig` trỏ vào **cụm của chính app đó**
 (cụm ghi trong `clusters/placement/<app>.yaml`). Chưa dựng cụm riêng thì dry-run tạm
 lên cụm quản lý — manifest giống hệt nhau, chỉ khác nơi áp.
+
+Hai người test **cùng một app trên cùng một cụm** cùng lúc: thêm
+`--namespace okr-sandbox-<tên mình>` để không giẫm namespace của nhau (mặc định
+cả hai sẽ dùng chung `okr-sandbox`). Còn deploy thật thì đã được tuần tự hóa
+tự động theo app (xem mục "Nhiều người dùng đồng thời" trong `platform-repo/README.md`).
 
 Harness tạo namespace `okr-sandbox` (label `idp-sandbox=true`) rồi `kubectl apply
 --dry-run=server` từng manifest — apiserver 1.35 kiểm schema + admission thật, in PASS/FAIL

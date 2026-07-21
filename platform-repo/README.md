@@ -70,6 +70,17 @@ Lợi ích: credential (kubeconfig, token config repo, robot Harbor) chỉ nằm
 
 Mỗi app repo có file `platform.lock` ghim ref (tag `catalog/vX`) của repo này — orchestrator render app bằng đúng catalog đó. Sửa provisioner/patch trên `main` **không ảnh hưởng app nào** cho tới khi app tự nâng lock. Quy trình: PR (catalog-ci hiện render-diff) → merge + tag → canary 1 app → rollout wave. Chi tiết: `CHIEN-LUOC-MIGRATION-VA-CAP-NHAT.md` ở repo tổng.
 
+## Nhiều người dùng đồng thời — mô hình tuần tự hóa
+
+| Tình huống | Cơ chế bảo vệ |
+|---|---|
+| 2 dev sửa score.yaml, push cùng lúc | git từ chối push sau (non-fast-forward) — dev phải pull/rebase; không bao giờ có 2 trạng thái song song trong repo |
+| 2 commit liên tiếp cùng app → 2 lần orchestrator | `concurrency.group: app-<app>` — deploy/promote CÙNG app xếp hàng tuần tự, KHÁC app chạy song song; kèm push retry+rebase vào config repo |
+| 2 tiến trình cùng tạo Secret trên cụm | create-if-missing: một bên thắng, bên kia AlreadyExists → giữ nguyên |
+| Deploy chen promote cùng app | chung concurrency group → không chen được |
+| 2 maintainer sửa catalog | PR + catalog-ci render-diff + tag; app ghim `platform.lock` nên không ai bị ăn catalog dở dang |
+| 2 người test-local cùng app trên cùng cụm | namespace sandbox trùng nhau → mỗi người truyền `--namespace <app>-sandbox-<tên mình>` |
+
 ## Mô hình đa cụm (mỗi app một cụm k8s riêng)
 
 ArgoCD chạy trên **cụm quản lý**, deploy chéo sang **cụm app** theo

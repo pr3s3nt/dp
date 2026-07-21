@@ -19,7 +19,7 @@ Ba app đã có mẫu hoàn chỉnh trong `score/examples/migration/` (feedback3
 | imagePullSecrets (artifactory/jfrog/harbor cũ) | patch env tự tiêm | tên secret cấu hình ở biến `$pullSecret` đầu `patches/<env>.tpl`; secret tạo create-if-missing |
 | ConfigMap my.cnf/mongod.conf của DB (`mysql-conf`, `mongodb-config`, `mysql`) | `params.config` của `mysql`/`mongodb` | provisioner tự tạo ConfigMap + mount (mysql: conf.d, mongo: --config); nội dung nằm trong git, review được |
 | ConfigMap file cấu hình của APP (nginx conf, env-vars) | chưa có type riêng | ít gặp; trước mắt: nướng vào image hoặc chờ type `config-file` (xem Non-goal) |
-| StatefulSet mysql kiểu replication (init server-id + xtrabackup clone, Service `mysql-read` — otm) | `type: mysql` (1 instance) | cụm cũ thực chạy `replicas: 1` nên rig replication không hoạt động; thu về 1 instance + backup CronJob. Cần read-replica thật → nâng cấp provisioner sau |
+| StatefulSet mysql kiểu replication (init server-id + xtrabackup clone/sidecar, Service `mysql-read`) | `type: mysql` | provisioner render ĐÚNG khuôn này (port trung thực file công ty apply): `params.replicas` >1 = có replica read-only tự clone; ghi vào `host` (pod-0), đọc qua `readHost` (svc -read); master/slave.cnf qua `params.masterConfig/slaveConfig`, cnf chung qua `params.config` |
 | NetworkPolicy, RBAC, ServiceAccount riêng | không map | platform chưa hỗ trợ; xử lý tay nếu app thật sự cần |
 | nodeSelector/hostPath (timezone...) | không map (chủ đích) | cụm mới không nên ghim node; timezone đặt qua env `TZ` |
 
