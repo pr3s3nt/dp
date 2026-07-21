@@ -1,0 +1,64 @@
+# =============================================================================
+# CI notes-app — biến thể DIGITALOCEAN (chạy song song ci.yaml gốc, KHÔNG thay thế).
+#   1. build + push image lên DOCR (DigitalOcean Container Registry), tag = <svc>-<sha>
+#   2. bắn repository_dispatch "deploy-request" sang platform-repo (target: "do")
+#
+# Khác ci.yaml gốc: runner ubuntu-latest (GitHub-hosted, ra được DOCR public),
+# registry = DOCR (1 repo "notes-app", phân biệt service bằng tag). Login DOCR bằng
+# DO API token (DOCR nhận token làm cả username lẫn password).
+#
+# Secrets cần trong repo notes-app:
+#   DO_TOKEN                 DigitalOcean API token (push DOCR)
+#   PLATFORM_DISPATCH_TOKEN  GitHub PAT có quyền dispatch vào platform-repo
+# =============================================================================
+name: do-ci
+
+on:
+  push:
+    branches: [main]
+
+env:
+  REGISTRY_REPO: registry.digitalocean.com/idp-notes-thanhnt/notes-app
+  APP_NAME: notes-app
+  PLATFORM_REPO: pr3s3nt/platform-repo
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [frontend, backend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login DOCR
+        run: echo "${{ secrets.DO_TOKEN }}" | docker login registry.digitalocean.com -u "${{ secrets.DO_TOKEN }}" --password-stdin
+
+      - name: Build & push
+        run: |
+          IMG="${REGISTRY_REPO}:${{ matrix.service }}-${{ github.sha }}"
+          docker build -t "$IMG" "./${{ matrix.service }}"
+          docker push "$IMG"
+
+  notify-platform:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gọi orchestrator (deploy-request, target=do)
+        run: |
+          curl -sf -X POST \
+            -H "Authorization: Bearer ${{ secrets.PLATFORM_DISPATCH_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "${{ github.api_url }}/repos/${PLATFORM_REPO}/dispatches" \
+            -d @- <<EOF
+          {
+            "event_type": "deploy-request",
+            "client_payload": {
+              "app": "${APP_NAME}",
+              "repo": "${{ github.repository }}",
+              "sha": "${{ github.sha }}",
+              "targets": "do"
+            }
+          }
+          EOF
+          echo "Đã gọi platform — theo dõi ở Actions của ${PLATFORM_REPO}"

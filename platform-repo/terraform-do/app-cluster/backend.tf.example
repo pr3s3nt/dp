@@ -1,0 +1,23 @@
+# =============================================================================
+# BACKEND DO SPACES (S3-compatible) — production dùng cái này thay state local.
+# Đổi tên thành backend.tf và điền bucket/endpoint, rồi:
+#   terraform init \
+#     -backend-config="access_key=$SPACES_ACCESS_KEY" \
+#     -backend-config="secret_key=$SPACES_SECRET_KEY"
+# (Spaces key tạo trong DO Control Panel -> API -> Spaces Keys.)
+# =============================================================================
+terraform {
+  backend "s3" {
+    endpoints = { s3 = "https://sgp1.digitaloceanspaces.com" }
+    bucket    = "idp-tfstate"                 # tên Space
+    key       = "do/app-cluster/terraform.tfstate"
+    region    = "us-east-1"                   # Spaces bỏ qua nhưng backend s3 bắt buộc có
+
+    # Spaces không có mấy API của AWS -> tắt các bước validate riêng của AWS:
+    skip_credentials_validation = true
+    skip_metadata_api_check     = true
+    skip_region_validation      = true
+    skip_requesting_account_id  = true
+    skip_s3_checksum            = true
+  }
+}

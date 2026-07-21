@@ -1,0 +1,16 @@
+# AppProject cho luồng DigitalOcean (config repo dưới org pr3s3nt).
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: idp
+  namespace: argocd
+spec:
+  description: Apps deployed via IDP (Score -> config repo -> ArgoCD) trên DOKS
+  sourceRepos:
+    - https://github.com/pr3s3nt/*
+  destinations:
+    - server: '*'
+      namespace: '*'
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace

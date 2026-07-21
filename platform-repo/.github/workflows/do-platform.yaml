@@ -1,0 +1,206 @@
+# =============================================================================
+# do-platform — LUỒNG ĐẦY ĐỦ: HẠ TẦNG TRƯỚC, DEPLOY SAU.
+#
+# App scaffold bằng scripts/new-app.sh dispatch "provision-and-deploy". Workflow:
+#   job infra  : terraform tạo VPC + cụm DOKS "idp-<app>" (idempotent bằng
+#                existence-check) + bootstrap ingress-nginx + ArgoCD + 2 Application
+#                (staging auto / prod manual) cho RIÊNG app này.
+#   job deploy : (needs infra) score-k8s render do provisioner+patch -> apply secret
+#                + pull secret -> commit <app>-config/do/<env> -> ArgoCD sync.
+#
+# Mô hình "mỗi app một cụm riêng": mỗi app có cụm + ArgoCD riêng, tự chứa.
+#
+# Secrets platform-repo: DO_TOKEN, CONFIG_REPO_TOKEN. (dùng chung với do-orchestrator)
+# =============================================================================
+name: do-platform
+
+on:
+  repository_dispatch:
+    types: [provision-and-deploy]
+
+env:
+  ORG: pr3s3nt
+  SCORE_K8S_VERSION: "0.15.0"
+  REGISTRY_PREFIX: registry.digitalocean.com/idp-notes-thanhnt
+  PULL_SECRET: registry-idp-notes-thanhnt
+
+jobs:
+  # ===========================================================================
+  infra:
+    if: github.event.action == 'provision-and-deploy'
+    runs-on: ubuntu-latest
+    env:
+      APP: ${{ github.event.client_payload.app }}
+    outputs:
+      cluster: ${{ steps.ensure.outputs.cluster }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cài công cụ (terraform, doctl, helm, yq)
+        run: |
+          set -euo pipefail
+          curl -fsSL -o tf.zip https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip
+          unzip -o -q tf.zip terraform && sudo mv terraform /usr/local/bin/
+          curl -fsSL https://github.com/digitalocean/doctl/releases/download/v1.163.0/doctl-1.163.0-linux-amd64.tar.gz | tar xz && sudo mv doctl /usr/local/bin/
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq
+          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+      - name: Đảm bảo cụm DOKS idp-<app> (terraform, idempotent)
+        id: ensure
+        env:
+          DIGITALOCEAN_TOKEN: ${{ secrets.DO_TOKEN }}
+        run: |
+          set -euo pipefail
+          doctl auth init -t "$DIGITALOCEAN_TOKEN" >/dev/null
+          CLUSTER="idp-${APP}"
+          echo "cluster=$CLUSTER" >> "$GITHUB_OUTPUT"
+          if doctl kubernetes cluster get "$CLUSTER" >/dev/null 2>&1; then
+            echo "==> cụm $CLUSTER đã tồn tại -> bỏ qua terraform (idempotent)"
+          else
+            echo "==> tạo hạ tầng bằng terraform cho app=$APP"
+            cd terraform-do/app-cluster
+            terraform init -no-color -input=false
+            terraform apply -no-color -input=false -auto-approve -var "app_name=${APP}" -var "node_count=2"
+            cd - >/dev/null
+          fi
+          doctl kubernetes cluster kubeconfig save "$CLUSTER"
+
+      - name: Đảm bảo node khỏe mạng (pod→API), recycle nếu lỗi
+        env:
+          DIGITALOCEAN_TOKEN: ${{ secrets.DO_TOKEN }}
+        run: |
+          set -uo pipefail
+          doctl auth init -t "$DIGITALOCEAN_TOKEN" >/dev/null
+          CLUSTER="idp-${APP}"
+          CIP=$(kubectl get svc kubernetes -n default -o jsonpath='{.spec.clusterIP}')
+          check_api() {  # pod→API bằng exit-code (không cần konnectivity cho logs)
+            kubectl delete pod netcheck -n default --ignore-not-found >/dev/null 2>&1
+            kubectl run netcheck -n default --restart=Never --image=curlimages/curl:8.10.1 --command -- \
+              sh -c "curl -sf --max-time 8 https://${CIP}:443/healthz >/dev/null && exit 0 || exit 1" >/dev/null 2>&1
+            for i in $(seq 1 15); do
+              ph=$(kubectl get pod netcheck -n default -o jsonpath='{.status.phase}' 2>/dev/null)
+              [ "$ph" = Succeeded ] && { kubectl delete pod netcheck -n default --ignore-not-found >/dev/null 2>&1; return 0; }
+              [ "$ph" = Failed ]    && { kubectl delete pod netcheck -n default --ignore-not-found >/dev/null 2>&1; return 1; }
+              sleep 8
+            done
+            kubectl delete pod netcheck -n default --ignore-not-found >/dev/null 2>&1; return 1
+          }
+          for attempt in 1 2 3 4; do
+            if check_api; then echo "==> pod→API OK (mạng node khỏe)"; exit 0; fi
+            echo "==> pod→API lỗi -> recycle toàn bộ node (lần $attempt)"
+            POOL=$(doctl kubernetes cluster node-pool list "$CLUSTER" --format ID --no-header)
+            for nid in $(doctl kubernetes cluster get "$CLUSTER" -o json | yq '.[0].node_pools[0].nodes[].id'); do
+              doctl kubernetes cluster node-pool replace-node "$CLUSTER" "$POOL" "$nid" --skip-drain -f || true
+            done
+            echo "   chờ node Ready lại..."
+            for i in $(seq 1 40); do
+              r=$(kubectl get nodes --no-headers 2>/dev/null | grep -c ' Ready ')
+              [ "$r" -ge 2 ] && break; sleep 15
+            done
+          done
+          echo "::warning::pod→API vẫn lỗi sau nhiều lần recycle — DOKS có thể đang trục trặc"; exit 1
+
+      - name: Bootstrap cụm (ingress-nginx + ArgoCD + Application của app)
+        run: |
+          set -euo pipefail
+          # ingress-nginx (1 LB DO)
+          if ! kubectl get ns ingress-nginx >/dev/null 2>&1; then
+            helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx >/dev/null
+            helm repo update >/dev/null
+            helm install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace \
+              --set controller.replicaCount=1 --set controller.service.type=LoadBalancer >/dev/null
+          fi
+          # ArgoCD (server-side vì CRD applicationsets lớn)
+          if ! kubectl get ns argocd >/dev/null 2>&1; then
+            kubectl create namespace argocd
+            kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+            kubectl -n argocd rollout status deploy/argocd-server --timeout=300s
+          fi
+          kubectl apply -f argocd/do-project.yaml
+          # 2 Application CHỈ cho app này (per-app cluster tự chứa; không dùng appset toàn cục)
+          sed "s/__APP__/${APP}/g" argocd/do-app.tpl.yaml | kubectl apply -f -
+          echo "==> bootstrap xong cụm idp-${APP}"
+
+  # ===========================================================================
+  deploy:
+    needs: infra
+    runs-on: ubuntu-latest
+    env:
+      APP: ${{ github.event.client_payload.app }}
+      APP_REPO: ${{ github.event.client_payload.repo }}
+      SHA: ${{ github.event.client_payload.sha }}
+      CLUSTER: ${{ needs.infra.outputs.cluster }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { path: catalog }
+      - uses: actions/checkout@v4
+        with: { repository: "${{ env.APP_REPO }}", ref: "${{ env.SHA }}", token: "${{ secrets.CONFIG_REPO_TOKEN }}", path: app }
+      - uses: actions/checkout@v4
+        with: { repository: "${{ env.ORG }}/${{ github.event.client_payload.app }}-config", token: "${{ secrets.CONFIG_REPO_TOKEN }}", path: config }
+
+      - name: Cài công cụ
+        run: |
+          set -euo pipefail
+          curl -fsSL -o sk.tgz "https://github.com/score-spec/score-k8s/releases/download/${SCORE_K8S_VERSION}/score-k8s_${SCORE_K8S_VERSION}_linux_amd64.tar.gz"
+          tar xzf sk.tgz score-k8s && sudo mv score-k8s /usr/local/bin/
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq
+          curl -fsSL https://github.com/digitalocean/doctl/releases/download/v1.163.0/doctl-1.163.0-linux-amd64.tar.gz | tar xz && sudo mv doctl /usr/local/bin/
+
+      - name: Kết nối cụm + LB IP
+        run: |
+          set -euo pipefail
+          doctl auth init -t "${{ secrets.DO_TOKEN }}" >/dev/null
+          doctl kubernetes cluster kubeconfig save "$CLUSTER"
+          for i in $(seq 1 40); do
+            LB_IP=$(kubectl get svc ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+            [ -n "$LB_IP" ] && break; sleep 15
+          done
+          [ -n "$LB_IP" ] || { echo "chưa có LB IP"; exit 1; }
+          echo "LB_IP=$LB_IP" >> "$GITHUB_ENV"
+
+      - name: Render + apply secret + commit config
+        run: |
+          set -euo pipefail
+          REGISTRY_REPO="${REGISTRY_PREFIX}/${APP}"
+          SERVICES=$(cd app && for f in */score.yaml; do dirname "$f"; done)
+          render() {
+            local env=$1 dir="work-${env}" host="${APP}-${env}.${LB_IP}.nip.io"
+            rm -rf "$dir"; mkdir -p "$dir/src"; cp -r app/. "$dir/src/"
+            for svc in $SERVICES; do
+              local f="$dir/src/$svc/score.yaml"
+              for r in $(yq '.resources | to_entries | map(select(.value.type=="route")) | .[].key' "$f"); do
+                HOST="$host" yq -i ".resources.${r}.params.host = strenv(HOST)" "$f"
+              done
+            done
+            pushd "$dir" >/dev/null
+            score-k8s init --no-sample \
+              --provisioners "../catalog/score/provisioners/do.provisioners.yaml" \
+              --patch-templates "../catalog/score/patches/do-${env}.tpl"
+            for svc in $SERVICES; do
+              score-k8s generate "src/${svc}/score.yaml" \
+                --override-property "containers.main.image=\"${REGISTRY_REPO}:${svc}-${SHA}\"" \
+                --output manifests.yaml
+            done
+            yq eval 'select(.kind == "Secret")' manifests.yaml > secrets.yaml
+            yq eval 'select(.kind != "Secret")' manifests.yaml > app.yaml
+            popd >/dev/null
+          }
+          apply_infra() {
+            local env=$1 ns="${APP}-${env}"
+            kubectl create namespace "$ns" 2>/dev/null || true
+            doctl registry kubernetes-manifest | yq 'del(.metadata.namespace)' | kubectl apply -n "$ns" -f - >/dev/null
+            while IFS= read -r s; do
+              [ -n "$s" ] || continue
+              kubectl -n "$ns" get secret "$s" >/dev/null 2>&1 && continue
+              yq "select(.kind==\"Secret\" and .metadata.name==\"$s\")" "work-${env}/secrets.yaml" | kubectl -n "$ns" apply -f - >/dev/null
+            done < <(yq 'select(.kind=="Secret") | .metadata.name' "work-${env}/secrets.yaml")
+          }
+          for env in staging prod; do
+            render "$env"; apply_infra "$env"
+            mkdir -p "config/do/${env}"; cp "work-${env}/app.yaml" "config/do/${env}/manifests.yaml"
+          done
+          cd config
+          git config user.name idp-orchestrator
+          git config user.email idp-ci@users.noreply.github.com
+          git add .
+          git diff --cached --quiet || { git commit -m "deploy(${APP}): do staging+prod ${SHA}"; git push; }

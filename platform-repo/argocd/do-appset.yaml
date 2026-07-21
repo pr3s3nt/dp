@@ -1,0 +1,60 @@
+# =============================================================================
+# ApplicationSet — DIGITALOCEAN (chạy song song appset-onprem.yaml).
+#
+# ArgoCD chạy NGAY TRÊN cụm DOKS -> deploy in-cluster (cùng cụm). 2 env tách nhau
+# bằng namespace <app>-<env>. Đọc config repo <app>-config/do/<env>/manifests.yaml.
+# staging: auto-sync (prune+selfHeal) | prod: manual (gate bằng nút Sync).
+#
+# THÊM APP = tạo repo <app>-config + thêm file clusters/placement/<app>.yaml.
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: do-apps
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - git:
+              repoURL: https://github.com/pr3s3nt/platform-repo.git
+              revision: main
+              files:
+                - path: "clusters/placement/*.yaml"
+          - list:
+              elements:
+                - env: staging
+                - env: prod
+  template:
+    metadata:
+      name: '{{ .app }}-{{ .env }}-do'
+      labels:
+        platform: do
+        env: '{{ .env }}'
+    spec:
+      project: idp
+      source:
+        repoURL: 'https://github.com/pr3s3nt/{{ .app }}-config.git'
+        targetRevision: main
+        path: 'do/{{ .env }}'
+        directory:
+          recurse: false
+      destination:
+        server: https://kubernetes.default.svc   # in-cluster (ArgoCD cùng cụm DOKS)
+        namespace: '{{ .app }}-{{ .env }}'
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+  # Chỉ staging auto-sync; prod manual để gate.
+  templatePatch: |
+    {{ if eq .env "staging" }}
+    spec:
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+    {{ end }}
